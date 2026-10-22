@@ -1,0 +1,44 @@
+# ===== Unity 自动生成的目录（不是源文件，勿提交）=====
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Unity 崩溃/诊断输出
+sysinfo.txt
+crashlytics-build.properties
+
+# ===== 导出的资源包（*.unitypackage）=====
+*.unitypackage
+
+# ===== IDE / 编辑器生成文件（可重新生成，勿提交）=====
+.vs/
+.idea/
+.vscode/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# ===== 操作系统临时文件 =====
+.DS_Store
+Thumbs.db
+
+# ===== 构建产物（按需保留：若要把安装包也纳入版本库，删掉这几行）=====
+/[Bb]uild/
+/[Bb]uilds/
+*.apk
+*.aab
+*.app
