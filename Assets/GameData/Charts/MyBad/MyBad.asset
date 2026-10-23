@@ -17,10 +17,10 @@ MonoBehaviour:
   - beat: 12
     order: 0
     position: {x: -12.71, y: -5.98}
-  - beat: 14
+  - beat: 14.5
     order: 0
     position: {x: -10.47, y: -2.76}
-  - beat: 16
+  - beat: 15.5
     order: 0
     position: {x: -8.46, y: -6.12}
   - beat: 18
