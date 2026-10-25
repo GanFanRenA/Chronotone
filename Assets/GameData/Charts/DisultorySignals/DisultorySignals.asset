@@ -1,0 +1,4518 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc314799bd95b574abbd6c2bb839b0b2, type: 3}
+  m_Name: DisultorySignals
+  m_EditorClassIdentifier: Assembly-CSharp::ChartSO
+  clip: {fileID: 8300000, guid: d44b1cd6fff75d34f9043112225af64c, type: 3}
+  nodes:
+  - beat: 1.125
+    order: 0
+    mode: 0
+    position: {x: 0, y: 0}
+  - beat: 1.75
+    order: 0
+    mode: 0
+    position: {x: 3.7499995, y: 0}
+  - beat: 2.25
+    order: 0
+    mode: 0
+    position: {x: 6.75, y: 0}
+  - beat: 2.625
+    order: 0
+    mode: 0
+    position: {x: 9, y: 0}
+  - beat: 3
+    order: 0
+    mode: 0
+    position: {x: 11.249999, y: 0}
+  - beat: 3.375
+    order: 0
+    mode: 0
+    position: {x: 13.5, y: 0}
+  - beat: 4
+    order: 0
+    mode: 0
+    position: {x: 17.25, y: 0}
+  - beat: 4.375
+    order: 0
+    mode: 0
+    position: {x: 19.5, y: 0}
+  - beat: 5.25
+    order: 0
+    mode: 0
+    position: {x: 24.75, y: 0}
+  - beat: 8.375
+    order: 0
+    mode: 0
+    position: {x: 43.5, y: 0}
+  - beat: 9.5
+    order: 0
+    mode: 0
+    position: {x: 50.249996, y: 0}
+  - beat: 9.875
+    order: 0
+    mode: 0
+    position: {x: 52.5, y: 0}
+  - beat: 10.375
+    order: 0
+    mode: 0
+    position: {x: 55.499996, y: 0}
+  - beat: 10.625
+    order: 0
+    mode: 0
+    position: {x: 56.999996, y: 0}
+  - beat: 11
+    order: 0
+    mode: 0
+    position: {x: 59.249996, y: 0}
+  - beat: 11.375
+    order: 0
+    mode: 0
+    position: {x: 61.499996, y: 0}
+  - beat: 11.625
+    order: 0
+    mode: 0
+    position: {x: 62.999996, y: 0}
+  - beat: 12
+    order: 0
+    mode: 0
+    position: {x: 65.24999, y: 0}
+  - beat: 12.375
+    order: 0
+    mode: 0
+    position: {x: 67.5, y: 0}
+  - beat: 12.625
+    order: 0
+    mode: 0
+    position: {x: 69, y: 0}
+  - beat: 13.125
+    order: 0
+    mode: 0
+    position: {x: 72, y: 0}
+  - beat: 13.375
+    order: 0
+    mode: 0
+    position: {x: 73.5, y: 0}
+  - beat: 13.75
+    order: 0
+    mode: 0
+    position: {x: 75.75, y: 0}
+  - beat: 14.375
+    order: 0
+    mode: 0
+    position: {x: 79.5, y: 0}
+  - beat: 14.625
+    order: 0
+    mode: 0
+    position: {x: 81, y: 0}
+  - beat: 15.125
+    order: 0
+    mode: 0
+    position: {x: 84, y: 0}
+  - beat: 15.5
+    order: 0
+    mode: 0
+    position: {x: 86.25, y: 0}
+  - beat: 15.875
+    order: 0
+    mode: 0
+    position: {x: 88.49999, y: 0}
+  - beat: 16.375
+    order: 0
+    mode: 0
+    position: {x: 91.49999, y: 0}
+  - beat: 16.875
+    order: 0
+    mode: 0
+    position: {x: 94.49999, y: 0}
+  - beat: 17.125
+    order: 0
+    mode: 0
+    position: {x: 95.999985, y: 0}
+  - beat: 17.375
+    order: 0
+    mode: 0
+    position: {x: 97.49999, y: 0}
+  - beat: 17.75
+    order: 0
+    mode: 0
+    position: {x: 99.749985, y: 0}
+  - beat: 18.125
+    order: 0
+    mode: 0
+    position: {x: 101.999985, y: 0}
+  - beat: 18.375
+    order: 0
+    mode: 0
+    position: {x: 103.499985, y: 0}
+  - beat: 19.125
+    order: 0
+    mode: 0
+    position: {x: 107.99999, y: 0}
+  - beat: 19.375
+    order: 0
+    mode: 0
+    position: {x: 109.499985, y: 0}
+  - beat: 19.625
+    order: 0
+    mode: 0
+    position: {x: 110.999985, y: 0}
+  - beat: 19.75
+    order: 0
+    mode: 0
+    position: {x: 111.74999, y: 0}
+  - beat: 20.25
+    order: 0
+    mode: 0
+    position: {x: 114.749985, y: 0}
+  - beat: 20.5
+    order: 0
+    mode: 0
+    position: {x: 116.24999, y: 0}
+  - beat: 20.75
+    order: 0
+    mode: 0
+    position: {x: 117.749985, y: 0}
+  - beat: 21.125
+    order: 0
+    mode: 0
+    position: {x: 119.999985, y: 0}
+  - beat: 21.5
+    order: 0
+    mode: 0
+    position: {x: 122.24998, y: 0}
+  - beat: 21.75
+    order: 0
+    mode: 0
+    position: {x: 123.749985, y: 0}
+  - beat: 22
+    order: 0
+    mode: 0
+    position: {x: 125.249985, y: 0}
+  - beat: 22.25
+    order: 0
+    mode: 0
+    position: {x: 126.74999, y: 0}
+  - beat: 22.5
+    order: 0
+    mode: 0
+    position: {x: 128.24998, y: 0}
+  - beat: 23
+    order: 0
+    mode: 0
+    position: {x: 131.24998, y: 0}
+  - beat: 23.25
+    order: 0
+    mode: 0
+    position: {x: 132.74998, y: 0}
+  - beat: 23.75
+    order: 0
+    mode: 0
+    position: {x: 135.74998, y: 0}
+  - beat: 24
+    order: 0
+    mode: 0
+    position: {x: 137.24998, y: 0}
+  - beat: 24.25
+    order: 0
+    mode: 0
+    position: {x: 138.74998, y: 0}
+  - beat: 24.5
+    order: 0
+    mode: 0
+    position: {x: 140.24998, y: 0}
+  - beat: 24.75
+    order: 0
+    mode: 0
+    position: {x: 141.74998, y: 0}
+  - beat: 25
+    order: 0
+    mode: 0
+    position: {x: 143.24998, y: 0}
+  - beat: 25.25
+    order: 0
+    mode: 0
+    position: {x: 144.74998, y: 0}
+  - beat: 25.75
+    order: 0
+    mode: 0
+    position: {x: 147.74998, y: 0}
+  - beat: 26.25
+    order: 0
+    mode: 0
+    position: {x: 150.74998, y: 0}
+  - beat: 26.5
+    order: 0
+    mode: 0
+    position: {x: 152.24998, y: 0}
+  - beat: 26.75
+    order: 0
+    mode: 0
+    position: {x: 153.74998, y: 0}
+  - beat: 27
+    order: 0
+    mode: 0
+    position: {x: 155.25, y: 0}
+  - beat: 27.25
+    order: 0
+    mode: 0
+    position: {x: 156.75, y: 0}
+  - beat: 27.75
+    order: 0
+    mode: 0
+    position: {x: 159.75, y: 0}
+  - beat: 28
+    order: 0
+    mode: 0
+    position: {x: 161.25, y: 0}
+  - beat: 28.25
+    order: 0
+    mode: 0
+    position: {x: 162.75002, y: 0}
+  - beat: 28.5
+    order: 0
+    mode: 0
+    position: {x: 164.25002, y: 0}
+  - beat: 28.75
+    order: 0
+    mode: 0
+    position: {x: 165.75002, y: 0}
+  - beat: 29
+    order: 0
+    mode: 0
+    position: {x: 167.25002, y: 0}
+  - beat: 29.25
+    order: 0
+    mode: 0
+    position: {x: 168.75002, y: 0}
+  - beat: 29.5
+    order: 0
+    mode: 0
+    position: {x: 170.25003, y: 0}
+  - beat: 29.75
+    order: 0
+    mode: 0
+    position: {x: 171.75003, y: 0}
+  - beat: 30
+    order: 0
+    mode: 0
+    position: {x: 173.25003, y: 0}
+  - beat: 30.25
+    order: 0
+    mode: 0
+    position: {x: 174.75003, y: 0}
+  - beat: 30.5
+    order: 0
+    mode: 0
+    position: {x: 176.25003, y: 0}
+  - beat: 31
+    order: 0
+    mode: 0
+    position: {x: 179.25005, y: 0}
+  - beat: 31.125
+    order: 0
+    mode: 0
+    position: {x: 180.00003, y: 0}
+  - beat: 31.5
+    order: 0
+    mode: 0
+    position: {x: 182.25003, y: 0}
+  - beat: 31.625
+    order: 0
+    mode: 0
+    position: {x: 183.00003, y: 0}
+  - beat: 32
+    order: 0
+    mode: 0
+    position: {x: 185.25003, y: 0}
+  - beat: 32.375
+    order: 0
+    mode: 0
+    position: {x: 187.50002, y: 0}
+  - beat: 32.625
+    order: 0
+    mode: 0
+    position: {x: 189.00003, y: 0}
+  - beat: 33.25
+    order: 0
+    mode: 0
+    position: {x: 192.75003, y: 0}
+  - beat: 33.375
+    order: 0
+    mode: 0
+    position: {x: 193.50002, y: 0}
+  - beat: 33.625
+    order: 0
+    mode: 0
+    position: {x: 195.00002, y: 0}
+  - beat: 33.875
+    order: 0
+    mode: 0
+    position: {x: 196.50003, y: 0}
+  - beat: 34.625
+    order: 0
+    mode: 0
+    position: {x: 201.00002, y: 0}
+  - beat: 35.125
+    order: 0
+    mode: 0
+    position: {x: 204.00003, y: 0}
+  - beat: 35.625
+    order: 0
+    mode: 0
+    position: {x: 207.00003, y: 0}
+  - beat: 36.125
+    order: 0
+    mode: 0
+    position: {x: 210.00003, y: 0}
+  - beat: 36.375
+    order: 0
+    mode: 0
+    position: {x: 211.50005, y: 0}
+  - beat: 36.625
+    order: 0
+    mode: 0
+    position: {x: 213.00005, y: 0}
+  - beat: 37.125
+    order: 0
+    mode: 0
+    position: {x: 216.00003, y: 0}
+  - beat: 37.375
+    order: 0
+    mode: 0
+    position: {x: 217.50003, y: 0}
+  - beat: 37.625
+    order: 0
+    mode: 0
+    position: {x: 219.00005, y: 0}
+  - beat: 37.875
+    order: 0
+    mode: 0
+    position: {x: 220.50005, y: 0}
+  - beat: 38.125
+    order: 0
+    mode: 0
+    position: {x: 222.00005, y: 0}
+  - beat: 38.375
+    order: 0
+    mode: 0
+    position: {x: 223.50005, y: 0}
+  - beat: 38.625
+    order: 0
+    mode: 0
+    position: {x: 225.00005, y: 0}
+  - beat: 38.875
+    order: 0
+    mode: 0
+    position: {x: 226.50006, y: 0}
+  - beat: 39.375
+    order: 0
+    mode: 0
+    position: {x: 229.50006, y: 0}
+  - beat: 39.625
+    order: 0
+    mode: 0
+    position: {x: 231.00006, y: 0}
+  - beat: 39.875
+    order: 0
+    mode: 0
+    position: {x: 232.50006, y: 0}
+  - beat: 40.375
+    order: 0
+    mode: 0
+    position: {x: 235.50008, y: 0}
+  - beat: 40.625
+    order: 0
+    mode: 0
+    position: {x: 237.00008, y: 0}
+  - beat: 40.875
+    order: 0
+    mode: 0
+    position: {x: 238.50008, y: 0}
+  - beat: 41.125
+    order: 0
+    mode: 0
+    position: {x: 240.00008, y: 0}
+  - beat: 41.375
+    order: 0
+    mode: 0
+    position: {x: 241.50009, y: 0}
+  - beat: 41.875
+    order: 0
+    mode: 0
+    position: {x: 244.50009, y: 0}
+  - beat: 42.125
+    order: 0
+    mode: 0
+    position: {x: 246.00009, y: 0}
+  - beat: 42.625
+    order: 0
+    mode: 0
+    position: {x: 249.0001, y: 0}
+  - beat: 43
+    order: 0
+    mode: 0
+    position: {x: 251.25009, y: 0}
+  - beat: 43.375
+    order: 0
+    mode: 0
+    position: {x: 253.50009, y: 0}
+  - beat: 43.875
+    order: 0
+    mode: 0
+    position: {x: 256.5001, y: 0}
+  - beat: 44.125
+    order: 0
+    mode: 0
+    position: {x: 258.0001, y: 0}
+  - beat: 44.375
+    order: 0
+    mode: 0
+    position: {x: 259.5001, y: 0}
+  - beat: 44.5
+    order: 0
+    mode: 0
+    position: {x: 260.2501, y: 0}
+  - beat: 45.125
+    order: 0
+    mode: 0
+    position: {x: 264.0001, y: 0}
+  - beat: 45.625
+    order: 0
+    mode: 0
+    position: {x: 267.0001, y: 0}
+  - beat: 45.75
+    order: 0
+    mode: 0
+    position: {x: 267.7501, y: 0}
+  - beat: 46.125
+    order: 0
+    mode: 0
+    position: {x: 270.00006, y: 0}
+  - beat: 46.625
+    order: 0
+    mode: 0
+    position: {x: 273.00006, y: 0}
+  - beat: 46.75
+    order: 0
+    mode: 0
+    position: {x: 273.75006, y: 0}
+  - beat: 47.125
+    order: 0
+    mode: 0
+    position: {x: 276.00006, y: 0}
+  - beat: 47.5
+    order: 0
+    mode: 0
+    position: {x: 278.25006, y: 0}
+  - beat: 48
+    order: 0
+    mode: 0
+    position: {x: 281.25006, y: 0}
+  - beat: 48.5
+    order: 0
+    mode: 0
+    position: {x: 284.25006, y: 0}
+  - beat: 48.875
+    order: 0
+    mode: 0
+    position: {x: 286.50006, y: 0}
+  - beat: 49
+    order: 0
+    mode: 0
+    position: {x: 287.25006, y: 0}
+  - beat: 49.25
+    order: 0
+    mode: 0
+    position: {x: 288.75006, y: 0}
+  - beat: 49.75
+    order: 0
+    mode: 0
+    position: {x: 291.75006, y: 0}
+  - beat: 50
+    order: 0
+    mode: 0
+    position: {x: 293.25006, y: 0}
+  - beat: 50.25
+    order: 0
+    mode: 0
+    position: {x: 294.75006, y: 0}
+  - beat: 50.75
+    order: 0
+    mode: 0
+    position: {x: 297.75006, y: 0}
+  - beat: 51.25
+    order: 0
+    mode: 0
+    position: {x: 300.75006, y: 0}
+  - beat: 52
+    order: 0
+    mode: 0
+    position: {x: 305.25006, y: 0}
+  - beat: 52.5
+    order: 0
+    mode: 0
+    position: {x: 308.25006, y: 0}
+  - beat: 53
+    order: 0
+    mode: 0
+    position: {x: 311.25006, y: 0}
+  - beat: 53.5
+    order: 0
+    mode: 0
+    position: {x: 314.25006, y: 0}
+  - beat: 54
+    order: 0
+    mode: 0
+    position: {x: 317.2501, y: 0}
+  - beat: 54.25
+    order: 0
+    mode: 0
+    position: {x: 318.75006, y: 0}
+  - beat: 54.5
+    order: 0
+    mode: 0
+    position: {x: 320.25006, y: 0}
+  - beat: 55
+    order: 0
+    mode: 0
+    position: {x: 323.25006, y: 0}
+  - beat: 55.5
+    order: 0
+    mode: 0
+    position: {x: 326.25006, y: 0}
+  - beat: 55.75
+    order: 0
+    mode: 0
+    position: {x: 327.75006, y: 0}
+  - beat: 56
+    order: 0
+    mode: 0
+    position: {x: 329.25003, y: 0}
+  - beat: 56.375
+    order: 0
+    mode: 0
+    position: {x: 331.50006, y: 0}
+  - beat: 57
+    order: 0
+    mode: 0
+    position: {x: 335.25006, y: 0}
+  - beat: 57.5
+    order: 0
+    mode: 0
+    position: {x: 338.25006, y: 0}
+  - beat: 58
+    order: 0
+    mode: 0
+    position: {x: 341.25006, y: 0}
+  - beat: 58.625
+    order: 0
+    mode: 0
+    position: {x: 345.00006, y: 0}
+  - beat: 59
+    order: 0
+    mode: 0
+    position: {x: 347.2501, y: 0}
+  - beat: 59.625
+    order: 0
+    mode: 0
+    position: {x: 351.0001, y: 0}
+  - beat: 60.125
+    order: 0
+    mode: 0
+    position: {x: 354.0001, y: 0}
+  - beat: 60.375
+    order: 0
+    mode: 0
+    position: {x: 355.50006, y: 0}
+  - beat: 60.875
+    order: 0
+    mode: 0
+    position: {x: 358.5001, y: 0}
+  - beat: 61.375
+    order: 0
+    mode: 0
+    position: {x: 361.5001, y: 0}
+  - beat: 62.125
+    order: 0
+    mode: 0
+    position: {x: 366.0001, y: 0}
+  - beat: 62.375
+    order: 0
+    mode: 0
+    position: {x: 367.50006, y: 0}
+  - beat: 62.875
+    order: 0
+    mode: 0
+    position: {x: 370.50006, y: 0}
+  - beat: 63.375
+    order: 0
+    mode: 0
+    position: {x: 373.5001, y: 0}
+  - beat: 63.875
+    order: 0
+    mode: 0
+    position: {x: 376.5001, y: 0}
+  - beat: 64.375
+    order: 0
+    mode: 0
+    position: {x: 379.5001, y: 0}
+  - beat: 64.875
+    order: 0
+    mode: 0
+    position: {x: 382.5001, y: 0}
+  - beat: 65.375
+    order: 0
+    mode: 0
+    position: {x: 385.5001, y: 0}
+  - beat: 65.875
+    order: 0
+    mode: 0
+    position: {x: 388.50012, y: 0}
+  - beat: 66.125
+    order: 0
+    mode: 0
+    position: {x: 390.0001, y: 0}
+  - beat: 66.375
+    order: 0
+    mode: 0
+    position: {x: 391.50012, y: 0}
+  - beat: 66.875
+    order: 0
+    mode: 0
+    position: {x: 394.50012, y: 0}
+  - beat: 67.375
+    order: 0
+    mode: 0
+    position: {x: 397.50012, y: 0}
+  - beat: 67.625
+    order: 0
+    mode: 0
+    position: {x: 399.00012, y: 0}
+  - beat: 68.125
+    order: 0
+    mode: 0
+    position: {x: 402.00012, y: 0}
+  - beat: 68.375
+    order: 0
+    mode: 0
+    position: {x: 403.50012, y: 0}
+  - beat: 68.875
+    order: 0
+    mode: 0
+    position: {x: 406.50012, y: 0}
+  - beat: 69.375
+    order: 0
+    mode: 0
+    position: {x: 409.50012, y: 0}
+  - beat: 69.875
+    order: 0
+    mode: 0
+    position: {x: 412.50012, y: 0}
+  - beat: 70
+    order: 0
+    mode: 0
+    position: {x: 413.25012, y: 0}
+  - beat: 70.375
+    order: 0
+    mode: 0
+    position: {x: 415.50012, y: 0}
+  - beat: 70.75
+    order: 0
+    mode: 0
+    position: {x: 417.75015, y: 0}
+  - beat: 71
+    order: 0
+    mode: 0
+    position: {x: 419.25012, y: 0}
+  - beat: 71.25
+    order: 0
+    mode: 0
+    position: {x: 420.75012, y: 0}
+  - beat: 71.5
+    order: 0
+    mode: 0
+    position: {x: 422.25012, y: 0}
+  - beat: 71.75
+    order: 0
+    mode: 0
+    position: {x: 423.7501, y: 0}
+  - beat: 72.25
+    order: 0
+    mode: 0
+    position: {x: 426.7501, y: 0}
+  - beat: 72.75
+    order: 0
+    mode: 0
+    position: {x: 429.75012, y: 0}
+  - beat: 73
+    order: 0
+    mode: 0
+    position: {x: 431.2501, y: 0}
+  - beat: 73.25
+    order: 0
+    mode: 0
+    position: {x: 432.75012, y: 0}
+  - beat: 73.75
+    order: 0
+    mode: 0
+    position: {x: 435.75012, y: 0}
+  - beat: 74
+    order: 0
+    mode: 0
+    position: {x: 437.25012, y: 0}
+  - beat: 74.25
+    order: 0
+    mode: 0
+    position: {x: 438.7501, y: 0}
+  - beat: 74.75
+    order: 0
+    mode: 0
+    position: {x: 441.7501, y: 0}
+  - beat: 75.25
+    order: 0
+    mode: 0
+    position: {x: 444.75012, y: 0}
+  - beat: 75.5
+    order: 0
+    mode: 0
+    position: {x: 446.2501, y: 0}
+  - beat: 75.75
+    order: 0
+    mode: 0
+    position: {x: 447.75012, y: 0}
+  - beat: 76.25
+    order: 0
+    mode: 0
+    position: {x: 450.75012, y: 0}
+  - beat: 76.75
+    order: 0
+    mode: 0
+    position: {x: 453.75012, y: 0}
+  - beat: 77.25
+    order: 0
+    mode: 0
+    position: {x: 456.75012, y: 0}
+  - beat: 77.75
+    order: 0
+    mode: 0
+    position: {x: 459.75015, y: 0}
+  - beat: 78
+    order: 0
+    mode: 0
+    position: {x: 461.25012, y: 0}
+  - beat: 78.5
+    order: 0
+    mode: 0
+    position: {x: 464.25012, y: 0}
+  - beat: 78.75
+    order: 0
+    mode: 0
+    position: {x: 465.75012, y: 0}
+  - beat: 79.125
+    order: 0
+    mode: 0
+    position: {x: 468.00012, y: 0}
+  - beat: 79.5
+    order: 0
+    mode: 0
+    position: {x: 470.25015, y: 0}
+  - beat: 80
+    order: 0
+    mode: 0
+    position: {x: 473.25015, y: 0}
+  - beat: 80.25
+    order: 0
+    mode: 0
+    position: {x: 474.75018, y: 0}
+  - beat: 80.75
+    order: 0
+    mode: 0
+    position: {x: 477.75018, y: 0}
+  - beat: 81.25
+    order: 0
+    mode: 0
+    position: {x: 480.75018, y: 0}
+  - beat: 81.75
+    order: 0
+    mode: 0
+    position: {x: 483.75018, y: 0}
+  - beat: 82.375
+    order: 0
+    mode: 0
+    position: {x: 487.50018, y: 0}
+  - beat: 82.75
+    order: 0
+    mode: 0
+    position: {x: 489.7502, y: 0}
+  - beat: 83.125
+    order: 0
+    mode: 0
+    position: {x: 492.00018, y: 0}
+  - beat: 83.375
+    order: 0
+    mode: 0
+    position: {x: 493.50018, y: 0}
+  - beat: 83.75
+    order: 0
+    mode: 0
+    position: {x: 495.75018, y: 0}
+  - beat: 84.125
+    order: 0
+    mode: 0
+    position: {x: 498.00018, y: 0}
+  - beat: 84.5
+    order: 0
+    mode: 0
+    position: {x: 500.2502, y: 0}
+  - beat: 84.625
+    order: 0
+    mode: 0
+    position: {x: 501.0002, y: 0}
+  - beat: 84.875
+    order: 0
+    mode: 0
+    position: {x: 502.50018, y: 0}
+  - beat: 85.125
+    order: 0
+    mode: 0
+    position: {x: 504.00018, y: 0}
+  - beat: 85.625
+    order: 0
+    mode: 0
+    position: {x: 507.00018, y: 0}
+  - beat: 86.625
+    order: 0
+    mode: 0
+    position: {x: 513.0002, y: 0}
+  - beat: 86.875
+    order: 0
+    mode: 0
+    position: {x: 514.5002, y: 0}
+  - beat: 87.625
+    order: 0
+    mode: 0
+    position: {x: 519.0002, y: 0}
+  - beat: 88.125
+    order: 0
+    mode: 0
+    position: {x: 522.0002, y: 0}
+  - beat: 88.375
+    order: 0
+    mode: 0
+    position: {x: 523.5002, y: 0}
+  - beat: 88.625
+    order: 0
+    mode: 0
+    position: {x: 525.0002, y: 0}
+  - beat: 88.875
+    order: 0
+    mode: 0
+    position: {x: 526.5002, y: 0}
+  - beat: 89.75
+    order: 0
+    mode: 0
+    position: {x: 531.7502, y: 0}
+  - beat: 90.375
+    order: 0
+    mode: 0
+    position: {x: 535.5002, y: 0}
+  - beat: 90.625
+    order: 0
+    mode: 0
+    position: {x: 537.0002, y: 0}
+  - beat: 91.125
+    order: 0
+    mode: 0
+    position: {x: 540.0002, y: 0}
+  - beat: 91.5
+    order: 0
+    mode: 0
+    position: {x: 542.2502, y: 0}
+  - beat: 91.875
+    order: 0
+    mode: 0
+    position: {x: 544.5002, y: 0}
+  - beat: 92.625
+    order: 0
+    mode: 0
+    position: {x: 549.0002, y: 0}
+  - beat: 93.125
+    order: 0
+    mode: 0
+    position: {x: 552.0002, y: 0}
+  - beat: 93.25
+    order: 0
+    mode: 0
+    position: {x: 552.7502, y: 0}
+  - beat: 93.625
+    order: 0
+    mode: 0
+    position: {x: 555.0002, y: 0}
+  - beat: 94.25
+    order: 0
+    mode: 0
+    position: {x: 558.7502, y: 0}
+  - beat: 94.75
+    order: 0
+    mode: 0
+    position: {x: 561.7502, y: 0}
+  - beat: 95
+    order: 0
+    mode: 0
+    position: {x: 563.2502, y: 0}
+  - beat: 95.75
+    order: 0
+    mode: 0
+    position: {x: 567.7502, y: 0}
+  - beat: 96.5
+    order: 0
+    mode: 0
+    position: {x: 572.2502, y: 0}
+  - beat: 97
+    order: 0
+    mode: 0
+    position: {x: 575.2502, y: 0}
+  - beat: 97.25
+    order: 0
+    mode: 0
+    position: {x: 576.7502, y: 0}
+  - beat: 97.5
+    order: 0
+    mode: 0
+    position: {x: 578.2502, y: 0}
+  - beat: 98
+    order: 0
+    mode: 0
+    position: {x: 581.2502, y: 0}
+  - beat: 98.25
+    order: 0
+    mode: 0
+    position: {x: 582.7502, y: 0}
+  - beat: 99
+    order: 0
+    mode: 0
+    position: {x: 587.2502, y: 0}
+  - beat: 99.75
+    order: 0
+    mode: 0
+    position: {x: 591.7501, y: 0}
+  - beat: 100.5
+    order: 0
+    mode: 0
+    position: {x: 596.2501, y: 0}
+  - beat: 101
+    order: 0
+    mode: 0
+    position: {x: 599.2501, y: 0}
+  - beat: 101.5
+    order: 0
+    mode: 0
+    position: {x: 602.2501, y: 0}
+  - beat: 102.25
+    order: 0
+    mode: 0
+    position: {x: 606.7501, y: 0}
+  - beat: 103
+    order: 0
+    mode: 0
+    position: {x: 611.2501, y: 0}
+  - beat: 103.75
+    order: 0
+    mode: 0
+    position: {x: 615.7501, y: 0}
+  - beat: 103.875
+    order: 0
+    mode: 0
+    position: {x: 616.5001, y: 0}
+  - beat: 104.5
+    order: 0
+    mode: 0
+    position: {x: 620.2501, y: 0}
+  - beat: 105
+    order: 0
+    mode: 0
+    position: {x: 623.2501, y: 0}
+  - beat: 106
+    order: 0
+    mode: 0
+    position: {x: 629.2501, y: 0}
+  - beat: 106.125
+    order: 0
+    mode: 0
+    position: {x: 630.0001, y: 0}
+  - beat: 106.625
+    order: 0
+    mode: 0
+    position: {x: 633.0001, y: 0}
+  - beat: 107.625
+    order: 0
+    mode: 0
+    position: {x: 639.0001, y: 0}
+  - beat: 108.375
+    order: 0
+    mode: 0
+    position: {x: 643.5002, y: 0}
+  - beat: 108.875
+    order: 0
+    mode: 0
+    position: {x: 646.5001, y: 0}
+  - beat: 109.375
+    order: 0
+    mode: 0
+    position: {x: 649.5001, y: 0}
+  - beat: 110.125
+    order: 0
+    mode: 0
+    position: {x: 654.0001, y: 0}
+  - beat: 110.375
+    order: 0
+    mode: 0
+    position: {x: 655.5001, y: 0}
+  - beat: 110.875
+    order: 0
+    mode: 0
+    position: {x: 658.5001, y: 0}
+  - beat: 111.625
+    order: 0
+    mode: 0
+    position: {x: 663.0001, y: 0}
+  - beat: 112.375
+    order: 0
+    mode: 0
+    position: {x: 667.5002, y: 0}
+  - beat: 112.875
+    order: 0
+    mode: 0
+    position: {x: 670.5001, y: 0}
+  - beat: 113.375
+    order: 0
+    mode: 0
+    position: {x: 673.5001, y: 0}
+  - beat: 114.125
+    order: 0
+    mode: 0
+    position: {x: 678.0001, y: 0}
+  - beat: 114.875
+    order: 0
+    mode: 0
+    position: {x: 682.5002, y: 0}
+  - beat: 115.625
+    order: 0
+    mode: 0
+    position: {x: 687.0001, y: 0}
+  - beat: 116.375
+    order: 0
+    mode: 0
+    position: {x: 691.5001, y: 0}
+  - beat: 116.875
+    order: 0
+    mode: 0
+    position: {x: 694.5001, y: 0}
+  - beat: 117.375
+    order: 0
+    mode: 0
+    position: {x: 697.5001, y: 0}
+  - beat: 118.25
+    order: 0
+    mode: 0
+    position: {x: 702.75006, y: 0}
+  - beat: 118.875
+    order: 0
+    mode: 0
+    position: {x: 706.50006, y: 0}
+  - beat: 119.5
+    order: 0
+    mode: 0
+    position: {x: 710.25006, y: 0}
+  - beat: 120.25
+    order: 0
+    mode: 0
+    position: {x: 714.7501, y: 0}
+  - beat: 120.75
+    order: 0
+    mode: 0
+    position: {x: 717.75006, y: 0}
+  - beat: 121.375
+    order: 0
+    mode: 0
+    position: {x: 721.50006, y: 0}
+  - beat: 121.5
+    order: 0
+    mode: 0
+    position: {x: 722.2501, y: 0}
+  - beat: 122.25
+    order: 0
+    mode: 0
+    position: {x: 726.7501, y: 0}
+  - beat: 122.75
+    order: 0
+    mode: 0
+    position: {x: 729.7501, y: 0}
+  - beat: 123
+    order: 0
+    mode: 0
+    position: {x: 731.2501, y: 0}
+  - beat: 123.25
+    order: 0
+    mode: 0
+    position: {x: 732.75006, y: 0}
+  - beat: 123.5
+    order: 0
+    mode: 0
+    position: {x: 734.25006, y: 0}
+  - beat: 123.875
+    order: 0
+    mode: 0
+    position: {x: 736.50006, y: 0}
+  - beat: 124.25
+    order: 0
+    mode: 0
+    position: {x: 738.7501, y: 0}
+  - beat: 125
+    order: 0
+    mode: 0
+    position: {x: 743.2501, y: 0}
+  - beat: 125.625
+    order: 0
+    mode: 0
+    position: {x: 747.0001, y: 0}
+  - beat: 126
+    order: 0
+    mode: 0
+    position: {x: 749.2501, y: 0}
+  - beat: 126.75
+    order: 0
+    mode: 0
+    position: {x: 753.7502, y: 0}
+  - beat: 127.125
+    order: 0
+    mode: 0
+    position: {x: 756.0002, y: 0}
+  - beat: 127.5
+    order: 0
+    mode: 0
+    position: {x: 758.2502, y: 0}
+  - beat: 128.25
+    order: 0
+    mode: 0
+    position: {x: 762.7501, y: 0}
+  - beat: 128.625
+    order: 0
+    mode: 0
+    position: {x: 765.0002, y: 0}
+  - beat: 129.25
+    order: 0
+    mode: 0
+    position: {x: 768.7502, y: 0}
+  - beat: 130
+    order: 0
+    mode: 0
+    position: {x: 773.2501, y: 0}
+  - beat: 130.75
+    order: 0
+    mode: 0
+    position: {x: 777.7501, y: 0}
+  - beat: 131.375
+    order: 0
+    mode: 0
+    position: {x: 781.5001, y: 0}
+  - beat: 132.25
+    order: 0
+    mode: 0
+    position: {x: 786.7501, y: 0}
+  - beat: 132.625
+    order: 0
+    mode: 0
+    position: {x: 789.0001, y: 0}
+  - beat: 133.125
+    order: 0
+    mode: 0
+    position: {x: 792.0001, y: 0}
+  - beat: 133.875
+    order: 0
+    mode: 0
+    position: {x: 796.5001, y: 0}
+  - beat: 134.375
+    order: 0
+    mode: 0
+    position: {x: 799.5001, y: 0}
+  - beat: 134.625
+    order: 0
+    mode: 0
+    position: {x: 801.0001, y: 0}
+  - beat: 135.375
+    order: 0
+    mode: 0
+    position: {x: 805.5001, y: 0}
+  - beat: 136.125
+    order: 0
+    mode: 0
+    position: {x: 810.0002, y: 0}
+  - beat: 137.125
+    order: 0
+    mode: 0
+    position: {x: 816.0002, y: 0}
+  - beat: 137.625
+    order: 0
+    mode: 0
+    position: {x: 819.0001, y: 0}
+  - beat: 138.25
+    order: 0
+    mode: 0
+    position: {x: 822.7501, y: 0}
+  - beat: 138.5
+    order: 0
+    mode: 0
+    position: {x: 824.2501, y: 0}
+  - beat: 138.875
+    order: 0
+    mode: 0
+    position: {x: 826.5001, y: 0}
+  - beat: 139.375
+    order: 0
+    mode: 0
+    position: {x: 829.5001, y: 0}
+  - beat: 139.625
+    order: 0
+    mode: 0
+    position: {x: 831.0001, y: 0}
+  - beat: 140
+    order: 0
+    mode: 0
+    position: {x: 833.2501, y: 0}
+  - beat: 140.375
+    order: 0
+    mode: 0
+    position: {x: 835.5001, y: 0}
+  - beat: 140.75
+    order: 0
+    mode: 0
+    position: {x: 837.7501, y: 0}
+  - beat: 141.125
+    order: 0
+    mode: 0
+    position: {x: 840.0002, y: 0}
+  - beat: 141.5
+    order: 0
+    mode: 0
+    position: {x: 842.2502, y: 0}
+  - beat: 141.875
+    order: 0
+    mode: 0
+    position: {x: 844.5002, y: 0}
+  - beat: 142.25
+    order: 0
+    mode: 0
+    position: {x: 846.7502, y: 0}
+  - beat: 142.625
+    order: 0
+    mode: 0
+    position: {x: 849.0002, y: 0}
+  - beat: 143
+    order: 0
+    mode: 0
+    position: {x: 851.25024, y: 0}
+  - beat: 143.375
+    order: 0
+    mode: 0
+    position: {x: 853.50024, y: 0}
+  - beat: 143.75
+    order: 0
+    mode: 0
+    position: {x: 855.75024, y: 0}
+  - beat: 144.125
+    order: 0
+    mode: 0
+    position: {x: 858.00024, y: 0}
+  - beat: 144.5
+    order: 0
+    mode: 0
+    position: {x: 860.25024, y: 0}
+  - beat: 144.875
+    order: 0
+    mode: 0
+    position: {x: 862.5003, y: 0}
+  - beat: 145.25
+    order: 0
+    mode: 0
+    position: {x: 864.7503, y: 0}
+  - beat: 145.5
+    order: 0
+    mode: 0
+    position: {x: 866.2503, y: 0}
+  - beat: 146
+    order: 0
+    mode: 0
+    position: {x: 869.25024, y: 0}
+  - beat: 146.375
+    order: 0
+    mode: 0
+    position: {x: 871.50024, y: 0}
+  - beat: 147.125
+    order: 0
+    mode: 0
+    position: {x: 876.0003, y: 0}
+  - beat: 147.75
+    order: 0
+    mode: 0
+    position: {x: 879.7503, y: 0}
+  - beat: 148.25
+    order: 0
+    mode: 0
+    position: {x: 882.75024, y: 0}
+  - beat: 148.5
+    order: 0
+    mode: 0
+    position: {x: 884.25024, y: 0}
+  - beat: 148.875
+    order: 0
+    mode: 0
+    position: {x: 886.50024, y: 0}
+  - beat: 149.25
+    order: 0
+    mode: 0
+    position: {x: 888.7503, y: 0}
+  - beat: 150
+    order: 0
+    mode: 0
+    position: {x: 893.25024, y: 0}
+  - beat: 150.5
+    order: 0
+    mode: 0
+    position: {x: 896.25024, y: 0}
+  - beat: 150.75
+    order: 0
+    mode: 0
+    position: {x: 897.7502, y: 0}
+  - beat: 151
+    order: 0
+    mode: 0
+    position: {x: 899.2502, y: 0}
+  - beat: 151.5
+    order: 0
+    mode: 0
+    position: {x: 902.25024, y: 0}
+  - beat: 151.75
+    order: 0
+    mode: 0
+    position: {x: 903.75024, y: 0}
+  - beat: 152.25
+    order: 0
+    mode: 0
+    position: {x: 906.7502, y: 0}
+  - beat: 152.5
+    order: 0
+    mode: 0
+    position: {x: 908.2502, y: 0}
+  - beat: 152.75
+    order: 0
+    mode: 0
+    position: {x: 909.7502, y: 0}
+  - beat: 153
+    order: 0
+    mode: 0
+    position: {x: 911.2502, y: 0}
+  - beat: 153.25
+    order: 0
+    mode: 0
+    position: {x: 912.7501, y: 0}
+  - beat: 153.5
+    order: 0
+    mode: 0
+    position: {x: 914.2501, y: 0}
+  - beat: 153.75
+    order: 0
+    mode: 0
+    position: {x: 915.7501, y: 0}
+  - beat: 154.125
+    order: 0
+    mode: 0
+    position: {x: 918.0001, y: 0}
+  - beat: 154.5
+    order: 0
+    mode: 0
+    position: {x: 920.2501, y: 0}
+  - beat: 154.75
+    order: 0
+    mode: 0
+    position: {x: 921.7501, y: 0}
+  - beat: 155.375
+    order: 0
+    mode: 0
+    position: {x: 925.5001, y: 0}
+  - beat: 155.75
+    order: 0
+    mode: 0
+    position: {x: 927.7501, y: 0}
+  - beat: 156
+    order: 0
+    mode: 0
+    position: {x: 929.2501, y: 0}
+  - beat: 156.5
+    order: 0
+    mode: 0
+    position: {x: 932.2501, y: 0}
+  - beat: 156.875
+    order: 0
+    mode: 0
+    position: {x: 934.5001, y: 0}
+  - beat: 157.375
+    order: 0
+    mode: 0
+    position: {x: 937.5001, y: 0}
+  - beat: 158.375
+    order: 0
+    mode: 0
+    position: {x: 943.5001, y: 0}
+  - beat: 159.125
+    order: 0
+    mode: 0
+    position: {x: 948.0001, y: 0}
+  - beat: 159.375
+    order: 0
+    mode: 0
+    position: {x: 949.5001, y: 0}
+  - beat: 159.875
+    order: 0
+    mode: 0
+    position: {x: 952.5001, y: 0}
+  - beat: 160.375
+    order: 0
+    mode: 0
+    position: {x: 955.50006, y: 0}
+  - beat: 160.875
+    order: 0
+    mode: 0
+    position: {x: 958.5001, y: 0}
+  - beat: 161.375
+    order: 0
+    mode: 0
+    position: {x: 961.50006, y: 0}
+  - beat: 161.625
+    order: 0
+    mode: 0
+    position: {x: 963.00006, y: 0}
+  - beat: 162.375
+    order: 0
+    mode: 0
+    position: {x: 967.5001, y: 0}
+  - beat: 163.375
+    order: 0
+    mode: 0
+    position: {x: 973.5001, y: 0}
+  - beat: 163.625
+    order: 0
+    mode: 0
+    position: {x: 975.0001, y: 0}
+  - beat: 164.125
+    order: 0
+    mode: 0
+    position: {x: 978.00006, y: 0}
+  - beat: 164.375
+    order: 0
+    mode: 0
+    position: {x: 979.50006, y: 0}
+  - beat: 164.875
+    order: 0
+    mode: 0
+    position: {x: 982.5001, y: 0}
+  - beat: 165.375
+    order: 0
+    mode: 0
+    position: {x: 985.50006, y: 0}
+  - beat: 166.125
+    order: 0
+    mode: 0
+    position: {x: 990.0001, y: 0}
+  - beat: 166.375
+    order: 0
+    mode: 0
+    position: {x: 991.50006, y: 0}
+  - beat: 166.625
+    order: 0
+    mode: 0
+    position: {x: 993.00006, y: 0}
+  - beat: 167.375
+    order: 0
+    mode: 0
+    position: {x: 997.5001, y: 0}
+  - beat: 167.625
+    order: 0
+    mode: 0
+    position: {x: 999.00006, y: 0}
+  - beat: 167.875
+    order: 0
+    mode: 0
+    position: {x: 1000.50006, y: 0}
+  - beat: 168.375
+    order: 0
+    mode: 0
+    position: {x: 1003.5001, y: 0}
+  - beat: 168.75
+    order: 0
+    mode: 0
+    position: {x: 1005.7501, y: 0}
+  - beat: 169.375
+    order: 0
+    mode: 0
+    position: {x: 1009.5001, y: 0}
+  - beat: 169.5
+    order: 0
+    mode: 0
+    position: {x: 1010.2501, y: 0}
+  - beat: 169.875
+    order: 0
+    mode: 0
+    position: {x: 1012.5002, y: 0}
+  - beat: 170.25
+    order: 0
+    mode: 0
+    position: {x: 1014.7502, y: 0}
+  - beat: 170.875
+    order: 0
+    mode: 0
+    position: {x: 1018.5002, y: 0}
+  - beat: 171.375
+    order: 0
+    mode: 0
+    position: {x: 1021.5001, y: 0}
+  - beat: 171.875
+    order: 0
+    mode: 0
+    position: {x: 1024.5001, y: 0}
+  - beat: 172
+    order: 0
+    mode: 0
+    position: {x: 1025.2501, y: 0}
+  - beat: 172.375
+    order: 0
+    mode: 0
+    position: {x: 1027.5002, y: 0}
+  - beat: 172.5
+    order: 0
+    mode: 0
+    position: {x: 1028.2502, y: 0}
+  - beat: 172.75
+    order: 0
+    mode: 0
+    position: {x: 1029.7502, y: 0}
+  - beat: 173.25
+    order: 0
+    mode: 0
+    position: {x: 1032.7502, y: 0}
+  - beat: 173.5
+    order: 0
+    mode: 0
+    position: {x: 1034.2502, y: 0}
+  - beat: 173.75
+    order: 0
+    mode: 0
+    position: {x: 1035.7502, y: 0}
+  - beat: 174.25
+    order: 0
+    mode: 0
+    position: {x: 1038.7502, y: 0}
+  - beat: 174.75
+    order: 0
+    mode: 0
+    position: {x: 1041.7502, y: 0}
+  - beat: 175.25
+    order: 0
+    mode: 0
+    position: {x: 1044.7502, y: 0}
+  - beat: 175.5
+    order: 0
+    mode: 0
+    position: {x: 1046.2502, y: 0}
+  - beat: 176
+    order: 0
+    mode: 0
+    position: {x: 1049.2502, y: 0}
+  - beat: 176.25
+    order: 0
+    mode: 0
+    position: {x: 1050.7502, y: 0}
+  - beat: 176.75
+    order: 0
+    mode: 0
+    position: {x: 1053.7502, y: 0}
+  - beat: 177.25
+    order: 0
+    mode: 0
+    position: {x: 1056.7502, y: 0}
+  - beat: 177.5
+    order: 0
+    mode: 0
+    position: {x: 1058.2502, y: 0}
+  - beat: 178.25
+    order: 0
+    mode: 0
+    position: {x: 1062.7502, y: 0}
+  - beat: 179.25
+    order: 0
+    mode: 0
+    position: {x: 1068.7502, y: 0}
+  - beat: 179.5
+    order: 0
+    mode: 0
+    position: {x: 1070.2502, y: 0}
+  - beat: 179.75
+    order: 0
+    mode: 0
+    position: {x: 1071.7502, y: 0}
+  - beat: 180.25
+    order: 0
+    mode: 0
+    position: {x: 1074.7502, y: 0}
+  - beat: 180.75
+    order: 0
+    mode: 0
+    position: {x: 1077.7502, y: 0}
+  - beat: 181.25
+    order: 0
+    mode: 0
+    position: {x: 1080.7502, y: 0}
+  - beat: 181.75
+    order: 0
+    mode: 0
+    position: {x: 1083.7502, y: 0}
+  - beat: 182.125
+    order: 0
+    mode: 0
+    position: {x: 1086.0002, y: 0}
+  - beat: 182.75
+    order: 0
+    mode: 0
+    position: {x: 1089.7502, y: 0}
+  - beat: 183.125
+    order: 0
+    mode: 0
+    position: {x: 1092.0002, y: 0}
+  - beat: 183.625
+    order: 0
+    mode: 0
+    position: {x: 1095.0002, y: 0}
+  - beat: 183.875
+    order: 0
+    mode: 0
+    position: {x: 1096.5002, y: 0}
+  - beat: 184.375
+    order: 0
+    mode: 0
+    position: {x: 1099.5002, y: 0}
+  - beat: 184.625
+    order: 0
+    mode: 0
+    position: {x: 1101.0002, y: 0}
+  - beat: 184.875
+    order: 0
+    mode: 0
+    position: {x: 1102.5002, y: 0}
+  - beat: 185.125
+    order: 0
+    mode: 0
+    position: {x: 1104.0002, y: 0}
+  - beat: 185.375
+    order: 0
+    mode: 0
+    position: {x: 1105.5002, y: 0}
+  - beat: 186.125
+    order: 0
+    mode: 0
+    position: {x: 1110.0002, y: 0}
+  - beat: 187.125
+    order: 0
+    mode: 0
+    position: {x: 1116.0002, y: 0}
+  - beat: 187.375
+    order: 0
+    mode: 0
+    position: {x: 1117.5002, y: 0}
+  - beat: 187.625
+    order: 0
+    mode: 0
+    position: {x: 1119.0002, y: 0}
+  - beat: 187.875
+    order: 0
+    mode: 0
+    position: {x: 1120.5002, y: 0}
+  - beat: 188.125
+    order: 0
+    mode: 0
+    position: {x: 1122.0002, y: 0}
+  - beat: 188.625
+    order: 0
+    mode: 0
+    position: {x: 1125.0002, y: 0}
+  - beat: 189.125
+    order: 0
+    mode: 0
+    position: {x: 1128.0002, y: 0}
+  - beat: 189.375
+    order: 0
+    mode: 0
+    position: {x: 1129.5002, y: 0}
+  - beat: 190.125
+    order: 0
+    mode: 0
+    position: {x: 1134.0002, y: 0}
+  - beat: 191.125
+    order: 0
+    mode: 0
+    position: {x: 1140.0002, y: 0}
+  - beat: 191.375
+    order: 0
+    mode: 0
+    position: {x: 1141.5002, y: 0}
+  - beat: 191.625
+    order: 0
+    mode: 0
+    position: {x: 1143.0002, y: 0}
+  - beat: 191.875
+    order: 0
+    mode: 0
+    position: {x: 1144.5002, y: 0}
+  - beat: 192.125
+    order: 0
+    mode: 0
+    position: {x: 1146.0002, y: 0}
+  - beat: 192.5
+    order: 0
+    mode: 0
+    position: {x: 1148.2502, y: 0}
+  - beat: 193.125
+    order: 0
+    mode: 0
+    position: {x: 1152.0002, y: 0}
+  - beat: 193.375
+    order: 0
+    mode: 0
+    position: {x: 1153.5002, y: 0}
+  - beat: 193.625
+    order: 0
+    mode: 0
+    position: {x: 1155.0002, y: 0}
+  - beat: 194
+    order: 0
+    mode: 0
+    position: {x: 1157.2502, y: 0}
+  - beat: 195.125
+    order: 0
+    mode: 0
+    position: {x: 1164.0002, y: 0}
+  - beat: 195.25
+    order: 0
+    mode: 0
+    position: {x: 1164.7502, y: 0}
+  - beat: 195.625
+    order: 0
+    mode: 0
+    position: {x: 1167.0002, y: 0}
+  - beat: 195.75
+    order: 0
+    mode: 0
+    position: {x: 1167.7502, y: 0}
+  - beat: 196.125
+    order: 0
+    mode: 0
+    position: {x: 1170.0002, y: 0}
+  - beat: 196.5
+    order: 0
+    mode: 0
+    position: {x: 1172.2502, y: 0}
+  - beat: 197
+    order: 0
+    mode: 0
+    position: {x: 1175.2502, y: 0}
+  - beat: 197.25
+    order: 0
+    mode: 0
+    position: {x: 1176.7502, y: 0}
+  - beat: 197.5
+    order: 0
+    mode: 0
+    position: {x: 1178.2502, y: 0}
+  - beat: 198
+    order: 0
+    mode: 0
+    position: {x: 1181.2502, y: 0}
+  - beat: 198.375
+    order: 0
+    mode: 0
+    position: {x: 1183.5002, y: 0}
+  - beat: 199
+    order: 0
+    mode: 0
+    position: {x: 1187.2502, y: 0}
+  - beat: 199.25
+    order: 0
+    mode: 0
+    position: {x: 1188.7502, y: 0}
+  - beat: 199.5
+    order: 0
+    mode: 0
+    position: {x: 1190.2502, y: 0}
+  - beat: 200
+    order: 0
+    mode: 0
+    position: {x: 1193.2502, y: 0}
+  - beat: 200.5
+    order: 0
+    mode: 0
+    position: {x: 1196.2502, y: 0}
+  - beat: 201
+    order: 0
+    mode: 0
+    position: {x: 1199.2502, y: 0}
+  - beat: 201.25
+    order: 0
+    mode: 0
+    position: {x: 1200.7502, y: 0}
+  - beat: 201.5
+    order: 0
+    mode: 0
+    position: {x: 1202.2502, y: 0}
+  - beat: 201.75
+    order: 0
+    mode: 0
+    position: {x: 1203.7502, y: 0}
+  - beat: 202
+    order: 0
+    mode: 0
+    position: {x: 1205.2502, y: 0}
+  - beat: 203
+    order: 0
+    mode: 0
+    position: {x: 1211.2502, y: 0}
+  - beat: 203.25
+    order: 0
+    mode: 0
+    position: {x: 1212.7502, y: 0}
+  - beat: 204
+    order: 0
+    mode: 0
+    position: {x: 1217.2502, y: 0}
+  - beat: 204.5
+    order: 0
+    mode: 0
+    position: {x: 1220.2502, y: 0}
+  - beat: 205
+    order: 0
+    mode: 0
+    position: {x: 1223.2502, y: 0}
+  - beat: 205.375
+    order: 0
+    mode: 0
+    position: {x: 1225.5002, y: 0}
+  - beat: 206
+    order: 0
+    mode: 0
+    position: {x: 1229.2502, y: 0}
+  - beat: 206.25
+    order: 0
+    mode: 0
+    position: {x: 1230.7502, y: 0}
+  - beat: 206.5
+    order: 0
+    mode: 0
+    position: {x: 1232.2502, y: 0}
+  - beat: 207
+    order: 0
+    mode: 0
+    position: {x: 1235.2502, y: 0}
+  - beat: 207.125
+    order: 0
+    mode: 0
+    position: {x: 1236.0002, y: 0}
+  - beat: 207.5
+    order: 0
+    mode: 0
+    position: {x: 1238.2502, y: 0}
+  - beat: 207.875
+    order: 0
+    mode: 0
+    position: {x: 1240.5002, y: 0}
+  - beat: 208.875
+    order: 0
+    mode: 0
+    position: {x: 1246.5002, y: 0}
+  - beat: 209.125
+    order: 0
+    mode: 0
+    position: {x: 1248.0002, y: 0}
+  - beat: 209.375
+    order: 0
+    mode: 0
+    position: {x: 1249.5002, y: 0}
+  - beat: 209.875
+    order: 0
+    mode: 0
+    position: {x: 1252.5002, y: 0}
+  - beat: 210.125
+    order: 0
+    mode: 0
+    position: {x: 1254.0002, y: 0}
+  - beat: 210.875
+    order: 0
+    mode: 0
+    position: {x: 1258.5002, y: 0}
+  - beat: 211.125
+    order: 0
+    mode: 0
+    position: {x: 1260.0002, y: 0}
+  - beat: 211.375
+    order: 0
+    mode: 0
+    position: {x: 1261.5002, y: 0}
+  - beat: 211.875
+    order: 0
+    mode: 0
+    position: {x: 1264.5002, y: 0}
+  - beat: 213.375
+    order: 0
+    mode: 0
+    position: {x: 1273.5002, y: 0}
+  - beat: 213.875
+    order: 0
+    mode: 0
+    position: {x: 1276.5002, y: 0}
+  - beat: 214.375
+    order: 0
+    mode: 0
+    position: {x: 1279.5002, y: 0}
+  - beat: 214.625
+    order: 0
+    mode: 0
+    position: {x: 1281.0002, y: 0}
+  - beat: 214.875
+    order: 0
+    mode: 0
+    position: {x: 1282.5004, y: 0}
+  - beat: 215.125
+    order: 0
+    mode: 0
+    position: {x: 1284.0002, y: 0}
+  - beat: 215.375
+    order: 0
+    mode: 0
+    position: {x: 1285.5004, y: 0}
+  - beat: 216
+    order: 0
+    mode: 0
+    position: {x: 1289.2504, y: 0}
+  - beat: 216.375
+    order: 0
+    mode: 0
+    position: {x: 1291.5002, y: 0}
+  - beat: 217
+    order: 0
+    mode: 0
+    position: {x: 1295.2502, y: 0}
+  - beat: 217.375
+    order: 0
+    mode: 0
+    position: {x: 1297.5002, y: 0}
+  - beat: 217.75
+    order: 0
+    mode: 0
+    position: {x: 1299.7501, y: 0}
+  - beat: 218.125
+    order: 0
+    mode: 0
+    position: {x: 1302.0002, y: 0}
+  - beat: 218.875
+    order: 0
+    mode: 0
+    position: {x: 1306.5002, y: 0}
+  - beat: 219.375
+    order: 0
+    mode: 0
+    position: {x: 1309.5002, y: 0}
+  - beat: 219.625
+    order: 0
+    mode: 0
+    position: {x: 1311.0002, y: 0}
+  - beat: 219.875
+    order: 0
+    mode: 0
+    position: {x: 1312.5004, y: 0}
+  - beat: 220.25
+    order: 0
+    mode: 0
+    position: {x: 1314.7502, y: 0}
+  - beat: 220.75
+    order: 0
+    mode: 0
+    position: {x: 1317.7502, y: 0}
+  - beat: 221.25
+    order: 0
+    mode: 0
+    position: {x: 1320.7502, y: 0}
+  - beat: 221.625
+    order: 0
+    mode: 0
+    position: {x: 1323.0002, y: 0}
+  - beat: 222.25
+    order: 0
+    mode: 0
+    position: {x: 1326.7502, y: 0}
+  - beat: 222.75
+    order: 0
+    mode: 0
+    position: {x: 1329.7501, y: 0}
+  - beat: 223.25
+    order: 0
+    mode: 0
+    position: {x: 1332.7501, y: 0}
+  - beat: 223.75
+    order: 0
+    mode: 0
+    position: {x: 1335.7501, y: 0}
+  - beat: 224.25
+    order: 0
+    mode: 0
+    position: {x: 1338.7501, y: 0}
+  - beat: 224.75
+    order: 0
+    mode: 0
+    position: {x: 1341.7501, y: 0}
+  - beat: 225.375
+    order: 0
+    mode: 0
+    position: {x: 1345.5001, y: 0}
+  - beat: 225.75
+    order: 0
+    mode: 0
+    position: {x: 1347.75, y: 0}
+  - beat: 226.375
+    order: 0
+    mode: 0
+    position: {x: 1351.5, y: 0}
+  - beat: 226.75
+    order: 0
+    mode: 0
+    position: {x: 1353.75, y: 0}
+  - beat: 227.25
+    order: 0
+    mode: 0
+    position: {x: 1356.75, y: 0}
+  - beat: 227.75
+    order: 0
+    mode: 0
+    position: {x: 1359.7499, y: 0}
+  - beat: 228.25
+    order: 0
+    mode: 0
+    position: {x: 1362.7499, y: 0}
+  - beat: 228.875
+    order: 0
+    mode: 0
+    position: {x: 1366.4999, y: 0}
+  - beat: 229.25
+    order: 0
+    mode: 0
+    position: {x: 1368.75, y: 0}
+  - beat: 229.625
+    order: 0
+    mode: 0
+    position: {x: 1370.9999, y: 0}
+  - beat: 230.25
+    order: 0
+    mode: 0
+    position: {x: 1374.7499, y: 0}
+  - beat: 230.625
+    order: 0
+    mode: 0
+    position: {x: 1377, y: 0}
+  - beat: 231.25
+    order: 0
+    mode: 0
+    position: {x: 1380.75, y: 0}
+  - beat: 231.75
+    order: 0
+    mode: 0
+    position: {x: 1383.75, y: 0}
+  - beat: 232.125
+    order: 0
+    mode: 0
+    position: {x: 1385.9999, y: 0}
+  - beat: 232.75
+    order: 0
+    mode: 0
+    position: {x: 1389.7499, y: 0}
+  - beat: 233.25
+    order: 0
+    mode: 0
+    position: {x: 1392.7499, y: 0}
+  - beat: 233.625
+    order: 0
+    mode: 0
+    position: {x: 1395, y: 0}
+  - beat: 234.375
+    order: 0
+    mode: 0
+    position: {x: 1399.5, y: 0}
+  - beat: 234.625
+    order: 0
+    mode: 0
+    position: {x: 1401, y: 0}
+  - beat: 235.125
+    order: 0
+    mode: 0
+    position: {x: 1404, y: 0}
+  - beat: 235.5
+    order: 0
+    mode: 0
+    position: {x: 1406.25, y: 0}
+  - beat: 235.625
+    order: 0
+    mode: 0
+    position: {x: 1407, y: 0}
+  - beat: 236.125
+    order: 0
+    mode: 0
+    position: {x: 1410, y: 0}
+  - beat: 236.625
+    order: 0
+    mode: 0
+    position: {x: 1413, y: 0}
+  - beat: 237.125
+    order: 0
+    mode: 0
+    position: {x: 1415.9999, y: 0}
+  - beat: 237.625
+    order: 0
+    mode: 0
+    position: {x: 1418.9999, y: 0}
+  - beat: 238.125
+    order: 0
+    mode: 0
+    position: {x: 1421.9999, y: 0}
+  - beat: 238.625
+    order: 0
+    mode: 0
+    position: {x: 1424.9999, y: 0}
+  - beat: 239.125
+    order: 0
+    mode: 0
+    position: {x: 1427.9999, y: 0}
+  - beat: 240.125
+    order: 0
+    mode: 0
+    position: {x: 1433.9998, y: 0}
+  - beat: 240.625
+    order: 0
+    mode: 0
+    position: {x: 1436.9998, y: 0}
+  - beat: 241.25
+    order: 0
+    mode: 0
+    position: {x: 1440.7498, y: 0}
+  - beat: 241.5
+    order: 0
+    mode: 0
+    position: {x: 1442.2498, y: 0}
+  - beat: 242.25
+    order: 0
+    mode: 0
+    position: {x: 1446.7499, y: 0}
+  - beat: 242.625
+    order: 0
+    mode: 0
+    position: {x: 1448.9998, y: 0}
+  - beat: 242.875
+    order: 0
+    mode: 0
+    position: {x: 1450.4999, y: 0}
+  - beat: 243.125
+    order: 0
+    mode: 0
+    position: {x: 1451.9998, y: 0}
+  - beat: 243.5
+    order: 0
+    mode: 0
+    position: {x: 1454.2498, y: 0}
+  - beat: 244
+    order: 0
+    mode: 0
+    position: {x: 1457.2496, y: 0}
+  - beat: 244.625
+    order: 0
+    mode: 0
+    position: {x: 1460.9996, y: 0}
+  - beat: 245
+    order: 0
+    mode: 0
+    position: {x: 1463.2498, y: 0}
+  - beat: 245.5
+    order: 0
+    mode: 0
+    position: {x: 1466.2498, y: 0}
+  - beat: 246
+    order: 0
+    mode: 0
+    position: {x: 1469.2498, y: 0}
+  - beat: 246.5
+    order: 0
+    mode: 0
+    position: {x: 1472.2496, y: 0}
+  - beat: 247
+    order: 0
+    mode: 0
+    position: {x: 1475.2496, y: 0}
+  - beat: 247.5
+    order: 0
+    mode: 0
+    position: {x: 1478.2496, y: 0}
+  - beat: 248
+    order: 0
+    mode: 0
+    position: {x: 1481.2496, y: 0}
+  - beat: 248.5
+    order: 0
+    mode: 0
+    position: {x: 1484.2496, y: 0}
+  - beat: 249
+    order: 0
+    mode: 0
+    position: {x: 1487.2495, y: 0}
+  - beat: 249.25
+    order: 0
+    mode: 0
+    position: {x: 1488.7496, y: 0}
+  - beat: 249.5
+    order: 0
+    mode: 0
+    position: {x: 1490.2495, y: 0}
+  - beat: 249.75
+    order: 0
+    mode: 0
+    position: {x: 1491.7496, y: 0}
+  - beat: 250.5
+    order: 0
+    mode: 0
+    position: {x: 1496.2496, y: 0}
+  - beat: 251
+    order: 0
+    mode: 0
+    position: {x: 1499.2496, y: 0}
+  - beat: 251.5
+    order: 0
+    mode: 0
+    position: {x: 1502.2495, y: 0}
+  - beat: 252
+    order: 0
+    mode: 0
+    position: {x: 1505.2495, y: 0}
+  - beat: 252.5
+    order: 0
+    mode: 0
+    position: {x: 1508.2495, y: 0}
+  - beat: 252.875
+    order: 0
+    mode: 0
+    position: {x: 1510.4995, y: 0}
+  - beat: 253.375
+    order: 0
+    mode: 0
+    position: {x: 1513.4994, y: 0}
+  - beat: 254
+    order: 0
+    mode: 0
+    position: {x: 1517.2494, y: 0}
+  - beat: 254.5
+    order: 0
+    mode: 0
+    position: {x: 1520.2494, y: 0}
+  - beat: 255
+    order: 0
+    mode: 0
+    position: {x: 1523.2494, y: 0}
+  - beat: 255.375
+    order: 0
+    mode: 0
+    position: {x: 1525.4995, y: 0}
+  - beat: 255.875
+    order: 0
+    mode: 0
+    position: {x: 1528.4994, y: 0}
+  - beat: 256.375
+    order: 0
+    mode: 0
+    position: {x: 1531.4994, y: 0}
+  - beat: 257.125
+    order: 0
+    mode: 0
+    position: {x: 1535.9994, y: 0}
+  - beat: 257.375
+    order: 0
+    mode: 0
+    position: {x: 1537.4995, y: 0}
+  - beat: 258.125
+    order: 0
+    mode: 0
+    position: {x: 1541.9995, y: 0}
+  - beat: 258.375
+    order: 0
+    mode: 0
+    position: {x: 1543.4995, y: 0}
+  - beat: 258.75
+    order: 0
+    mode: 0
+    position: {x: 1545.7495, y: 0}
+  - beat: 258.875
+    order: 0
+    mode: 0
+    position: {x: 1546.4995, y: 0}
+  - beat: 259.375
+    order: 0
+    mode: 0
+    position: {x: 1549.4995, y: 0}
+  - beat: 259.875
+    order: 0
+    mode: 0
+    position: {x: 1552.4995, y: 0}
+  - beat: 260.375
+    order: 0
+    mode: 0
+    position: {x: 1555.4995, y: 0}
+  - beat: 260.875
+    order: 0
+    mode: 0
+    position: {x: 1558.4994, y: 0}
+  - beat: 261.375
+    order: 0
+    mode: 0
+    position: {x: 1561.4994, y: 0}
+  - beat: 261.875
+    order: 0
+    mode: 0
+    position: {x: 1564.4994, y: 0}
+  - beat: 262.25
+    order: 0
+    mode: 0
+    position: {x: 1566.7495, y: 0}
+  - beat: 262.875
+    order: 0
+    mode: 0
+    position: {x: 1570.4995, y: 0}
+  - beat: 263.375
+    order: 0
+    mode: 0
+    position: {x: 1573.4994, y: 0}
+  - beat: 263.875
+    order: 0
+    mode: 0
+    position: {x: 1576.4994, y: 0}
+  - beat: 264.375
+    order: 0
+    mode: 0
+    position: {x: 1579.4994, y: 0}
+  - beat: 265.125
+    order: 0
+    mode: 0
+    position: {x: 1583.9994, y: 0}
+  - beat: 265.375
+    order: 0
+    mode: 0
+    position: {x: 1585.4995, y: 0}
+  - beat: 265.875
+    order: 0
+    mode: 0
+    position: {x: 1588.4994, y: 0}
+  - beat: 266.125
+    order: 0
+    mode: 0
+    position: {x: 1589.9995, y: 0}
+  - beat: 266.375
+    order: 0
+    mode: 0
+    position: {x: 1591.4995, y: 0}
+  - beat: 266.625
+    order: 0
+    mode: 0
+    position: {x: 1592.9996, y: 0}
+  - beat: 266.875
+    order: 0
+    mode: 0
+    position: {x: 1594.4995, y: 0}
+  - beat: 267.375
+    order: 0
+    mode: 0
+    position: {x: 1597.4995, y: 0}
+  - beat: 267.875
+    order: 0
+    mode: 0
+    position: {x: 1600.4995, y: 0}
+  - beat: 268.25
+    order: 0
+    mode: 0
+    position: {x: 1602.7494, y: 0}
+  - beat: 268.75
+    order: 0
+    mode: 0
+    position: {x: 1605.7494, y: 0}
+  - beat: 269.25
+    order: 0
+    mode: 0
+    position: {x: 1608.7494, y: 0}
+  - beat: 269.75
+    order: 0
+    mode: 0
+    position: {x: 1611.7494, y: 0}
+  - beat: 270.25
+    order: 0
+    mode: 0
+    position: {x: 1614.7493, y: 0}
+  - beat: 270.75
+    order: 0
+    mode: 0
+    position: {x: 1617.7493, y: 0}
+  - beat: 271.25
+    order: 0
+    mode: 0
+    position: {x: 1620.7493, y: 0}
+  - beat: 271.75
+    order: 0
+    mode: 0
+    position: {x: 1623.7493, y: 0}
+  - beat: 272.25
+    order: 0
+    mode: 0
+    position: {x: 1626.7493, y: 0}
+  - beat: 272.75
+    order: 0
+    mode: 0
+    position: {x: 1629.7491, y: 0}
+  - beat: 273.25
+    order: 0
+    mode: 0
+    position: {x: 1632.7491, y: 0}
+  - beat: 274
+    order: 0
+    mode: 0
+    position: {x: 1637.2491, y: 0}
+  - beat: 274.25
+    order: 0
+    mode: 0
+    position: {x: 1638.7493, y: 0}
+  - beat: 274.75
+    order: 0
+    mode: 0
+    position: {x: 1641.7493, y: 0}
+  - beat: 275.25
+    order: 0
+    mode: 0
+    position: {x: 1644.7491, y: 0}
+  - beat: 275.75
+    order: 0
+    mode: 0
+    position: {x: 1647.7491, y: 0}
+  - beat: 276.25
+    order: 0
+    mode: 0
+    position: {x: 1650.7491, y: 0}
+  - beat: 276.75
+    order: 0
+    mode: 0
+    position: {x: 1653.7491, y: 0}
+  - beat: 277.25
+    order: 0
+    mode: 0
+    position: {x: 1656.7491, y: 0}
+  - beat: 277.75
+    order: 0
+    mode: 0
+    position: {x: 1659.749, y: 0}
+  - beat: 278.25
+    order: 0
+    mode: 0
+    position: {x: 1662.749, y: 0}
+  - beat: 278.75
+    order: 0
+    mode: 0
+    position: {x: 1665.749, y: 0}
+  - beat: 279.25
+    order: 0
+    mode: 0
+    position: {x: 1668.749, y: 0}
+  - beat: 279.75
+    order: 0
+    mode: 0
+    position: {x: 1671.749, y: 0}
+  - beat: 280.25
+    order: 0
+    mode: 0
+    position: {x: 1674.7489, y: 0}
+  - beat: 280.75
+    order: 0
+    mode: 0
+    position: {x: 1677.7489, y: 0}
+  - beat: 280.875
+    order: 0
+    mode: 0
+    position: {x: 1678.4989, y: 0}
+  - beat: 281.125
+    order: 0
+    mode: 0
+    position: {x: 1679.999, y: 0}
+  - beat: 282.125
+    order: 0
+    mode: 0
+    position: {x: 1685.9989, y: 0}
+  - beat: 283
+    order: 0
+    mode: 0
+    position: {x: 1691.249, y: 0}
+  - beat: 285.25
+    order: 0
+    mode: 0
+    position: {x: 1704.7489, y: 0}
+  - beat: 286.125
+    order: 0
+    mode: 0
+    position: {x: 1709.999, y: 0}
+  - beat: 289.125
+    order: 0
+    mode: 0
+    position: {x: 1727.999, y: 0}
+  - beat: 290.125
+    order: 0
+    mode: 0
+    position: {x: 1733.9989, y: 0}
+  - beat: 293.25
+    order: 0
+    mode: 0
+    position: {x: 1752.7489, y: 0}
+  - beat: 294
+    order: 0
+    mode: 0
+    position: {x: 1757.2489, y: 0}
+  - beat: 295
+    order: 0
+    mode: 0
+    position: {x: 1763.249, y: 0}
+  - beat: 296.625
+    order: 0
+    mode: 0
+    position: {x: 1772.999, y: 0}
+  - beat: 297
+    order: 0
+    mode: 0
+    position: {x: 1775.2489, y: 0}
+  - beat: 297.75
+    order: 0
+    mode: 0
+    position: {x: 1779.7489, y: 0}
+  - beat: 298
+    order: 0
+    mode: 0
+    position: {x: 1781.249, y: 0}
+  - beat: 298.5
+    order: 0
+    mode: 0
+    position: {x: 1784.249, y: 0}
+  - beat: 299.5
+    order: 0
+    mode: 0
+    position: {x: 1790.2489, y: 0}
+  - beat: 300
+    order: 0
+    mode: 0
+    position: {x: 1793.2489, y: 0}
+  - beat: 300.25
+    order: 0
+    mode: 0
+    position: {x: 1794.7488, y: 0}
+  - beat: 300.5
+    order: 0
+    mode: 0
+    position: {x: 1796.2489, y: 0}
+  - beat: 301
+    order: 0
+    mode: 0
+    position: {x: 1799.2489, y: 0}
+  - beat: 301.25
+    order: 0
+    mode: 0
+    position: {x: 1800.7488, y: 0}
+  - beat: 301.5
+    order: 0
+    mode: 0
+    position: {x: 1802.2488, y: 0}
+  - beat: 301.75
+    order: 0
+    mode: 0
+    position: {x: 1803.7489, y: 0}
+  - beat: 302
+    order: 0
+    mode: 0
+    position: {x: 1805.2488, y: 0}
+  - beat: 302.5
+    order: 0
+    mode: 0
+    position: {x: 1808.2488, y: 0}
+  - beat: 303.5
+    order: 0
+    mode: 0
+    position: {x: 1814.2488, y: 0}
+  - beat: 303.75
+    order: 0
+    mode: 0
+    position: {x: 1815.7488, y: 0}
+  - beat: 304
+    order: 0
+    mode: 0
+    position: {x: 1817.2488, y: 0}
+  - beat: 304.25
+    order: 0
+    mode: 0
+    position: {x: 1818.7489, y: 0}
+  - beat: 304.5
+    order: 0
+    mode: 0
+    position: {x: 1820.2488, y: 0}
+  - beat: 305
+    order: 0
+    mode: 0
+    position: {x: 1823.2488, y: 0}
+  - beat: 305.5
+    order: 0
+    mode: 0
+    position: {x: 1826.2488, y: 0}
+  - beat: 306
+    order: 0
+    mode: 0
+    position: {x: 1829.2488, y: 0}
+  - beat: 306.5
+    order: 0
+    mode: 0
+    position: {x: 1832.2487, y: 0}
+  - beat: 306.75
+    order: 0
+    mode: 0
+    position: {x: 1833.7488, y: 0}
+  - beat: 307.25
+    order: 0
+    mode: 0
+    position: {x: 1836.7488, y: 0}
+  - beat: 307.5
+    order: 0
+    mode: 0
+    position: {x: 1838.2488, y: 0}
+  - beat: 307.875
+    order: 0
+    mode: 0
+    position: {x: 1840.4988, y: 0}
+  - beat: 308.5
+    order: 0
+    mode: 0
+    position: {x: 1844.2488, y: 0}
+  - beat: 309.375
+    order: 0
+    mode: 0
+    position: {x: 1849.4988, y: 0}
+  - beat: 309.875
+    order: 0
+    mode: 0
+    position: {x: 1852.4988, y: 0}
+  - beat: 310.375
+    order: 0
+    mode: 0
+    position: {x: 1855.4988, y: 0}
+  - beat: 310.875
+    order: 0
+    mode: 0
+    position: {x: 1858.4987, y: 0}
+  - beat: 311
+    order: 0
+    mode: 0
+    position: {x: 1859.2488, y: 0}
+  - beat: 311.375
+    order: 0
+    mode: 0
+    position: {x: 1861.4987, y: 0}
+  - beat: 311.625
+    order: 0
+    mode: 0
+    position: {x: 1862.9988, y: 0}
+  - beat: 311.875
+    order: 0
+    mode: 0
+    position: {x: 1864.4988, y: 0}
+  - beat: 312.125
+    order: 0
+    mode: 0
+    position: {x: 1865.9988, y: 0}
+  - beat: 312.375
+    order: 0
+    mode: 0
+    position: {x: 1867.4989, y: 0}
+  - beat: 312.875
+    order: 0
+    mode: 0
+    position: {x: 1870.4989, y: 0}
+  - beat: 313.625
+    order: 0
+    mode: 0
+    position: {x: 1874.9989, y: 0}
+  - beat: 313.875
+    order: 0
+    mode: 0
+    position: {x: 1876.4988, y: 0}
+  - beat: 314.375
+    order: 0
+    mode: 0
+    position: {x: 1879.4988, y: 0}
+  - beat: 314.875
+    order: 0
+    mode: 0
+    position: {x: 1882.4988, y: 0}
+  - beat: 315.375
+    order: 0
+    mode: 0
+    position: {x: 1885.4988, y: 0}
+  - beat: 315.875
+    order: 0
+    mode: 0
+    position: {x: 1888.4987, y: 0}
+  - beat: 316.125
+    order: 0
+    mode: 0
+    position: {x: 1889.9988, y: 0}
+  - beat: 316.375
+    order: 0
+    mode: 0
+    position: {x: 1891.4988, y: 0}
+  - beat: 316.875
+    order: 0
+    mode: 0
+    position: {x: 1894.4988, y: 0}
+  - beat: 317.375
+    order: 0
+    mode: 0
+    position: {x: 1897.4988, y: 0}
+  - beat: 317.625
+    order: 0
+    mode: 0
+    position: {x: 1898.9988, y: 0}
+  - beat: 317.875
+    order: 0
+    mode: 0
+    position: {x: 1900.4989, y: 0}
+  - beat: 318.375
+    order: 0
+    mode: 0
+    position: {x: 1903.4988, y: 0}
+  - beat: 318.75
+    order: 0
+    mode: 0
+    position: {x: 1905.7488, y: 0}
+  - beat: 319.25
+    order: 0
+    mode: 0
+    position: {x: 1908.7488, y: 0}
+  - beat: 319.75
+    order: 0
+    mode: 0
+    position: {x: 1911.7488, y: 0}
+  - beat: 320
+    order: 0
+    mode: 0
+    position: {x: 1913.2488, y: 0}
+  - beat: 320.375
+    order: 0
+    mode: 0
+    position: {x: 1915.4988, y: 0}
+  - beat: 320.625
+    order: 0
+    mode: 0
+    position: {x: 1916.9988, y: 0}
+  - beat: 320.875
+    order: 0
+    mode: 0
+    position: {x: 1918.4988, y: 0}
+  - beat: 321.5
+    order: 0
+    mode: 0
+    position: {x: 1922.2488, y: 0}
+  - beat: 321.75
+    order: 0
+    mode: 0
+    position: {x: 1923.7489, y: 0}
+  - beat: 322.375
+    order: 0
+    mode: 0
+    position: {x: 1927.4989, y: 0}
+  - beat: 322.5
+    order: 0
+    mode: 0
+    position: {x: 1928.2489, y: 0}
+  - beat: 323.25
+    order: 0
+    mode: 0
+    position: {x: 1932.7489, y: 0}
+  - beat: 323.5
+    order: 0
+    mode: 0
+    position: {x: 1934.249, y: 0}
+  - beat: 324
+    order: 0
+    mode: 0
+    position: {x: 1937.2489, y: 0}
+  - beat: 324.25
+    order: 0
+    mode: 0
+    position: {x: 1938.749, y: 0}
+  - beat: 324.75
+    order: 0
+    mode: 0
+    position: {x: 1941.749, y: 0}
+  - beat: 325
+    order: 0
+    mode: 0
+    position: {x: 1943.249, y: 0}
+  - beat: 325.25
+    order: 0
+    mode: 0
+    position: {x: 1944.749, y: 0}
+  - beat: 325.75
+    order: 0
+    mode: 0
+    position: {x: 1947.749, y: 0}
+  - beat: 326.25
+    order: 0
+    mode: 0
+    position: {x: 1950.749, y: 0}
+  - beat: 326.5
+    order: 0
+    mode: 0
+    position: {x: 1952.249, y: 0}
+  - beat: 327
+    order: 0
+    mode: 0
+    position: {x: 1955.249, y: 0}
+  - beat: 327.75
+    order: 0
+    mode: 0
+    position: {x: 1959.749, y: 0}
+  - beat: 328.25
+    order: 0
+    mode: 0
+    position: {x: 1962.749, y: 0}
+  - beat: 328.5
+    order: 0
+    mode: 0
+    position: {x: 1964.2491, y: 0}
+  - beat: 328.75
+    order: 0
+    mode: 0
+    position: {x: 1965.749, y: 0}
+  - beat: 329.5
+    order: 0
+    mode: 0
+    position: {x: 1970.249, y: 0}
+  - beat: 329.75
+    order: 0
+    mode: 0
+    position: {x: 1971.7491, y: 0}
+  - beat: 330.25
+    order: 0
+    mode: 0
+    position: {x: 1974.749, y: 0}
+  - beat: 330.625
+    order: 0
+    mode: 0
+    position: {x: 1976.999, y: 0}
+  - beat: 331
+    order: 0
+    mode: 0
+    position: {x: 1979.249, y: 0}
+  - beat: 331.25
+    order: 0
+    mode: 0
+    position: {x: 1980.749, y: 0}
+  - beat: 331.625
+    order: 0
+    mode: 0
+    position: {x: 1982.999, y: 0}
+  - beat: 332.25
+    order: 0
+    mode: 0
+    position: {x: 1986.749, y: 0}
+  - beat: 332.5
+    order: 0
+    mode: 0
+    position: {x: 1988.249, y: 0}
+  - beat: 332.75
+    order: 0
+    mode: 0
+    position: {x: 1989.749, y: 0}
+  - beat: 333
+    order: 0
+    mode: 0
+    position: {x: 1991.2491, y: 0}
+  - beat: 333.25
+    order: 0
+    mode: 0
+    position: {x: 1992.749, y: 0}
+  - beat: 333.375
+    order: 0
+    mode: 0
+    position: {x: 1993.499, y: 0}
+  - beat: 333.625
+    order: 0
+    mode: 0
+    position: {x: 1994.9991, y: 0}
+  - beat: 334.25
+    order: 0
+    mode: 0
+    position: {x: 1998.7491, y: 0}
+  - beat: 334.625
+    order: 0
+    mode: 0
+    position: {x: 2000.999, y: 0}
+  - beat: 335.125
+    order: 0
+    mode: 0
+    position: {x: 2003.999, y: 0}
+  - beat: 335.625
+    order: 0
+    mode: 0
+    position: {x: 2006.999, y: 0}
+  - beat: 335.875
+    order: 0
+    mode: 0
+    position: {x: 2008.499, y: 0}
+  - beat: 336.125
+    order: 0
+    mode: 0
+    position: {x: 2009.9991, y: 0}
+  - beat: 336.375
+    order: 0
+    mode: 0
+    position: {x: 2011.499, y: 0}
+  - beat: 336.625
+    order: 0
+    mode: 0
+    position: {x: 2012.9991, y: 0}
+  - beat: 337.125
+    order: 0
+    mode: 0
+    position: {x: 2015.999, y: 0}
+  - beat: 337.375
+    order: 0
+    mode: 0
+    position: {x: 2017.4991, y: 0}
+  - beat: 337.625
+    order: 0
+    mode: 0
+    position: {x: 2018.999, y: 0}
+  - beat: 338.125
+    order: 0
+    mode: 0
+    position: {x: 2021.999, y: 0}
+  - beat: 338.625
+    order: 0
+    mode: 0
+    position: {x: 2024.999, y: 0}
+  - beat: 339.125
+    order: 0
+    mode: 0
+    position: {x: 2027.999, y: 0}
+  - beat: 339.625
+    order: 0
+    mode: 0
+    position: {x: 2030.9989, y: 0}
+  - beat: 340.125
+    order: 0
+    mode: 0
+    position: {x: 2033.9989, y: 0}
+  - beat: 340.375
+    order: 0
+    mode: 0
+    position: {x: 2035.499, y: 0}
+  - beat: 340.625
+    order: 0
+    mode: 0
+    position: {x: 2036.999, y: 0}
+  - beat: 341.375
+    order: 0
+    mode: 0
+    position: {x: 2041.499, y: 0}
+  - beat: 341.625
+    order: 0
+    mode: 0
+    position: {x: 2042.9991, y: 0}
+  - beat: 342.125
+    order: 0
+    mode: 0
+    position: {x: 2045.999, y: 0}
+  - beat: 342.625
+    order: 0
+    mode: 0
+    position: {x: 2048.999, y: 0}
+  - beat: 343.125
+    order: 0
+    mode: 0
+    position: {x: 2051.999, y: 0}
+  - beat: 343.375
+    order: 0
+    mode: 0
+    position: {x: 2053.499, y: 0}
+  - beat: 343.875
+    order: 0
+    mode: 0
+    position: {x: 2056.499, y: 0}
+  - beat: 344.25
+    order: 0
+    mode: 0
+    position: {x: 2058.749, y: 0}
+  - beat: 344.625
+    order: 0
+    mode: 0
+    position: {x: 2060.999, y: 0}
+  - beat: 345.125
+    order: 0
+    mode: 0
+    position: {x: 2063.999, y: 0}
+  - beat: 345.625
+    order: 0
+    mode: 0
+    position: {x: 2066.999, y: 0}
+  - beat: 346.125
+    order: 0
+    mode: 0
+    position: {x: 2069.999, y: 0}
+  - beat: 346.5
+    order: 0
+    mode: 0
+    position: {x: 2072.249, y: 0}
+  - beat: 347.25
+    order: 0
+    mode: 0
+    position: {x: 2076.749, y: 0}
+  - beat: 347.5
+    order: 0
+    mode: 0
+    position: {x: 2078.249, y: 0}
+  - beat: 348.25
+    order: 0
+    mode: 0
+    position: {x: 2082.749, y: 0}
+  - beat: 348.5
+    order: 0
+    mode: 0
+    position: {x: 2084.249, y: 0}
+  - beat: 349.5
+    order: 0
+    mode: 0
+    position: {x: 2090.249, y: 0}
+  - beat: 350
+    order: 0
+    mode: 0
+    position: {x: 2093.249, y: 0}
+  - beat: 350.5
+    order: 0
+    mode: 0
+    position: {x: 2096.249, y: 0}
+  - beat: 350.75
+    order: 0
+    mode: 0
+    position: {x: 2097.749, y: 0}
+  - beat: 351
+    order: 0
+    mode: 0
+    position: {x: 2099.249, y: 0}
+  - beat: 351.25
+    order: 0
+    mode: 0
+    position: {x: 2100.749, y: 0}
+  - beat: 351.5
+    order: 0
+    mode: 0
+    position: {x: 2102.249, y: 0}
+  - beat: 351.75
+    order: 0
+    mode: 0
+    position: {x: 2103.749, y: 0}
+  - beat: 352
+    order: 0
+    mode: 0
+    position: {x: 2105.249, y: 0}
+  - beat: 352.25
+    order: 0
+    mode: 0
+    position: {x: 2106.749, y: 0}
+  - beat: 352.5
+    order: 0
+    mode: 0
+    position: {x: 2108.249, y: 0}
+  - beat: 353
+    order: 0
+    mode: 0
+    position: {x: 2111.249, y: 0}
+  - beat: 353.25
+    order: 0
+    mode: 0
+    position: {x: 2112.749, y: 0}
+  - beat: 353.5
+    order: 0
+    mode: 0
+    position: {x: 2114.249, y: 0}
+  - beat: 354
+    order: 0
+    mode: 0
+    position: {x: 2117.249, y: 0}
+  - beat: 355
+    order: 0
+    mode: 0
+    position: {x: 2123.249, y: 0}
+  - beat: 355.25
+    order: 0
+    mode: 0
+    position: {x: 2124.749, y: 0}
+  - beat: 355.75
+    order: 0
+    mode: 0
+    position: {x: 2127.749, y: 0}
+  - beat: 356
+    order: 0
+    mode: 0
+    position: {x: 2129.249, y: 0}
+  - beat: 356.5
+    order: 0
+    mode: 0
+    position: {x: 2132.249, y: 0}
+  - beat: 356.75
+    order: 0
+    mode: 0
+    position: {x: 2133.749, y: 0}
+  - beat: 357.5
+    order: 0
+    mode: 0
+    position: {x: 2138.249, y: 0}
+  - beat: 357.625
+    order: 0
+    mode: 0
+    position: {x: 2138.999, y: 0}
+  - beat: 357.875
+    order: 0
+    mode: 0
+    position: {x: 2140.499, y: 0}
+  - beat: 358.375
+    order: 0
+    mode: 0
+    position: {x: 2143.499, y: 0}
+  - beat: 358.875
+    order: 0
+    mode: 0
+    position: {x: 2146.499, y: 0}
+  - beat: 359.375
+    order: 0
+    mode: 0
+    position: {x: 2149.499, y: 0}
+  - beat: 359.875
+    order: 0
+    mode: 0
+    position: {x: 2152.499, y: 0}
+  - beat: 360.125
+    order: 0
+    mode: 0
+    position: {x: 2153.999, y: 0}
+  - beat: 360.375
+    order: 0
+    mode: 0
+    position: {x: 2155.499, y: 0}
+  - beat: 361.125
+    order: 0
+    mode: 0
+    position: {x: 2159.999, y: 0}
+  - beat: 361.5
+    order: 0
+    mode: 0
+    position: {x: 2162.249, y: 0}
+  - beat: 361.875
+    order: 0
+    mode: 0
+    position: {x: 2164.499, y: 0}
+  - beat: 362.375
+    order: 0
+    mode: 0
+    position: {x: 2167.499, y: 0}
+  - beat: 363.375
+    order: 0
+    mode: 0
+    position: {x: 2173.499, y: 0}
+  - beat: 363.875
+    order: 0
+    mode: 0
+    position: {x: 2176.499, y: 0}
+  - beat: 364.375
+    order: 0
+    mode: 0
+    position: {x: 2179.499, y: 0}
+  - beat: 365.125
+    order: 0
+    mode: 0
+    position: {x: 2183.999, y: 0}
+  - beat: 365.375
+    order: 0
+    mode: 0
+    position: {x: 2185.499, y: 0}
+  - beat: 365.875
+    order: 0
+    mode: 0
+    position: {x: 2188.499, y: 0}
+  - beat: 366.25
+    order: 0
+    mode: 0
+    position: {x: 2190.749, y: 0}
+  - beat: 366.75
+    order: 0
+    mode: 0
+    position: {x: 2193.749, y: 0}
+  - beat: 367.25
+    order: 0
+    mode: 0
+    position: {x: 2196.749, y: 0}
+  - beat: 368.375
+    order: 0
+    mode: 0
+    position: {x: 2203.499, y: 0}
+  - beat: 368.5
+    order: 0
+    mode: 0
+    position: {x: 2204.249, y: 0}
+  - beat: 369
+    order: 0
+    mode: 0
+    position: {x: 2207.249, y: 0}
+  - beat: 369.75
+    order: 0
+    mode: 0
+    position: {x: 2211.749, y: 0}
+  - beat: 370.25
+    order: 0
+    mode: 0
+    position: {x: 2214.749, y: 0}
+  - beat: 370.75
+    order: 0
+    mode: 0
+    position: {x: 2217.749, y: 0}
+  - beat: 371.25
+    order: 0
+    mode: 0
+    position: {x: 2220.749, y: 0}
+  - beat: 371.75
+    order: 0
+    mode: 0
+    position: {x: 2223.749, y: 0}
+  - beat: 372.5
+    order: 0
+    mode: 0
+    position: {x: 2228.249, y: 0}
+  - beat: 372.75
+    order: 0
+    mode: 0
+    position: {x: 2229.749, y: 0}
+  - beat: 373.25
+    order: 0
+    mode: 0
+    position: {x: 2232.749, y: 0}
+  - beat: 373.875
+    order: 0
+    mode: 0
+    position: {x: 2236.499, y: 0}
+  - beat: 374.25
+    order: 0
+    mode: 0
+    position: {x: 2238.749, y: 0}
+  - beat: 374.75
+    order: 0
+    mode: 0
+    position: {x: 2241.749, y: 0}
+  - beat: 375.25
+    order: 0
+    mode: 0
+    position: {x: 2244.749, y: 0}
+  - beat: 375.5
+    order: 0
+    mode: 0
+    position: {x: 2246.249, y: 0}
+  - beat: 376.25
+    order: 0
+    mode: 0
+    position: {x: 2250.749, y: 0}
+  - beat: 377.25
+    order: 0
+    mode: 0
+    position: {x: 2256.749, y: 0}
+  - beat: 377.75
+    order: 0
+    mode: 0
+    position: {x: 2259.749, y: 0}
+  - beat: 378
+    order: 0
+    mode: 0
+    position: {x: 2261.249, y: 0}
+  - beat: 378.75
+    order: 0
+    mode: 0
+    position: {x: 2265.749, y: 0}
+  - beat: 379.25
+    order: 0
+    mode: 0
+    position: {x: 2268.749, y: 0}
+  - beat: 379.5
+    order: 0
+    mode: 0
+    position: {x: 2270.249, y: 0}
+  - beat: 379.75
+    order: 0
+    mode: 0
+    position: {x: 2271.749, y: 0}
+  - beat: 380.25
+    order: 0
+    mode: 0
+    position: {x: 2274.749, y: 0}
+  - beat: 380.75
+    order: 0
+    mode: 0
+    position: {x: 2277.749, y: 0}
+  - beat: 381.25
+    order: 0
+    mode: 0
+    position: {x: 2280.749, y: 0}
+  - beat: 381.75
+    order: 0
+    mode: 0
+    position: {x: 2283.749, y: 0}
+  - beat: 382.75
+    order: 0
+    mode: 0
+    position: {x: 2289.749, y: 0}
+  - beat: 383.25
+    order: 0
+    mode: 0
+    position: {x: 2292.749, y: 0}
+  - beat: 383.5
+    order: 0
+    mode: 0
+    position: {x: 2294.249, y: 0}
+  - beat: 383.625
+    order: 0
+    mode: 0
+    position: {x: 2294.999, y: 0}
+  - beat: 384.125
+    order: 0
+    mode: 0
+    position: {x: 2297.999, y: 0}
+  - beat: 384.75
+    order: 0
+    mode: 0
+    position: {x: 2301.749, y: 0}
+  - beat: 385.125
+    order: 0
+    mode: 0
+    position: {x: 2303.999, y: 0}
+  - beat: 385.625
+    order: 0
+    mode: 0
+    position: {x: 2306.999, y: 0}
+  - beat: 385.875
+    order: 0
+    mode: 0
+    position: {x: 2308.499, y: 0}
+  - beat: 386.125
+    order: 0
+    mode: 0
+    position: {x: 2309.999, y: 0}
+  - beat: 386.625
+    order: 0
+    mode: 0
+    position: {x: 2312.999, y: 0}
+  - beat: 386.875
+    order: 0
+    mode: 0
+    position: {x: 2314.499, y: 0}
+  - beat: 387.125
+    order: 0
+    mode: 0
+    position: {x: 2315.999, y: 0}
+  - beat: 387.375
+    order: 0
+    mode: 0
+    position: {x: 2317.499, y: 0}
+  - beat: 387.625
+    order: 0
+    mode: 0
+    position: {x: 2318.999, y: 0}
+  - beat: 387.875
+    order: 0
+    mode: 0
+    position: {x: 2320.499, y: 0}
+  - beat: 388.125
+    order: 0
+    mode: 0
+    position: {x: 2321.999, y: 0}
+  - beat: 388.625
+    order: 0
+    mode: 0
+    position: {x: 2324.999, y: 0}
+  - beat: 389.125
+    order: 0
+    mode: 0
+    position: {x: 2327.999, y: 0}
+  - beat: 389.625
+    order: 0
+    mode: 0
+    position: {x: 2330.999, y: 0}
+  - beat: 389.875
+    order: 0
+    mode: 0
+    position: {x: 2332.499, y: 0}
+  - beat: 390.375
+    order: 0
+    mode: 0
+    position: {x: 2335.499, y: 0}
+  - beat: 390.625
+    order: 0
+    mode: 0
+    position: {x: 2336.999, y: 0}
+  - beat: 391.125
+    order: 0
+    mode: 0
+    position: {x: 2339.999, y: 0}
+  - beat: 391.625
+    order: 0
+    mode: 0
+    position: {x: 2342.999, y: 0}
+  - beat: 391.875
+    order: 0
+    mode: 0
+    position: {x: 2344.499, y: 0}
+  - beat: 392.125
+    order: 0
+    mode: 0
+    position: {x: 2345.999, y: 0}
+  - beat: 392.75
+    order: 0
+    mode: 0
+    position: {x: 2349.749, y: 0}
+  - beat: 393.125
+    order: 0
+    mode: 0
+    position: {x: 2351.999, y: 0}
+  - beat: 393.625
+    order: 0
+    mode: 0
+    position: {x: 2354.999, y: 0}
+  - beat: 394
+    order: 0
+    mode: 0
+    position: {x: 2357.249, y: 0}
+  - beat: 394.625
+    order: 0
+    mode: 0
+    position: {x: 2360.999, y: 0}
+  - beat: 395
+    order: 0
+    mode: 0
+    position: {x: 2363.249, y: 0}
+  - beat: 395.5
+    order: 0
+    mode: 0
+    position: {x: 2366.249, y: 0}
+  - beat: 396
+    order: 0
+    mode: 0
+    position: {x: 2369.249, y: 0}
+  - beat: 396.5
+    order: 0
+    mode: 0
+    position: {x: 2372.249, y: 0}
+  - beat: 396.75
+    order: 0
+    mode: 0
+    position: {x: 2373.749, y: 0}
+  - beat: 397
+    order: 0
+    mode: 0
+    position: {x: 2375.249, y: 0}
+  - beat: 397.5
+    order: 0
+    mode: 0
+    position: {x: 2378.249, y: 0}
+  - beat: 398
+    order: 0
+    mode: 0
+    position: {x: 2381.249, y: 0}
+  - beat: 398.25
+    order: 0
+    mode: 0
+    position: {x: 2382.749, y: 0}
+  - beat: 398.5
+    order: 0
+    mode: 0
+    position: {x: 2384.249, y: 0}
+  - beat: 398.75
+    order: 0
+    mode: 0
+    position: {x: 2385.749, y: 0}
+  - beat: 399
+    order: 0
+    mode: 0
+    position: {x: 2387.249, y: 0}
+  - beat: 399.25
+    order: 0
+    mode: 0
+    position: {x: 2388.749, y: 0}
+  - beat: 399.5
+    order: 0
+    mode: 0
+    position: {x: 2390.249, y: 0}
+  - beat: 399.75
+    order: 0
+    mode: 0
+    position: {x: 2391.749, y: 0}
+  - beat: 400
+    order: 0
+    mode: 0
+    position: {x: 2393.249, y: 0}
+  - beat: 400.5
+    order: 0
+    mode: 0
+    position: {x: 2396.249, y: 0}
+  - beat: 400.75
+    order: 0
+    mode: 0
+    position: {x: 2397.749, y: 0}
+  - beat: 401
+    order: 0
+    mode: 0
+    position: {x: 2399.249, y: 0}
+  - beat: 401.5
+    order: 0
+    mode: 0
+    position: {x: 2402.249, y: 0}
+  - beat: 401.75
+    order: 0
+    mode: 0
+    position: {x: 2403.749, y: 0}
+  - beat: 402
+    order: 0
+    mode: 0
+    position: {x: 2405.249, y: 0}
+  - beat: 402.5
+    order: 0
+    mode: 0
+    position: {x: 2408.249, y: 0}
+  - beat: 403
+    order: 0
+    mode: 0
+    position: {x: 2411.249, y: 0}
+  - beat: 403.5
+    order: 0
+    mode: 0
+    position: {x: 2414.249, y: 0}
+  - beat: 404
+    order: 0
+    mode: 0
+    position: {x: 2417.249, y: 0}
+  - beat: 404.5
+    order: 0
+    mode: 0
+    position: {x: 2420.249, y: 0}
+  - beat: 404.75
+    order: 0
+    mode: 0
+    position: {x: 2421.749, y: 0}
+  - beat: 405
+    order: 0
+    mode: 0
+    position: {x: 2423.249, y: 0}
+  - beat: 405.25
+    order: 0
+    mode: 0
+    position: {x: 2424.749, y: 0}
+  - beat: 405.5
+    order: 0
+    mode: 0
+    position: {x: 2426.249, y: 0}
+  - beat: 405.75
+    order: 0
+    mode: 0
+    position: {x: 2427.749, y: 0}
+  - beat: 406
+    order: 0
+    mode: 0
+    position: {x: 2429.249, y: 0}
+  - beat: 406.25
+    order: 0
+    mode: 0
+    position: {x: 2430.749, y: 0}
+  - beat: 406.5
+    order: 0
+    mode: 0
+    position: {x: 2432.249, y: 0}
+  - beat: 406.75
+    order: 0
+    mode: 0
+    position: {x: 2433.749, y: 0}
+  - beat: 407
+    order: 0
+    mode: 0
+    position: {x: 2435.249, y: 0}
+  - beat: 407.25
+    order: 0
+    mode: 0
+    position: {x: 2436.749, y: 0}
+  - beat: 407.5
+    order: 0
+    mode: 0
+    position: {x: 2438.249, y: 0}
+  - beat: 407.75
+    order: 0
+    mode: 0
+    position: {x: 2439.749, y: 0}
+  - beat: 407.875
+    order: 0
+    mode: 0
+    position: {x: 2440.499, y: 0}
+  - beat: 408.625
+    order: 0
+    mode: 0
+    position: {x: 2444.999, y: 0}
+  - beat: 408.875
+    order: 0
+    mode: 0
+    position: {x: 2446.499, y: 0}
+  - beat: 409.375
+    order: 0
+    mode: 0
+    position: {x: 2449.499, y: 0}
+  - beat: 410.125
+    order: 0
+    mode: 0
+    position: {x: 2453.999, y: 0}
+  - beat: 410.625
+    order: 0
+    mode: 0
+    position: {x: 2456.999, y: 0}
+  - beat: 410.875
+    order: 0
+    mode: 0
+    position: {x: 2458.499, y: 0}
+  - beat: 411.375
+    order: 0
+    mode: 0
+    position: {x: 2461.499, y: 0}
+  - beat: 411.625
+    order: 0
+    mode: 0
+    position: {x: 2462.999, y: 0}
+  - beat: 411.875
+    order: 0
+    mode: 0
+    position: {x: 2464.499, y: 0}
+  - beat: 412.625
+    order: 0
+    mode: 0
+    position: {x: 2468.999, y: 0}
+  - beat: 412.875
+    order: 0
+    mode: 0
+    position: {x: 2470.499, y: 0}
+  - beat: 413.125
+    order: 0
+    mode: 0
+    position: {x: 2471.999, y: 0}
+  - beat: 413.375
+    order: 0
+    mode: 0
+    position: {x: 2473.499, y: 0}
+  - beat: 413.625
+    order: 0
+    mode: 0
+    position: {x: 2474.999, y: 0}
+  - beat: 413.875
+    order: 0
+    mode: 0
+    position: {x: 2476.499, y: 0}
+  - beat: 414.125
+    order: 0
+    mode: 0
+    position: {x: 2477.999, y: 0}
+  - beat: 414.375
+    order: 0
+    mode: 0
+    position: {x: 2479.499, y: 0}
+  - beat: 414.625
+    order: 0
+    mode: 0
+    position: {x: 2480.999, y: 0}
+  - beat: 414.875
+    order: 0
+    mode: 0
+    position: {x: 2482.499, y: 0}
+  - beat: 415.375
+    order: 0
+    mode: 0
+    position: {x: 2485.499, y: 0}
+  - beat: 415.625
+    order: 0
+    mode: 0
+    position: {x: 2486.999, y: 0}
+  - beat: 415.875
+    order: 0
+    mode: 0
+    position: {x: 2488.499, y: 0}
+  - beat: 416.125
+    order: 0
+    mode: 0
+    position: {x: 2489.999, y: 0}
+  - beat: 416.5
+    order: 0
+    mode: 0
+    position: {x: 2492.249, y: 0}
+  - beat: 416.875
+    order: 0
+    mode: 0
+    position: {x: 2494.499, y: 0}
+  - beat: 417.125
+    order: 0
+    mode: 0
+    position: {x: 2495.999, y: 0}
+  - beat: 417.5
+    order: 0
+    mode: 0
+    position: {x: 2498.249, y: 0}
+  - beat: 417.875
+    order: 0
+    mode: 0
+    position: {x: 2500.499, y: 0}
+  - beat: 418.375
+    order: 0
+    mode: 0
+    position: {x: 2503.499, y: 0}
+  - beat: 418.625
+    order: 0
+    mode: 0
+    position: {x: 2504.999, y: 0}
+  - beat: 419
+    order: 0
+    mode: 0
+    position: {x: 2507.249, y: 0}
+  - beat: 419.5
+    order: 0
+    mode: 0
+    position: {x: 2510.249, y: 0}
+  - beat: 419.625
+    order: 0
+    mode: 0
+    position: {x: 2510.999, y: 0}
+  - beat: 420.125
+    order: 0
+    mode: 0
+    position: {x: 2513.999, y: 0}
+  - beat: 421.875
+    order: 0
+    mode: 0
+    position: {x: 2524.499, y: 0}
+  - beat: 422.75
+    order: 0
+    mode: 0
+    position: {x: 2529.749, y: 0}
+  - beat: 423.25
+    order: 0
+    mode: 0
+    position: {x: 2532.749, y: 0}
+  - beat: 423.5
+    order: 0
+    mode: 0
+    position: {x: 2534.249, y: 0}
+  - beat: 424.25
+    order: 0
+    mode: 0
+    position: {x: 2538.749, y: 0}
+  - beat: 424.5
+    order: 0
+    mode: 0
+    position: {x: 2540.249, y: 0}
+  - beat: 425
+    order: 0
+    mode: 0
+    position: {x: 2543.249, y: 0}
+  - beat: 425.25
+    order: 0
+    mode: 0
+    position: {x: 2544.749, y: 0}
+  - beat: 425.75
+    order: 0
+    mode: 0
+    position: {x: 2547.749, y: 0}
+  - beat: 426
+    order: 0
+    mode: 0
+    position: {x: 2549.249, y: 0}
+  - beat: 426.5
+    order: 0
+    mode: 0
+    position: {x: 2552.249, y: 0}
+  - beat: 426.75
+    order: 0
+    mode: 0
+    position: {x: 2553.749, y: 0}
+  - beat: 427.25
+    order: 0
+    mode: 0
+    position: {x: 2556.7493, y: 0}
+  - beat: 428.25
+    order: 0
+    mode: 0
+    position: {x: 2562.7493, y: 0}
+  - beat: 429
+    order: 0
+    mode: 0
+    position: {x: 2567.249, y: 0}
+  - beat: 429.75
+    order: 0
+    mode: 0
+    position: {x: 2571.749, y: 0}
+  - beat: 430.375
+    order: 0
+    mode: 0
+    position: {x: 2575.499, y: 0}
+  - beat: 431.125
+    order: 0
+    mode: 0
+    position: {x: 2579.9988, y: 0}
+  - beat: 431.5
+    order: 0
+    mode: 0
+    position: {x: 2582.2488, y: 0}
+  - beat: 431.875
+    order: 0
+    mode: 0
+    position: {x: 2584.4988, y: 0}
+  - beat: 432.125
+    order: 0
+    mode: 0
+    position: {x: 2585.9988, y: 0}
+  - beat: 432.875
+    order: 0
+    mode: 0
+    position: {x: 2590.499, y: 0}
+  - beat: 433.625
+    order: 0
+    mode: 0
+    position: {x: 2594.9988, y: 0}
+  - beat: 434.375
+    order: 0
+    mode: 0
+    position: {x: 2599.499, y: 0}
+  - beat: 435.125
+    order: 0
+    mode: 0
+    position: {x: 2603.999, y: 0}
+  - beat: 435.625
+    order: 0
+    mode: 0
+    position: {x: 2606.999, y: 0}
+  - beat: 436.125
+    order: 0
+    mode: 0
+    position: {x: 2609.999, y: 0}
+  - beat: 436.875
+    order: 0
+    mode: 0
+    position: {x: 2614.499, y: 0}
+  - beat: 437.25
+    order: 0
+    mode: 0
+    position: {x: 2616.749, y: 0}
+  - beat: 437.625
+    order: 0
+    mode: 0
+    position: {x: 2618.999, y: 0}
+  - beat: 437.875
+    order: 0
+    mode: 0
+    position: {x: 2620.499, y: 0}
+  - beat: 438.375
+    order: 0
+    mode: 0
+    position: {x: 2623.499, y: 0}
+  - beat: 438.625
+    order: 0
+    mode: 0
+    position: {x: 2624.999, y: 0}
+  - beat: 439.125
+    order: 0
+    mode: 0
+    position: {x: 2627.9993, y: 0}
+  - beat: 439.5
+    order: 0
+    mode: 0
+    position: {x: 2630.2493, y: 0}
+  - beat: 439.625
+    order: 0
+    mode: 0
+    position: {x: 2630.999, y: 0}
+  - beat: 440.75
+    order: 0
+    mode: 0
+    position: {x: 2637.7493, y: 0}
+  - beat: 441.125
+    order: 0
+    mode: 0
+    position: {x: 2639.999, y: 0}
+  - beat: 441.75
+    order: 0
+    mode: 0
+    position: {x: 2643.749, y: 0}
+  - beat: 441.875
+    order: 0
+    mode: 0
+    position: {x: 2644.499, y: 0}
+  - beat: 442.25
+    order: 0
+    mode: 0
+    position: {x: 2646.749, y: 0}
+  - beat: 442.75
+    order: 0
+    mode: 0
+    position: {x: 2649.749, y: 0}
+  - beat: 443.125
+    order: 0
+    mode: 0
+    position: {x: 2651.999, y: 0}
+  - beat: 443.25
+    order: 0
+    mode: 0
+    position: {x: 2652.749, y: 0}
+  - beat: 443.75
+    order: 0
+    mode: 0
+    position: {x: 2655.749, y: 0}
+  - beat: 444
+    order: 0
+    mode: 0
+    position: {x: 2657.249, y: 0}
+  - beat: 444.75
+    order: 0
+    mode: 0
+    position: {x: 2661.749, y: 0}
+  - beat: 445.5
+    order: 0
+    mode: 0
+    position: {x: 2666.2488, y: 0}
+  - beat: 446.25
+    order: 0
+    mode: 0
+    position: {x: 2670.749, y: 0}
+  - beat: 447
+    order: 0
+    mode: 0
+    position: {x: 2675.249, y: 0}
+  - beat: 447.5
+    order: 0
+    mode: 0
+    position: {x: 2678.249, y: 0}
+  - beat: 448
+    order: 0
+    mode: 0
+    position: {x: 2681.249, y: 0}
+  - beat: 448.75
+    order: 0
+    mode: 0
+    position: {x: 2685.749, y: 0}
+  - beat: 449.5
+    order: 0
+    mode: 0
+    position: {x: 2690.249, y: 0}
+  - beat: 450.25
+    order: 0
+    mode: 0
+    position: {x: 2694.7488, y: 0}
+  - beat: 450.625
+    order: 0
+    mode: 0
+    position: {x: 2696.9988, y: 0}
+  - beat: 451
+    order: 0
+    mode: 0
+    position: {x: 2699.2488, y: 0}
+  - beat: 451.5
+    order: 0
+    mode: 0
+    position: {x: 2702.2485, y: 0}
+  - beat: 452
+    order: 0
+    mode: 0
+    position: {x: 2705.2488, y: 0}
+  - beat: 452.75
+    order: 0
+    mode: 0
+    position: {x: 2709.7485, y: 0}
+  - beat: 453.125
+    order: 0
+    mode: 0
+    position: {x: 2711.9985, y: 0}
+  - beat: 453.5
+    order: 0
+    mode: 0
+    position: {x: 2714.2485, y: 0}
+  - beat: 454.25
+    order: 0
+    mode: 0
+    position: {x: 2718.7483, y: 0}
+  - beat: 454.625
+    order: 0
+    mode: 0
+    position: {x: 2720.9983, y: 0}
+  - beat: 455
+    order: 0
+    mode: 0
+    position: {x: 2723.2483, y: 0}
+  - beat: 455.375
+    order: 0
+    mode: 0
+    position: {x: 2725.4983, y: 0}
+  - beat: 456
+    order: 0
+    mode: 0
+    position: {x: 2729.2483, y: 0}
+  - beat: 456.125
+    order: 0
+    mode: 0
+    position: {x: 2729.998, y: 0}
+  - beat: 456.625
+    order: 0
+    mode: 0
+    position: {x: 2732.9983, y: 0}
+  - beat: 456.875
+    order: 0
+    mode: 0
+    position: {x: 2734.4983, y: 0}
+  - beat: 457.375
+    order: 0
+    mode: 0
+    position: {x: 2737.498, y: 0}
+  - beat: 457.625
+    order: 0
+    mode: 0
+    position: {x: 2738.9983, y: 0}
+  - beat: 458.125
+    order: 0
+    mode: 0
+    position: {x: 2741.998, y: 0}
+  - beat: 459
+    order: 0
+    mode: 0
+    position: {x: 2747.248, y: 0}
+  - beat: 459.375
+    order: 0
+    mode: 0
+    position: {x: 2749.498, y: 0}
+  - beat: 459.625
+    order: 0
+    mode: 0
+    position: {x: 2750.998, y: 0}
+  - beat: 459.875
+    order: 0
+    mode: 0
+    position: {x: 2752.498, y: 0}
+  - beat: 460.625
+    order: 0
+    mode: 0
+    position: {x: 2756.998, y: 0}
+  - beat: 461.375
+    order: 0
+    mode: 0
+    position: {x: 2761.498, y: 0}
+  - beat: 461.625
+    order: 0
+    mode: 0
+    position: {x: 2762.998, y: 0}
+  - beat: 462.125
+    order: 0
+    mode: 0
+    position: {x: 2765.998, y: 0}
+  - beat: 462.875
+    order: 0
+    mode: 0
+    position: {x: 2770.498, y: 0}
+  - beat: 463.125
+    order: 0
+    mode: 0
+    position: {x: 2771.998, y: 0}
+  - beat: 463.375
+    order: 0
+    mode: 0
+    position: {x: 2773.498, y: 0}
+  - beat: 463.875
+    order: 0
+    mode: 0
+    position: {x: 2776.4983, y: 0}
+  - beat: 464.25
+    order: 0
+    mode: 0
+    position: {x: 2778.748, y: 0}
+  - beat: 464.625
+    order: 0
+    mode: 0
+    position: {x: 2780.998, y: 0}
+  - beat: 465.375
+    order: 0
+    mode: 0
+    position: {x: 2785.498, y: 0}
+  - beat: 466.125
+    order: 0
+    mode: 0
+    position: {x: 2789.9978, y: 0}
+  - beat: 466.875
+    order: 0
+    mode: 0
+    position: {x: 2794.498, y: 0}
+  - beat: 467.375
+    order: 0
+    mode: 0
+    position: {x: 2797.498, y: 0}
+  - beat: 467.75
+    order: 0
+    mode: 0
+    position: {x: 2799.748, y: 0}
+  - beat: 468.625
+    order: 0
+    mode: 0
+    position: {x: 2804.998, y: 0}
+  - beat: 469.25
+    order: 0
+    mode: 0
+    position: {x: 2808.748, y: 0}
+  - beat: 470
+    order: 0
+    mode: 0
+    position: {x: 2813.248, y: 0}
+  - beat: 470.375
+    order: 0
+    mode: 0
+    position: {x: 2815.498, y: 0}
+  - beat: 470.625
+    order: 0
+    mode: 0
+    position: {x: 2816.998, y: 0}
+  - beat: 470.875
+    order: 0
+    mode: 0
+    position: {x: 2818.498, y: 0}
+  - beat: 471.125
+    order: 0
+    mode: 0
+    position: {x: 2819.998, y: 0}
+  - beat: 471.375
+    order: 0
+    mode: 0
+    position: {x: 2821.4983, y: 0}
+  - beat: 471.875
+    order: 0
+    mode: 0
+    position: {x: 2824.498, y: 0}
+  - beat: 472.25
+    order: 0
+    mode: 0
+    position: {x: 2826.748, y: 0}
+  - beat: 472.5
+    order: 0
+    mode: 0
+    position: {x: 2828.248, y: 0}
+  - beat: 473
+    order: 0
+    mode: 0
+    position: {x: 2831.248, y: 0}
+  - beat: 473.5
+    order: 0
+    mode: 0
+    position: {x: 2834.2483, y: 0}
+  - beat: 473.875
+    order: 0
+    mode: 0
+    position: {x: 2836.4983, y: 0}
+  - beat: 474.25
+    order: 0
+    mode: 0
+    position: {x: 2838.748, y: 0}
+  - beat: 475
+    order: 0
+    mode: 0
+    position: {x: 2843.248, y: 0}
+  - beat: 475.375
+    order: 0
+    mode: 0
+    position: {x: 2845.498, y: 0}
+  - beat: 475.75
+    order: 0
+    mode: 0
+    position: {x: 2847.748, y: 0}
+  - beat: 476.125
+    order: 0
+    mode: 0
+    position: {x: 2849.9978, y: 0}
+  - beat: 476.5
+    order: 0
+    mode: 0
+    position: {x: 2852.2478, y: 0}
+  - beat: 476.75
+    order: 0
+    mode: 0
+    position: {x: 2853.7478, y: 0}
+  - beat: 477.25
+    order: 0
+    mode: 0
+    position: {x: 2856.748, y: 0}
+  - beat: 477.625
+    order: 0
+    mode: 0
+    position: {x: 2858.998, y: 0}
+  - beat: 478
+    order: 0
+    mode: 0
+    position: {x: 2861.2478, y: 0}
+  - beat: 478.375
+    order: 0
+    mode: 0
+    position: {x: 2863.4978, y: 0}
+  - beat: 478.75
+    order: 0
+    mode: 0
+    position: {x: 2865.7478, y: 0}
+  - beat: 479
+    order: 0
+    mode: 0
+    position: {x: 2867.2478, y: 0}
+  - beat: 479.25
+    order: 0
+    mode: 0
+    position: {x: 2868.7478, y: 0}
+  - beat: 479.5
+    order: 0
+    mode: 0
+    position: {x: 2870.248, y: 0}
+  - beat: 479.75
+    order: 0
+    mode: 0
+    position: {x: 2871.748, y: 0}
+  - beat: 480
+    order: 0
+    mode: 0
+    position: {x: 2873.248, y: 0}
+  - beat: 480.25
+    order: 0
+    mode: 0
+    position: {x: 2874.748, y: 0}
+  - beat: 480.625
+    order: 0
+    mode: 0
+    position: {x: 2876.998, y: 0}
+  - beat: 481
+    order: 0
+    mode: 0
+    position: {x: 2879.248, y: 0}
+  - beat: 481.5
+    order: 0
+    mode: 0
+    position: {x: 2882.248, y: 0}
+  - beat: 481.75
+    order: 0
+    mode: 0
+    position: {x: 2883.748, y: 0}
+  - beat: 482
+    order: 0
+    mode: 0
+    position: {x: 2885.2483, y: 0}
+  - beat: 482.25
+    order: 0
+    mode: 0
+    position: {x: 2886.7483, y: 0}
+  - beat: 482.5
+    order: 0
+    mode: 0
+    position: {x: 2888.2483, y: 0}
+  - beat: 482.875
+    order: 0
+    mode: 0
+    position: {x: 2890.4983, y: 0}
+  - beat: 483.25
+    order: 0
+    mode: 0
+    position: {x: 2892.7483, y: 0}
+  - beat: 483.375
+    order: 0
+    mode: 0
+    position: {x: 2893.498, y: 0}
+  - beat: 483.75
+    order: 0
+    mode: 0
+    position: {x: 2895.748, y: 0}
+  - beat: 484
+    order: 0
+    mode: 0
+    position: {x: 2897.248, y: 0}
+  - beat: 484.25
+    order: 0
+    mode: 0
+    position: {x: 2898.748, y: 0}
+  - beat: 484.5
+    order: 0
+    mode: 0
+    position: {x: 2900.2483, y: 0}
+  - beat: 484.75
+    order: 0
+    mode: 0
+    position: {x: 2901.7483, y: 0}
+  - beat: 485
+    order: 0
+    mode: 0
+    position: {x: 2903.2483, y: 0}
+  - beat: 485.125
+    order: 0
+    mode: 0
+    position: {x: 2903.9985, y: 0}
+  - beat: 485.5
+    order: 0
+    mode: 0
+    position: {x: 2906.2483, y: 0}
+  - beat: 485.625
+    order: 0
+    mode: 0
+    position: {x: 2906.9985, y: 0}
+  - beat: 485.875
+    order: 0
+    mode: 0
+    position: {x: 2908.4985, y: 0}
+  - beat: 486.125
+    order: 0
+    mode: 0
+    position: {x: 2909.9985, y: 0}
+  - beat: 486.5
+    order: 0
+    mode: 0
+    position: {x: 2912.2485, y: 0}
+  - beat: 486.625
+    order: 0
+    mode: 0
+    position: {x: 2912.9985, y: 0}
+  - beat: 487
+    order: 0
+    mode: 0
+    position: {x: 2915.2485, y: 0}
+  - beat: 487.125
+    order: 0
+    mode: 0
+    position: {x: 2915.9983, y: 0}
+  - beat: 487.375
+    order: 0
+    mode: 0
+    position: {x: 2917.4983, y: 0}
+  - beat: 487.625
+    order: 0
+    mode: 0
+    position: {x: 2918.9985, y: 0}
+  - beat: 487.875
+    order: 0
+    mode: 0
+    position: {x: 2920.4985, y: 0}
+  - beat: 488.125
+    order: 0
+    mode: 0
+    position: {x: 2921.9985, y: 0}
+  - beat: 488.375
+    order: 0
+    mode: 0
+    position: {x: 2923.4985, y: 0}
+  - beat: 488.625
+    order: 0
+    mode: 0
+    position: {x: 2924.9985, y: 0}
+  - beat: 488.875
+    order: 0
+    mode: 0
+    position: {x: 2926.4988, y: 0}
+  - beat: 489.125
+    order: 0
+    mode: 0
+    position: {x: 2927.9988, y: 0}
+  - beat: 489.375
+    order: 0
+    mode: 0
+    position: {x: 2929.4988, y: 0}
+  - beat: 490.25
+    order: 0
+    mode: 0
+    position: {x: 2934.7488, y: 0}
+  - beat: 491.375
+    order: 0
+    mode: 0
+    position: {x: 2941.499, y: 0}
+  - beat: 491.875
+    order: 0
+    mode: 0
+    position: {x: 2944.499, y: 0}
+  - beat: 492
+    order: 0
+    mode: 0
+    position: {x: 2945.249, y: 0}
+  - beat: 492.5
+    order: 0
+    mode: 0
+    position: {x: 2948.249, y: 0}
+  - beat: 492.75
+    order: 0
+    mode: 0
+    position: {x: 2949.749, y: 0}
+  - beat: 493.5
+    order: 0
+    mode: 0
+    position: {x: 2954.249, y: 0}
+  - beat: 494.25
+    order: 0
+    mode: 0
+    position: {x: 2958.7488, y: 0}
+  - beat: 494.625
+    order: 0
+    mode: 0
+    position: {x: 2960.9988, y: 0}
+  - beat: 495.125
+    order: 0
+    mode: 0
+    position: {x: 2963.999, y: 0}
+  - beat: 495.75
+    order: 0
+    mode: 0
+    position: {x: 2967.749, y: 0}
+  - beat: 496.125
+    order: 0
+    mode: 0
+    position: {x: 2969.9988, y: 0}
+  - beat: 496.5
+    order: 0
+    mode: 0
+    position: {x: 2972.2488, y: 0}
+  bpmTimeline:
+    segments:
+    - beat: 0
+      bpm: 200
+      speed: 20
+  globalOffsetBeats: 0

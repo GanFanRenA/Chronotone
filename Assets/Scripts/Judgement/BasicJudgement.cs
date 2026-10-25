@@ -3,15 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public enum JudgementGrade
-{
-    Perfect,
-    Great,
-    Bad,
-    Miss
-}
-
-[RequireComponent(typeof(Player))]
 public class BasicJudgement : MonoBehaviour
 {
     [SerializeField, Range(0.02f, 0.2f)]
@@ -20,14 +11,24 @@ public class BasicJudgement : MonoBehaviour
     [SerializeField, Range(0.04f, 0.3f)]
     private float greatWindowSeconds = 0.14f;
 
+    [SerializeField, Range(0.16f, 0.4f)]
+    private float badWindowSeconds = 0.24f;
+
     private Player player;
     private BasicJudgementFeedback feedback;
     private IReadOnlyList<NodeData> nodes;
     private double[] noteTimes;
     private bool[] judged;
-    private int expiryIndex;
+    private int nextPendingNodeIndex;
+    private bool blocked;
 
-    private Camera worldCamera;
+    public event Action<JudgementResult> JudgementResolved;
+
+    void OnValidate()
+    {
+        greatWindowSeconds = Mathf.Max(perfectWindowSeconds, greatWindowSeconds);
+        badWindowSeconds = Mathf.Max(greatWindowSeconds, badWindowSeconds);
+    }
 
     void Awake()
     {
@@ -36,9 +37,8 @@ public class BasicJudgement : MonoBehaviour
 
         if (feedback == null)
         {
-            var feedbackObject = new GameObject("JudgementFeedback");
-            feedbackObject.transform.SetParent(transform, false);
-            feedback = feedbackObject.AddComponent<BasicJudgementFeedback>();
+            Debug.LogError("BasicJudgement 缺少 BasicJudgementFeedback 子对象", this);
+            enabled = false;
         }
     }
 
@@ -63,19 +63,33 @@ public class BasicJudgement : MonoBehaviour
         for (int i = 0; i < nodes.Count; i++)
             noteTimes[i] = player.chartPlayer.chart.bpmTimeline.BeatToSeconds(nodes[i].beat);
 
-        worldCamera = Camera.main;
+        nextPendingNodeIndex = FindFirstNodeAtOrAfter(
+            player.PlaybackStartBeat);
+        for (int i = 0; i < judged.Length; i++)
+            judged[i] = i < nextPendingNodeIndex;
+
+        AdvanceToNextPendingNode();
     }
 
-    void Update()
+    public void Tick(double songTime)
     {
-        if (nodes == null || judged == null || player == null || !player.IsRunning)
+        if (!isActiveAndEnabled || blocked ||
+            nodes == null || judged == null || player == null ||
+            !player.IsRunning || !player.AudioHasStarted)
             return;
 
-        double songTime = player.SongTime;
         ExpireMissedNotes(songTime);
+        if (blocked)
+            return;
+
+        if (player.AutoModeEnabled)
+            return;
 
         if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame)
-            HandlePress(songTime, null);
+            HandlePress(songTime);
+
+        if (blocked)
+            return;
 
         Touchscreen touchscreen = Touchscreen.current;
         if (touchscreen == null)
@@ -86,96 +100,215 @@ public class BasicJudgement : MonoBehaviour
         {
             var touch = touches[i];
             if (touch != null && touch.press.wasPressedThisFrame)
-                HandlePress(songTime, touch.position.ReadValue());
-        }
-    }
-
-    private void HandlePress(double songTime, Vector2? pressPosition)
-    {
-        int noteIndex = FindClosestPendingNote(songTime, out double timeDelta);
-        Vector2 effectPosition = pressPosition ?? GetFeedbackScreenPosition(noteIndex);
-
-        if (noteIndex < 0)
-        {
-            feedback.ShowJudgement(JudgementGrade.Bad, effectPosition);
-            return;
-        }
-
-        judged[noteIndex] = true;
-        JudgementGrade grade = Math.Abs(timeDelta) <= perfectWindowSeconds
-            ? JudgementGrade.Perfect
-            : JudgementGrade.Great;
-
-        if (pressPosition.HasValue)
-            feedback.ShowJudgement(grade, effectPosition);
-
-        feedback.ShowJudgement(grade, GetFeedbackScreenPosition(noteIndex));
-    }
-
-    private int FindClosestPendingNote(double songTime, out double closestDelta)
-    {
-        int bestIndex = -1;
-        double bestDistance = double.PositiveInfinity;
-        closestDelta = 0d;
-
-        for (int i = expiryIndex; i < noteTimes.Length; i++)
-        {
-            if (judged[i])
-                continue;
-
-            double delta = songTime - noteTimes[i];
-            if (delta < -greatWindowSeconds)
-                break;
-
-            if (delta > greatWindowSeconds)
-                continue;
-
-            double distance = Math.Abs(delta);
-            if (distance < bestDistance)
             {
-                bestDistance = distance;
-                bestIndex = i;
-                closestDelta = delta;
+                HandlePress(songTime);
+                if (blocked)
+                    return;
             }
         }
+    }
 
-        return bestIndex;
+    public void ProcessNodeDue(int nodeIndex)
+    {
+        if (!isActiveAndEnabled ||
+            nodeIndex != nextPendingNodeIndex ||
+            !IsValidPendingNode(nodeIndex) ||
+            blocked || player == null ||
+            !player.AudioHasStarted)
+            return;
+
+        if (player.AutoModeEnabled)
+        {
+            player.RequestNodeAction(nodes[nodeIndex].mode);
+            ResolveNote(
+                nodeIndex,
+                noteTimes[nodeIndex],
+                0d);
+        }
+    }
+
+    private void HandlePress(double songTime)
+    {
+        int noteIndex = nextPendingNodeIndex;
+        if (noteIndex < 0)
+            return;
+
+        player.RequestNodeAction(nodes[noteIndex].mode);
+
+        double timeDelta = songTime - noteTimes[noteIndex];
+        if (timeDelta < -badWindowSeconds ||
+            timeDelta > badWindowSeconds)
+            return;
+
+        ResolveNote(
+            noteIndex,
+            songTime,
+            timeDelta);
+    }
+
+    private void ResolveNote(
+        int noteIndex,
+        double songTime,
+        double timeDelta,
+        JudgementGrade? forcedGrade = null)
+    {
+        if (!IsValidPendingNode(noteIndex) ||
+            noteIndex != nextPendingNodeIndex)
+            return;
+
+        judged[noteIndex] = true;
+        AdvanceToNextPendingNode();
+
+        double absoluteDelta = Math.Abs(timeDelta);
+        JudgementGrade grade;
+        if (forcedGrade.HasValue)
+            grade = forcedGrade.Value;
+        else if (absoluteDelta <= perfectWindowSeconds)
+            grade = JudgementGrade.Perfect;
+        else if (absoluteDelta <= greatWindowSeconds)
+            grade = JudgementGrade.Great;
+        else
+            grade = JudgementGrade.Bad;
+
+        feedback.ShowJudgement(
+            grade,
+            GetFeedbackWorldPosition(noteIndex));
+        ResolveJudgement(new JudgementResult(
+            noteIndex,
+            grade,
+            timeDelta,
+            songTime,
+            true));
     }
 
     private void ExpireMissedNotes(double songTime)
     {
-        while (expiryIndex < noteTimes.Length)
+        while (!blocked && nextPendingNodeIndex >= 0)
         {
-            if (judged[expiryIndex])
-            {
-                expiryIndex++;
-                continue;
-            }
+            int noteIndex = nextPendingNodeIndex;
+            if (songTime <= noteTimes[noteIndex] + badWindowSeconds)
+                return;
 
-            if (songTime <= noteTimes[expiryIndex] + greatWindowSeconds)
-                break;
-
-            judged[expiryIndex] = true;
-            feedback.ShowJudgement(JudgementGrade.Miss, GetFeedbackScreenPosition(expiryIndex));
-            expiryIndex++;
+            ResolveNote(
+                noteIndex,
+                songTime,
+                songTime - noteTimes[noteIndex],
+                JudgementGrade.Miss);
         }
     }
 
-    private Vector2 GetFeedbackScreenPosition(int noteIndex)
+    public void Pause()
     {
-        if (noteIndex >= 0 && worldCamera != null)
-        {
-            Vector3 position = (Vector3)nodes[noteIndex].position;
-            Vector3 screenPosition = worldCamera.WorldToScreenPoint(position);
+        blocked = true;
+    }
 
-            if (screenPosition.z >= 0f)
-            {
-                screenPosition.x = Mathf.Clamp(screenPosition.x, 80f, Screen.width - 80f);
-                screenPosition.y = Mathf.Clamp(screenPosition.y, 100f, Screen.height - 100f);
-                return screenPosition;
-            }
+    public void ResetFromCheckpoint(int checkpointNodeIndex)
+    {
+        if (nodes == null || judged == null)
+            return;
+
+        int nextIndex = Mathf.Clamp(checkpointNodeIndex + 1, 0, nodes.Count);
+        for (int i = 0; i < judged.Length; i++)
+            judged[i] = i < nextIndex;
+
+        nextPendingNodeIndex = nextIndex;
+        AdvanceToNextPendingNode();
+        blocked = false;
+    }
+
+    private bool IsValidPendingNode(int nodeIndex)
+    {
+        return nodes != null && judged != null &&
+            nodeIndex >= 0 && nodeIndex < nodes.Count &&
+            !judged[nodeIndex] &&
+            IsJudgeable(nodeIndex);
+    }
+
+    private bool IsJudgeable(int nodeIndex)
+    {
+        NodeMode mode = nodes[nodeIndex].mode;
+        return mode == NodeMode.JumpNode ||
+            mode == NodeMode.GravityNode;
+    }
+
+    private int FindFirstNodeAtOrAfter(float beat)
+    {
+        int low = 0;
+        int high = nodes.Count;
+        while (low < high)
+        {
+            int middle = low + (high - low) / 2;
+            NodeData node = nodes[middle];
+            if (node != null && node.beat < beat)
+                low = middle + 1;
+            else
+                high = middle;
+        }
+        return low;
+    }
+
+    private void AdvanceToNextPendingNode()
+    {
+        if (nodes == null || judged == null)
+        {
+            nextPendingNodeIndex = -1;
+            return;
         }
 
-        return new Vector2(Screen.width * 0.5f, Screen.height * 0.62f);
+        nextPendingNodeIndex = Mathf.Clamp(
+            nextPendingNodeIndex,
+            0,
+            nodes.Count);
+
+        while (nextPendingNodeIndex < nodes.Count &&
+               (judged[nextPendingNodeIndex] ||
+                !IsJudgeable(nextPendingNodeIndex)))
+        {
+            nextPendingNodeIndex++;
+        }
+
+        if (nextPendingNodeIndex >= nodes.Count)
+            nextPendingNodeIndex = -1;
+    }
+
+    private void ResolveJudgement(JudgementResult result)
+    {
+        if (!result.HasNote || nodes == null ||
+            result.NoteIndex >= nodes.Count)
+        {
+            Debug.LogError(
+                $"[判定] 已拒绝无节点判定结果：{result.Grade}",
+                this);
+            return;
+        }
+
+        Debug.Log(
+            $"[判定] 节点 {result.NoteIndex} " +
+            $"(Beat {nodes[result.NoteIndex].beat:0.###}) | " +
+            $"{result.Grade} | {FormatTimingDelta(result.TimeDelta)}");
+
+        JudgementResolved?.Invoke(result);
+    }
+
+    private static string FormatTimingDelta(double timeDelta)
+    {
+        long milliseconds = (long)Math.Round(
+            timeDelta * 1000d,
+            MidpointRounding.AwayFromZero);
+        string sign = milliseconds > 0L ? "+" : string.Empty;
+        return $"{sign}{milliseconds}ms";
+    }
+
+    private Vector3 GetFeedbackWorldPosition(int noteIndex)
+    {
+        Vector3 playerPosition = player != null
+            ? player.transform.position
+            : transform.position;
+        if (nodes == null || noteIndex < 0 ||
+            noteIndex >= nodes.Count || nodes[noteIndex] == null)
+            return playerPosition;
+
+        Vector3 nodePosition = (Vector3)nodes[noteIndex].position;
+        return (playerPosition + nodePosition) * 0.5f;
     }
 }

@@ -10,14 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fc314799bd95b574abbd6c2bb839b0b2, type: 3}
-  m_Name: EdenFall
+  m_Name: YaoBan
   m_EditorClassIdentifier: Assembly-CSharp::ChartSO
-  clip: {fileID: 8300000, guid: 046acb6e947f1674587942ba407c2fea, type: 3}
-  nodes:
-  - beat: 5.5
-    order: 0
-    position: {x: 0, y: 0}
+  clip: {fileID: 8300000, guid: e06c04e8c8b4a9040bde0194c6ef09f1, type: 3}
+  nodes: []
   bpmTimeline:
     segments:
     - beat: 0
-      bpm: 115
+      bpm: 148
+      speed: 5
+  globalOffsetBeats: 0
