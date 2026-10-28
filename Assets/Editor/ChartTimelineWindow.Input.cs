@@ -30,14 +30,16 @@ public partial class ChartTimelineWindow
                 pixelsPerBeat = Mathf.Clamp(
                     pixelsPerBeat * Mathf.Pow(1.1f, -e.delta.y),
                     MinPixelsPerBeat, MaxPixelsPerBeat);
-                scrollBeat = Mathf.Max(0f, mouseBeat - (e.mousePosition.x - trackRect.x) / pixelsPerBeat);
+                scrollBeat = Mathf.Max(
+                    MinScrollBeat,
+                    mouseBeat - (e.mousePosition.x - trackRect.x) / pixelsPerBeat);
             }
             else
             {
                 float scrollDelta = (Mathf.Abs(e.delta.x) > Mathf.Abs(e.delta.y))
                     ? e.delta.x * 100f / pixelsPerBeat
                     : e.delta.y * 100f / pixelsPerBeat;
-                scrollBeat = Mathf.Max(0f, scrollBeat + scrollDelta);
+                scrollBeat = Mathf.Max(MinScrollBeat, scrollBeat + scrollDelta);
             }
             e.Use(); RequestRepaint(); return;
         }
@@ -45,7 +47,9 @@ public partial class ChartTimelineWindow
         if (e.type == EventType.MouseDrag && e.button == 2 &&
             (rulerRect.Contains(e.mousePosition) || trackRect.Contains(e.mousePosition)))
         {
-            scrollBeat = Mathf.Max(0f, scrollBeat - e.delta.x / pixelsPerBeat);
+            scrollBeat = Mathf.Max(
+                MinScrollBeat,
+                scrollBeat - e.delta.x / pixelsPerBeat);
             e.Use(); RequestRepaint(); return;
         }
 
@@ -61,19 +65,22 @@ public partial class ChartTimelineWindow
                 if (ctrl)
                 {
                     if (IsSelected(hit)) RemoveFromSelection(hit);
-                    else AddToSelection(hit);
+                    else
+                    {
+                        AddToSelection(hit);
+                        if (rangeSelectionAnchor == null)
+                            rangeSelectionAnchor = hit;
+                    }
                 }
                 else if (shift)
                 {
-                    AddToSelection(hit);
+                    SelectRangeTo(hit, markers);
                 }
                 else
                 {
-                    if (!IsSelected(hit))
-                    {
-                        ClearSelection();
-                        AddToSelection(hit);
-                    }
+                    ClearSelection();
+                    AddToSelection(hit);
+                    rangeSelectionAnchor = hit;
                     BeginDrag(e, trackRect);
                 }
                 SyncSelectionToUnity();
@@ -81,7 +88,7 @@ public partial class ChartTimelineWindow
             }
             else
             {
-                if (!ctrl && !shift && selection.Count > 0)
+                if (!ctrl && !shift)
                 {
                     ClearSelection();
                     SyncSelectionToUnity();
@@ -141,7 +148,7 @@ public partial class ChartTimelineWindow
                     boxCurrentBeat = ScreenXToBeat(e.mousePosition.x, trackRect);
                     CompleteBoxSelection(markers);
                 }
-                else CreateNodeFromClick(e, trackRect, markers);
+                else MovePlayheadFromClick(e, trackRect);
 
                 pendingClick = false;
                 boxSelecting = false;
@@ -175,6 +182,10 @@ public partial class ChartTimelineWindow
                 if (e.control || e.command || e.alt) return false;
                 ReplayPlayback();
                 RequestRepaint();
+                break;
+            case KeyCode.F:
+                if (e.control || e.command || e.alt) return false;
+                ReturnToPlayStart();
                 break;
             case KeyCode.J:
                 if (e.control || e.command || e.alt) return false;
@@ -216,6 +227,19 @@ public partial class ChartTimelineWindow
 
     private float ScreenXToBeat(float screenX, Rect trackRect) =>
         scrollBeat + (screenX - trackRect.x) / pixelsPerBeat;
+
+    private void MovePlayheadFromClick(Event e, Rect trackRect)
+    {
+        float beat = ScreenXToBeat(e.mousePosition.x, trackRect);
+        if (snap > 0f)
+            beat = Mathf.Round(beat / snap) * snap;
+
+        playheadBeat = Mathf.Max(0f, beat);
+        if (playing)
+            StartPlayback();
+
+        RequestRepaint();
+    }
 
     private void BeginDrag(Event e, Rect trackRect)
     {

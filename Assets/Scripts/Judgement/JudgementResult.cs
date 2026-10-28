@@ -26,7 +26,9 @@ public readonly struct JudgementResult
     public bool HasNote => NoteIndex >= 0;
     public bool IsSuccessfulHit =>
         NoteConsumed &&
-        (Grade == JudgementGrade.Perfect || Grade == JudgementGrade.Great);
+        (Grade == JudgementGrade.Perfect ||
+         Grade == JudgementGrade.Great ||
+         Grade == JudgementGrade.Bad);
 }
 
 public enum JudgementGrade

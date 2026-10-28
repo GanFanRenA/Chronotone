@@ -52,7 +52,9 @@ public partial class ChartTimelineWindow
 
         if (Mathf.Approximately(delta, 0f)) return false;
 
-        float newScroll = Mathf.Max(0f, scrollBeat + delta / pixelsPerBeat);
+        float newScroll = Mathf.Max(
+            MinScrollBeat,
+            scrollBeat + delta / pixelsPerBeat);
         if (Mathf.Approximately(newScroll, scrollBeat)) return false;
 
         scrollBeat = newScroll;
@@ -75,6 +77,7 @@ public partial class ChartTimelineWindow
             ClearSelection();
             SyncSelectionToUnity();
             InvalidateMarkerCache();
+            SceneView.RepaintAll();
         }
         PreparePreviewClip();
 
@@ -155,12 +158,48 @@ public partial class ChartTimelineWindow
             MaxPlaybackSpeed,
             GUILayout.Width(100));
         playbackSpeed = NormalizePlaybackSpeed(playbackSpeed);
-        if (!Mathf.Approximately(previousPlaybackSpeed, playbackSpeed) &&
-            previewSource != null)
+        if (!Mathf.Approximately(previousPlaybackSpeed, playbackSpeed))
         {
-            previewSource.pitch = playbackSpeed;
+            float currentBeat =
+                GetCurrentPlaybackBeat(previousPlaybackSpeed);
+            if (previewSource != null)
+                previewSource.pitch = playbackSpeed;
+            if (playing)
+            {
+                playheadBeat = currentBeat;
+                BeginNodeClickSchedule(
+                    AudioSettings.dspTime,
+                    currentBeat);
+            }
         }
         GUILayout.Label($"{playbackSpeed:0.0}x", EditorStyles.miniLabel, GUILayout.Width(36));
+
+        GUILayout.Space(8);
+        bool newPreviewEnabled = GUILayout.Toggle(
+            previewEnabled,
+            new GUIContent(
+                "启用预览",
+                "仅单选时显示物理预测线：绿色最早、洋红最晚，青色/橙色为节点拍点；多选暂停计算。"),
+            EditorStyles.toolbarButton,
+            GUILayout.Width(72));
+        if (newPreviewEnabled != previewEnabled)
+        {
+            previewEnabled = newPreviewEnabled;
+            SceneView.RepaintAll();
+        }
+
+        GUILayout.Space(4);
+        EditorGUI.BeginDisabledGroup(!CanUseNodeClickAudio);
+        bool newNodeClickEnabled = GUILayout.Toggle(
+            nodeClickEnabled,
+            new GUIContent(
+                "卡点音",
+                "播放经过节点时按 DSP 时间预调度固定音效。需要在 ChartPlayer 配置音效和 AudioSource 池。"),
+            EditorStyles.toolbarButton,
+            GUILayout.Width(56));
+        if (newNodeClickEnabled != nodeClickEnabled)
+            SetNodeClickEnabled(newNodeClickEnabled);
+        EditorGUI.EndDisabledGroup();
 
         EditorGUI.EndDisabledGroup();
         GUILayout.FlexibleSpace();
@@ -255,11 +294,19 @@ public partial class ChartTimelineWindow
         float viewBeats = Mathf.Max(1f, position.width) / pixelsPerBeat;
         float maxBeat = markers.Length > 0 ? markers[markers.Length - 1].beat : 0f;
         float furthestBeat = Mathf.Max(Mathf.Max(maxBeat, playStartBeat), playheadBeat);
-        float totalBeats = Mathf.Max(viewBeats, furthestBeat + 4f);
-        float maxScroll = Mathf.Max(0f, totalBeats - viewBeats);
+        float totalBeats = Mathf.Max(
+            Mathf.Max(viewBeats, furthestBeat + 4f),
+            scrollBeat + viewBeats);
+        float minScroll = MinScrollBeat;
+        float maxScroll = Mathf.Max(minScroll, totalBeats - viewBeats);
 
-        float newScroll = GUI.HorizontalScrollbar(rect, scrollBeat, viewBeats, 0f, totalBeats);
-        newScroll = Mathf.Clamp(newScroll, 0f, maxScroll);
+        float newScroll = GUI.HorizontalScrollbar(
+            rect,
+            scrollBeat,
+            viewBeats,
+            minScroll,
+            totalBeats);
+        newScroll = Mathf.Clamp(newScroll, minScroll, maxScroll);
         if (!Mathf.Approximately(newScroll, scrollBeat))
         {
             scrollBeat = newScroll;

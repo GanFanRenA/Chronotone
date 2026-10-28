@@ -51,9 +51,44 @@ public partial class ChartTimelineWindow
 
         float viewBeats = Mathf.Max(1f, position.width) / pixelsPerBeat;
         if (playheadBeat > scrollBeat + viewBeats * 0.85f)
-            scrollBeat = Mathf.Max(0f, playheadBeat - viewBeats * 0.2f);
+            scrollBeat = Mathf.Max(
+                MinScrollBeat,
+                playheadBeat - viewBeats * 0.2f);
 
         RequestRepaint();
+    }
+
+    private float GetCurrentPlaybackBeat(float speedForFallback)
+    {
+        if (!playing ||
+            targetPlayer == null ||
+            targetPlayer.chart == null ||
+            targetPlayer.chart.bpmTimeline == null)
+        {
+            return playheadBeat;
+        }
+
+        BpmTimeline timeline = targetPlayer.chart.bpmTimeline;
+        if (playbackUsesAudio)
+        {
+            if (previewSource == null)
+                return playheadBeat;
+
+            float chartSeconds =
+                previewSource.time -
+                targetPlayer.chart.GlobalOffsetSeconds;
+            return timeline.SecondsToBeat(
+                Mathf.Max(0f, chartSeconds));
+        }
+
+        float startSeconds =
+            timeline.BeatToSeconds(playbackAnchorBeat);
+        float elapsed =
+            (float)(AudioSettings.dspTime - playStartDspTime);
+        return timeline.SecondsToBeat(
+            startSeconds +
+            Mathf.Max(0f, elapsed) *
+            Mathf.Max(0.1f, speedForFallback));
     }
 
     private void TogglePlayback()
@@ -81,7 +116,17 @@ public partial class ChartTimelineWindow
             float audioSeconds =
                 targetPlayer.chart.bpmTimeline.BeatToSeconds(playbackAnchorBeat) +
                 targetPlayer.chart.GlobalOffsetSeconds;
-            previewSource.time = Mathf.Clamp(audioSeconds, 0f, Mathf.Max(0f, clip.length - 0.001f));
+            float clampedAudioSeconds = Mathf.Clamp(
+                audioSeconds,
+                0f,
+                Mathf.Max(0f, clip.length - 0.001f));
+            previewSource.time = clampedAudioSeconds;
+            playbackAnchorBeat =
+                targetPlayer.chart.bpmTimeline.SecondsToBeat(
+                    Mathf.Max(
+                        0f,
+                        clampedAudioSeconds -
+                        targetPlayer.chart.GlobalOffsetSeconds));
             playStartDspTime = AudioSettings.dspTime + PlaybackLeadTime;
             previewSource.PlayScheduled(playStartDspTime);
         }
@@ -96,6 +141,9 @@ public partial class ChartTimelineWindow
         }
 
         playing = true;
+        BeginNodeClickSchedule(
+            playStartDspTime,
+            playbackAnchorBeat);
         RequestRepaint();
     }
 
@@ -103,14 +151,30 @@ public partial class ChartTimelineWindow
     {
         if (!CanPlay()) return;
 
-        playheadBeat = playStartBeat;
+        FocusPlayStartBeat();
         StartPlayback();
+    }
+
+    private void ReturnToPlayStart()
+    {
+        StopPlayback();
+        FocusPlayStartBeat();
+    }
+
+    private void FocusPlayStartBeat()
+    {
+        playheadBeat = playStartBeat;
+        scrollBeat = Mathf.Max(
+            MinScrollBeat,
+            playStartBeat - RedAxisLeftInsetPixels / pixelsPerBeat);
+        RequestRepaint();
     }
 
     private void StopPlayback()
     {
         playing = false;
         playbackUsesAudio = false;
+        StopNodeClickAudio();
         if (previewSource != null)
             previewSource.Stop();
     }
@@ -132,6 +196,7 @@ public partial class ChartTimelineWindow
 
     private void PreparePreviewClip()
     {
+        PrepareNodeClickAudio();
         if (previewSource == null) return;
 
         AudioClip clip = CanPlay() ? targetPlayer.chart.clip : null;

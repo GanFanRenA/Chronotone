@@ -39,7 +39,7 @@ public class ChartSO : ScriptableObject
             float beat = Mathf.Max(0f, node.beat);
             float deltaX = bpmTimeline != null
                 ? bpmTimeline.DistanceBetweenBeats(previousBeat, beat)
-                : (beat - previousBeat) * 60f / 120f * 5f;
+                : (beat - previousBeat) * 5f;
 
             previousX += deltaX;
             node.deltaX = deltaX;

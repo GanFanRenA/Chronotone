@@ -12,6 +12,8 @@ public partial class ChartTimelineWindow : EditorWindow
     [SerializeField] private float playStartBeat;
     [SerializeField] private float playbackSpeed = 1f;
     [SerializeField] private NodeMarker nodePrefab;
+    [SerializeField] private bool previewEnabled;
+    [SerializeField] private bool nodeClickEnabled;
 
     private const float ToolbarHeight = 54f;
     private const float RulerHeight = 32f;
@@ -21,10 +23,11 @@ public partial class ChartTimelineWindow : EditorWindow
     private const float MaxPixelsPerBeat = 400f;
     private const float EdgeScrollZone = 40f;
     private const float EdgeScrollSpeed = 600f;
+    private const float RedAxisLeftInsetPixels = 24f;
     private const string NodePrefabPath = "Assets/Prefabs/Node.prefab";
     private const float PlaybackLeadTime = 0.1f;
-    private static readonly string[] SnapLabels = { "1", "1/2", "1/4", "1/8", "关" };
-    private static readonly float[] SnapValues = { 1f, 0.5f, 0.25f, 0.125f, 0f };
+    private static readonly string[] SnapLabels = { "1", "1/2", "1/4", "1/8", "1/16", "1/32", "关" };
+    private static readonly float[] SnapValues = { 1f, 0.5f, 0.25f, 0.125f, 0.0625f, 0.03125f, 0f };
     private static readonly GUIContent OffsetLabel =
         new GUIContent("偏移拍", "正值让谱面整体晚于音乐；单位是拍。");
     private static readonly GUIContent PlaybackSpeedLabel =
@@ -58,6 +61,9 @@ public partial class ChartTimelineWindow : EditorWindow
     private float playbackAnchorBeat;
     private AudioSource previewSource;
 
+    private float MinScrollBeat =>
+        -RedAxisLeftInsetPixels / pixelsPerBeat;
+
     [MenuItem("Window/Rhythm/Chart Timeline")]
     public static void Open() => GetWindow<ChartTimelineWindow>("Chart Timeline");
 
@@ -75,8 +81,12 @@ public partial class ChartTimelineWindow : EditorWindow
         Undo.undoRedoPerformed += OnUndoRedoPerformed;
         Undo.postprocessModifications -= OnPostprocessModifications;
         Undo.postprocessModifications += OnPostprocessModifications;
+        EditorApplication.update -= UpdateNodeClickSchedule;
+        EditorApplication.update += UpdateNodeClickSchedule;
         EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
         EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        SceneView.duringSceneGui -= DrawTrajectoryPreview;
+        SceneView.duringSceneGui += DrawTrajectoryPreview;
         windowVisible = true;
         InvalidateMarkerCache();
         EnsurePreviewSource();
@@ -89,7 +99,9 @@ public partial class ChartTimelineWindow : EditorWindow
         EditorApplication.hierarchyChanged -= OnHierarchyChanged;
         Undo.undoRedoPerformed -= OnUndoRedoPerformed;
         Undo.postprocessModifications -= OnPostprocessModifications;
+        EditorApplication.update -= UpdateNodeClickSchedule;
         EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+        SceneView.duringSceneGui -= DrawTrajectoryPreview;
         StopPlayback();
         if (previewSource != null && previewSource.gameObject != null)
             DestroyImmediate(previewSource.gameObject);

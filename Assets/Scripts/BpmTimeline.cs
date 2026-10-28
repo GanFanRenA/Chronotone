@@ -7,7 +7,8 @@ public class BpmSegment
 {
     public float beat;      // 该段从第几拍开始，第一段必须是 0
     public float bpm = 120f;
-    public float speed = 5f; // 谱面滚动速度，单位：世界单位/秒
+    [Tooltip("每个 beat 沿 X 轴跨越的格数；当前每格为 1 个世界单位。")]
+    public float speed = 5f;
 }
 
 [Serializable]
@@ -66,10 +67,9 @@ public class BpmTimeline
             }
 
             float beatSpan = Mathf.Max(0f, next.beat - current.beat);
-            float seconds = beatSpan * 60f /
-                Mathf.Max(0.0001f, Mathf.Abs(current.bpm));
             distancePrefixBySegment[i + 1] =
-                distancePrefixBySegment[i] + Mathf.Max(0f, current.speed) * seconds;
+                distancePrefixBySegment[i] +
+                Mathf.Max(0f, current.speed) * beatSpan;
         }
     }
 
@@ -78,7 +78,7 @@ public class BpmTimeline
     {
         if (segments == null || segments.Count == 0)
         {
-            return Mathf.Max(0f, beat) * 60f / 120f * 5f;
+            return Mathf.Max(0f, beat) * 5f;
         }
 
         if (distancePrefixBySegment == null ||
@@ -93,10 +93,9 @@ public class BpmTimeline
         if (segment == null)
             return distancePrefixBySegment[segmentIndex];
 
-        float bpm = Mathf.Max(0.0001f, Mathf.Abs(segment.bpm));
-        float seconds = Mathf.Max(0f, beat - segment.beat) * 60f / bpm;
         return distancePrefixBySegment[segmentIndex] +
-            Mathf.Max(0f, segment.speed) * seconds;
+            Mathf.Max(0f, segment.speed) *
+            Mathf.Max(0f, beat - segment.beat);
     }
 
     public float DistanceBetweenBeats(float fromBeat, float toBeat)

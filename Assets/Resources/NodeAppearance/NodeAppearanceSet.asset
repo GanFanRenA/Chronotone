@@ -22,3 +22,15 @@ MonoBehaviour:
   - mode: 2
     nodeColor: {r: 0.2, g: 0.65, b: 1, a: 0.7}
     timelineColor: {r: 0.2, g: 0.65, b: 1, a: 1}
+  - mode: 3
+    nodeColor: {r: 1, g: 0.28, b: 0.18, a: 0.7}
+    timelineColor: {r: 1, g: 0.28, b: 0.18, a: 1}
+  - mode: 4
+    nodeColor: {r: 0.9, g: 0.25, b: 0.75, a: 0.7}
+    timelineColor: {r: 0.9, g: 0.25, b: 0.75, a: 1}
+  - mode: 5
+    nodeColor: {r: 0.35, g: 0.8, b: 0.85, a: 0.7}
+    timelineColor: {r: 0.35, g: 0.8, b: 0.85, a: 1}
+  - mode: 6
+    nodeColor: {r: 0.45, g: 1, b: 0.35, a: 0.7}
+    timelineColor: {r: 0.45, g: 1, b: 0.35, a: 1}

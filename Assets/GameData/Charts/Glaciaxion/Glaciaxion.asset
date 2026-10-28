@@ -17,1221 +17,1101 @@ MonoBehaviour:
   - beat: 2.25
     order: 0
     mode: 0
-    position: {x: 9.782609, y: 0.5}
-    deltaX: 9.782609
+    position: {x: 18.5, y: 0.5}
+    deltaX: 18
   - beat: 4.25
     order: 0
     mode: 0
-    position: {x: 18.478262, y: 2.51}
-    deltaX: 8.695653
+    position: {x: 34.5, y: 2.51}
+    deltaX: 16
   - beat: 5.25
     order: 0
     mode: 0
-    position: {x: 22.826088, y: 4.5}
-    deltaX: 4.347826
+    position: {x: 42.5, y: 4.5}
+    deltaX: 8
   - beat: 6.25
     order: 0
     mode: 0
-    position: {x: 27.173912, y: 6.64}
-    deltaX: 4.347824
+    position: {x: 50.5, y: 6.46}
+    deltaX: 8
   - beat: 7.25
     order: 0
     mode: 2
-    position: {x: 31.52174, y: 2.51}
-    deltaX: 4.347828
+    position: {x: 58.5, y: 3.5}
+    deltaX: 8
   - beat: 9
     order: 0
     mode: 1
-    position: {x: 39.130436, y: 9.28}
-    deltaX: 7.608696
+    position: {x: 72.5, y: 9.28}
+    deltaX: 14
   - beat: 10.125
     order: 0
-    mode: 0
-    position: {x: 44.02174, y: 9.26}
-    deltaX: 4.891304
+    mode: 5
+    position: {x: 81.5, y: 11.46}
+    deltaX: 9
   - beat: 11.125
     order: 0
     mode: 0
-    position: {x: 48.369564, y: 7.32}
-    deltaX: 4.347824
+    position: {x: 89.5, y: 9.5}
+    deltaX: 8
   - beat: 12
     order: 0
     mode: 0
-    position: {x: 52.173916, y: 10.48}
-    deltaX: 3.8043518
+    position: {x: 96.5, y: 10.53}
+    deltaX: 7
   - beat: 13
     order: 0
     mode: 0
-    position: {x: 56.52174, y: 8.49}
-    deltaX: 4.347824
+    position: {x: 104.5, y: 11.53}
+    deltaX: 8
   - beat: 14
     order: 0
     mode: 0
-    position: {x: 60.869564, y: 5.42}
-    deltaX: 4.347824
-  - beat: 15
+    position: {x: 112.5, y: 9.5}
+    deltaX: 8
+  - beat: 15.125
     order: 0
     mode: 0
-    position: {x: 65.21739, y: 4.45}
-    deltaX: 4.347828
+    position: {x: 121.5, y: 10.48}
+    deltaX: 9
   - beat: 17
     order: 0
     mode: 1
-    position: {x: 73.91305, y: 0.5}
-    deltaX: 8.695656
+    position: {x: 136.5, y: -1.5699999}
+    deltaX: 15
   - beat: 18
     order: 0
     mode: 0
-    position: {x: 78.26087, y: 0.5}
-    deltaX: 4.347824
+    position: {x: 144.5, y: -1.3000002}
+    deltaX: 8
   - beat: 19
     order: 0
     mode: 0
-    position: {x: 82.6087, y: 0.5}
-    deltaX: 4.3478317
+    position: {x: 152.5, y: 0.4}
+    deltaX: 8
+  - beat: 20.5
+    order: 0
+    mode: 0
+    position: {x: 164.5, y: 1.4}
+    deltaX: 12
   - beat: 21
     order: 0
     mode: 0
-    position: {x: 91.30435, y: 0.5}
-    deltaX: 8.695648
+    position: {x: 168.5, y: -1.5899999}
+    deltaX: 4
   - beat: 23
     order: 0
     mode: 0
-    position: {x: 100, y: 0.5}
-    deltaX: 8.695648
+    position: {x: 184.5, y: 0.5}
+    deltaX: 16
   - beat: 24
     order: 0
     mode: 1
-    position: {x: 104.34783, y: 0.5}
-    deltaX: 4.3478317
+    position: {x: 192.5, y: 1.4300001}
+    deltaX: 8
   - beat: 24.5
     order: 0
-    mode: 2
-    position: {x: 106.52174, y: 0.5}
-    deltaX: 2.173912
+    mode: 5
+    position: {x: 196.5, y: 1.46}
+    deltaX: 4
   - beat: 25
     order: 0
     mode: 2
-    position: {x: 108.69565, y: 0.5}
-    deltaX: 2.1739044
+    position: {x: 200.5, y: 8.46}
+    deltaX: 4
   - beat: 27
     order: 0
     mode: 0
-    position: {x: 117.3913, y: 0.5}
-    deltaX: 8.695648
+    position: {x: 216.5, y: 6.58}
+    deltaX: 16
   - beat: 29
     order: 0
     mode: 0
-    position: {x: 126.08696, y: 0.5}
-    deltaX: 8.695663
+    position: {x: 232.5, y: 8.51}
+    deltaX: 16
   - beat: 31
     order: 0
     mode: 0
-    position: {x: 134.78261, y: 0.5}
-    deltaX: 8.695648
+    position: {x: 248.5, y: 10.44}
+    deltaX: 16
   - beat: 33
     order: 0
     mode: 0
-    position: {x: 143.47826, y: 0.5}
-    deltaX: 8.695648
+    position: {x: 264.5, y: 12.43}
+    deltaX: 16
   - beat: 34
     order: 0
     mode: 1
-    position: {x: 147.8261, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 35
+    position: {x: 272.5, y: 14.51}
+    deltaX: 8
+  - beat: 34.875
     order: 0
     mode: 0
-    position: {x: 152.1739, y: 0.5}
-    deltaX: 4.347809
-  - beat: 37
+    position: {x: 279.5, y: 14.5}
+    deltaX: 7
+  - beat: 36.875
     order: 0
     mode: 0
-    position: {x: 160.86957, y: 0.5}
-    deltaX: 8.695663
-  - beat: 38
+    position: {x: 295.5, y: 15.55}
+    deltaX: 16
+  - beat: 37.875
     order: 0
     mode: 0
-    position: {x: 165.2174, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 38.25
+    position: {x: 303.5, y: 14.65}
+    deltaX: 8
+  - beat: 38.375
     order: 0
     mode: 0
-    position: {x: 166.30434, y: 0.5}
-    deltaX: 1.0869293
+    position: {x: 307.5, y: 11.94}
+    deltaX: 4
   - beat: 39
     order: 0
-    mode: 0
-    position: {x: 169.56522, y: 0.5}
-    deltaX: 3.2608795
-  - beat: 40.5
+    mode: 5
+    position: {x: 312.5, y: 9.97}
+    deltaX: 5
+  - beat: 40.375
     order: 0
     mode: 0
-    position: {x: 176.08696, y: 0.5}
-    deltaX: 6.521744
-  - beat: 40.75
+    position: {x: 323.5, y: 19.51}
+    deltaX: 11
+  - beat: 40.875
     order: 0
     mode: 0
-    position: {x: 177.17392, y: 0.5}
-    deltaX: 1.0869598
+    position: {x: 327.5, y: 19.07}
+    deltaX: 4
   - beat: 41.75
     order: 0
     mode: 0
-    position: {x: 181.52174, y: 0.5}
-    deltaX: 4.347824
-  - beat: 42.625
+    position: {x: 334.5, y: 17.48}
+    deltaX: 7
+  - beat: 42.75
     order: 0
-    mode: 0
-    position: {x: 185.32608, y: 0.5}
-    deltaX: 3.8043365
+    mode: 2
+    position: {x: 342.5, y: 17.5}
+    deltaX: 8
   - beat: 43
     order: 0
     mode: 1
-    position: {x: 186.95651, y: 0.5}
-    deltaX: 1.6304321
+    position: {x: 344.5, y: 11.75}
+    deltaX: 2
   - beat: 43.75
     order: 0
     mode: 0
-    position: {x: 190.2174, y: 0.5}
-    deltaX: 3.2608948
+    position: {x: 350.5, y: 9.5}
+    deltaX: 6
   - beat: 44.125
     order: 0
     mode: 0
-    position: {x: 191.84782, y: 0.5}
-    deltaX: 1.6304169
-  - beat: 44.625
+    position: {x: 353.5, y: 11.52}
+    deltaX: 3
+  - beat: 44.5
     order: 0
     mode: 0
-    position: {x: 194.02174, y: 0.5}
-    deltaX: 2.1739197
-  - beat: 45.5
+    position: {x: 356.5, y: 13.52}
+    deltaX: 3
+  - beat: 45.75
     order: 0
     mode: 0
-    position: {x: 197.82608, y: 0.5}
-    deltaX: 3.8043365
-  - beat: 46.5
+    position: {x: 366.5, y: 11.46}
+    deltaX: 10
+  - beat: 46.75
     order: 0
     mode: 0
-    position: {x: 202.17392, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 47.5
+    position: {x: 374.5, y: 13.45}
+    deltaX: 8
+  - beat: 47.75
     order: 0
     mode: 0
-    position: {x: 206.52174, y: 0.5}
-    deltaX: 4.347824
-  - beat: 48.5
-    order: 0
-    mode: 0
-    position: {x: 210.86957, y: 0.5}
-    deltaX: 4.347824
+    position: {x: 382.5, y: 15.51}
+    deltaX: 8
   - beat: 48.75
     order: 0
-    mode: 0
-    position: {x: 211.95651, y: 0.5}
-    deltaX: 1.0869446
+    mode: 4
+    position: {x: 390.5, y: 15.58}
+    deltaX: 8
   - beat: 49
     order: 0
     mode: 0
-    position: {x: 213.04349, y: 0.5}
-    deltaX: 1.0869751
+    position: {x: 392.5, y: 20.85}
+    deltaX: 2
+  - beat: 49.25
+    order: 0
+    mode: 6
+    position: {x: 394.5, y: 18.78}
+    deltaX: 2
   - beat: 55
     order: 0
     mode: 1
-    position: {x: 239.13043, y: 0.5}
-    deltaX: 26.086945
-  - beat: 57.5
+    position: {x: 440.5, y: 14.41}
+    deltaX: 46
+  - beat: 57.625
     order: 0
     mode: 0
-    position: {x: 250, y: 0.5}
-    deltaX: 10.869568
+    position: {x: 461.5, y: 8.469999}
+    deltaX: 21
   - beat: 58.625
     order: 0
     mode: 0
-    position: {x: 254.8913, y: 0.5}
-    deltaX: 4.8912964
-  - beat: 59.375
+    position: {x: 469.5, y: 9.5}
+    deltaX: 8
+  - beat: 59.5
+    order: 0
+    mode: 5
+    position: {x: 476.5, y: 6.49}
+    deltaX: 7
+  - beat: 60.5
     order: 0
     mode: 0
-    position: {x: 258.1522, y: 0.5}
-    deltaX: 3.2608948
-  - beat: 60.375
-    order: 0
-    mode: 0
-    position: {x: 262.5, y: 0.5}
-    deltaX: 4.347809
-  - beat: 61.375
-    order: 0
-    mode: 0
-    position: {x: 266.8478, y: 0.5}
-    deltaX: 4.347809
+    position: {x: 484.5, y: 11.55}
+    deltaX: 8
   - beat: 61.5
     order: 0
     mode: 0
-    position: {x: 267.3913, y: 0.5}
-    deltaX: 0.54348755
+    position: {x: 492.5, y: 11.49}
+    deltaX: 8
   - beat: 61.625
     order: 0
-    mode: 0
-    position: {x: 267.93478, y: 0.5}
-    deltaX: 0.54348755
-  - beat: 62.25
+    mode: 6
+    position: {x: 493.5, y: 9.85}
+    deltaX: 1
+  - beat: 61.75
     order: 0
-    mode: 0
-    position: {x: 270.6522, y: 0.5}
-    deltaX: 2.7174072
-  - beat: 63.25
+    mode: 6
+    position: {x: 494.5, y: 11.48}
+    deltaX: 1
+  - beat: 62.5
     order: 0
-    mode: 0
-    position: {x: 275, y: 0.5}
-    deltaX: 4.347809
-  - beat: 63.375
-    order: 0
-    mode: 0
-    position: {x: 275.5435, y: 0.5}
-    deltaX: 0.54348755
+    mode: 4
+    position: {x: 500.5, y: 10.4}
+    deltaX: 6
   - beat: 63.5
     order: 0
     mode: 0
-    position: {x: 276.08698, y: 0.5}
-    deltaX: 0.54348755
+    position: {x: 508.5, y: 5.89}
+    deltaX: 8
   - beat: 63.625
     order: 0
+    mode: 5
+    position: {x: 509.5, y: 7.49}
+    deltaX: 1
+  - beat: 63.75
+    order: 0
     mode: 0
-    position: {x: 276.63043, y: 0.5}
-    deltaX: 0.54345703
+    position: {x: 510.5, y: 8.12}
+    deltaX: 1
+  - beat: 63.875
+    order: 0
+    mode: 6
+    position: {x: 511.5, y: 6.62}
+    deltaX: 1
   - beat: 64.5
     order: 0
     mode: 0
-    position: {x: 280.43478, y: 0.5}
-    deltaX: 3.8043518
-  - beat: 64.625
+    position: {x: 516.5, y: 7.44}
+    deltaX: 5
+  - beat: 65
     order: 0
     mode: 0
-    position: {x: 280.97827, y: 0.5}
-    deltaX: 0.54348755
-  - beat: 64.75
+    position: {x: 520.5, y: 7.89}
+    deltaX: 4
+  - beat: 65.5
     order: 0
     mode: 0
-    position: {x: 281.52173, y: 0.5}
-    deltaX: 0.54345703
-  - beat: 65.25
+    position: {x: 524.5, y: 8.41}
+    deltaX: 4
+  - beat: 66
     order: 0
     mode: 0
-    position: {x: 283.69565, y: 0.5}
-    deltaX: 2.1739197
-  - beat: 65.875
+    position: {x: 528.5, y: 8.88}
+    deltaX: 4
+  - beat: 66.5
     order: 0
     mode: 0
-    position: {x: 286.41302, y: 0.5}
-    deltaX: 2.7173767
-  - beat: 66.25
+    position: {x: 532.5, y: 9.36}
+    deltaX: 4
+  - beat: 67.375
+    order: 0
+    mode: 4
+    position: {x: 539.5, y: 4.42}
+    deltaX: 7
+  - beat: 68.375
+    order: 0
+    mode: 6
+    position: {x: 547.5, y: 11.35}
+    deltaX: 8
+  - beat: 68.65625
+    order: 0
+    mode: 3
+    position: {x: 549.75, y: 13.37}
+    deltaX: 2.25
+  - beat: 68.9375
     order: 0
     mode: 0
-    position: {x: 288.0435, y: 0.5}
-    deltaX: 1.6304626
-  - beat: 67.25
-    order: 0
-    mode: 0
-    position: {x: 292.3913, y: 0.5}
-    deltaX: 4.347809
-  - beat: 68.125
-    order: 0
-    mode: 0
-    position: {x: 296.19565, y: 0.5}
-    deltaX: 3.8043518
-  - beat: 69
-    order: 0
-    mode: 0
-    position: {x: 300, y: 0.5}
-    deltaX: 3.8043518
-  - beat: 69.125
-    order: 0
-    mode: 0
-    position: {x: 300.5435, y: 0.5}
-    deltaX: 0.54348755
+    position: {x: 552, y: 6.59}
+    deltaX: 2.25
   - beat: 69.25
     order: 0
-    mode: 0
-    position: {x: 301.08698, y: 0.5}
-    deltaX: 0.54348755
-  - beat: 69.375
+    mode: 6
+    position: {x: 554.5, y: 8.8}
+    deltaX: 2.5
+  - beat: 70.375
+    order: 0
+    mode: 2
+    position: {x: 563.5, y: 13.5}
+    deltaX: 9
+  - beat: 71
     order: 0
     mode: 0
-    position: {x: 301.63043, y: 0.5}
-    deltaX: 0.54345703
-  - beat: 70.25
-    order: 0
-    mode: 0
-    position: {x: 305.43478, y: 0.5}
-    deltaX: 3.8043518
+    position: {x: 568.5, y: 13.5}
+    deltaX: 5
   - beat: 71.125
     order: 0
     mode: 0
-    position: {x: 309.23914, y: 0.5}
-    deltaX: 3.8043518
-  - beat: 72.125
+    position: {x: 569.5, y: 11.49}
+    deltaX: 1
+  - beat: 71.25
     order: 0
     mode: 0
-    position: {x: 313.58698, y: 0.5}
-    deltaX: 4.3478394
+    position: {x: 570.5, y: 11.49}
+    deltaX: 1
+  - beat: 71.875
+    order: 0
+    mode: 0
+    position: {x: 575.5, y: 11.49}
+    deltaX: 5
+  - beat: 72.25
+    order: 0
+    mode: 0
+    position: {x: 578.5, y: 9.5}
+    deltaX: 3
   - beat: 73
     order: 0
     mode: 1
-    position: {x: 317.3913, y: 0.5}
-    deltaX: 3.8043213
-  - beat: 75.5
+    position: {x: 584.5, y: 6.45}
+    deltaX: 6
+  - beat: 75.25
     order: 0
     mode: 0
-    position: {x: 328.26086, y: 0.5}
-    deltaX: 10.869568
+    position: {x: 602.5, y: 6.48}
+    deltaX: 18
   - beat: 76.25
     order: 0
     mode: 0
-    position: {x: 331.52173, y: 0.5}
-    deltaX: 3.2608643
+    position: {x: 610.5, y: 7.41}
+    deltaX: 8
   - beat: 77.25
     order: 0
     mode: 0
-    position: {x: 335.86957, y: 0.5}
-    deltaX: 4.3478394
+    position: {x: 618.5, y: 7.38}
+    deltaX: 8
   - beat: 78.25
     order: 0
     mode: 0
-    position: {x: 340.2174, y: 0.5}
-    deltaX: 4.3478394
+    position: {x: 626.5, y: 7.83}
+    deltaX: 8
   - beat: 79.25
     order: 0
     mode: 0
-    position: {x: 344.5652, y: 0.5}
-    deltaX: 4.3477783
+    position: {x: 634.5, y: 5.82}
+    deltaX: 8
   - beat: 80.25
     order: 0
     mode: 0
-    position: {x: 348.91302, y: 0.5}
-    deltaX: 4.3478394
+    position: {x: 642.5, y: 4.62}
+    deltaX: 8
   - beat: 84
     order: 0
     mode: 1
-    position: {x: 365.2174, y: 0.5}
-    deltaX: 16.304382
-  - beat: 85
+    position: {x: 672.5, y: 1.45}
+    deltaX: 30
+  - beat: 85.125
     order: 0
     mode: 0
-    position: {x: 369.5652, y: 0.5}
-    deltaX: 4.3477783
-  - beat: 86
+    position: {x: 681.5, y: 0.46}
+    deltaX: 9
+  - beat: 86.125
     order: 0
     mode: 0
-    position: {x: 373.91302, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 87
+    position: {x: 689.5, y: 2.42}
+    deltaX: 8
+  - beat: 87.125
     order: 0
     mode: 0
-    position: {x: 378.26086, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 88
+    position: {x: 697.5, y: 4.56}
+    deltaX: 8
+  - beat: 88.125
     order: 0
     mode: 0
-    position: {x: 382.60867, y: 0.5}
-    deltaX: 4.347809
-  - beat: 89
+    position: {x: 705.5, y: 6.41}
+    deltaX: 8
+  - beat: 89.125
     order: 0
     mode: 0
-    position: {x: 386.9565, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 90
+    position: {x: 713.5, y: 8.43}
+    deltaX: 8
+  - beat: 90.125
     order: 0
     mode: 0
-    position: {x: 391.30435, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 91
+    position: {x: 721.5, y: 10.38}
+    deltaX: 8
+  - beat: 91.125
     order: 0
     mode: 0
-    position: {x: 395.65216, y: 0.5}
-    deltaX: 4.347809
-  - beat: 92
+    position: {x: 729.5, y: 12.42}
+    deltaX: 8
+  - beat: 92.125
     order: 0
     mode: 0
-    position: {x: 400, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 93
+    position: {x: 737.5, y: 14.54}
+    deltaX: 8
+  - beat: 93.125
     order: 0
     mode: 0
-    position: {x: 404.34784, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 94
+    position: {x: 745.5, y: 16.5}
+    deltaX: 8
+  - beat: 94.125
     order: 0
     mode: 0
-    position: {x: 408.69565, y: 0.5}
-    deltaX: 4.347809
-  - beat: 95
+    position: {x: 753.5, y: 17.5}
+    deltaX: 8
+  - beat: 95.125
     order: 0
     mode: 0
-    position: {x: 413.0435, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 96
+    position: {x: 761.5, y: 18.34}
+    deltaX: 8
+  - beat: 96.125
     order: 0
     mode: 0
-    position: {x: 417.39133, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 97
+    position: {x: 769.5, y: 17.45}
+    deltaX: 8
+  - beat: 97.125
     order: 0
     mode: 0
-    position: {x: 421.73914, y: 0.5}
-    deltaX: 4.347809
-  - beat: 98
+    position: {x: 777.5, y: 15.49}
+    deltaX: 8
+  - beat: 98.125
     order: 0
     mode: 1
-    position: {x: 426.08698, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 99
+    position: {x: 785.5, y: 9.5}
+    deltaX: 8
+  - beat: 99.125
     order: 0
     mode: 0
-    position: {x: 430.4348, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 100
+    position: {x: 793.5, y: 9.5}
+    deltaX: 8
+  - beat: 100.875
     order: 0
     mode: 0
-    position: {x: 434.7826, y: 0.5}
-    deltaX: 4.3477783
-  - beat: 100.125
+    position: {x: 807.5, y: 9.5}
+    deltaX: 14
+  - beat: 101.875
     order: 0
     mode: 0
-    position: {x: 435.32608, y: 0.5}
-    deltaX: 0.54348755
-  - beat: 100.25
+    position: {x: 815.5, y: 9.5}
+    deltaX: 8
+  - beat: 102.875
     order: 0
     mode: 0
-    position: {x: 435.86957, y: 0.5}
-    deltaX: 0.54348755
-  - beat: 101
+    position: {x: 823.5, y: 9.5}
+    deltaX: 8
+  - beat: 103.875
     order: 0
     mode: 0
-    position: {x: 439.13043, y: 0.5}
-    deltaX: 3.2608643
-  - beat: 102
+    position: {x: 831.5, y: 9.5}
+    deltaX: 8
+  - beat: 104.875
     order: 0
     mode: 0
-    position: {x: 443.47827, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 103
+    position: {x: 839.5, y: 9.5}
+    deltaX: 8
+  - beat: 105.875
     order: 0
     mode: 0
-    position: {x: 447.82608, y: 0.5}
-    deltaX: 4.347809
-  - beat: 104
+    position: {x: 847.5, y: 9.5}
+    deltaX: 8
+  - beat: 107.875
     order: 0
     mode: 0
-    position: {x: 452.17392, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 105
+    position: {x: 863.5, y: 9.5}
+    deltaX: 16
+  - beat: 108.875
     order: 0
     mode: 0
-    position: {x: 456.52173, y: 0.5}
-    deltaX: 4.347809
-  - beat: 106
+    position: {x: 871.5, y: 9.5}
+    deltaX: 8
+  - beat: 109.875
     order: 0
     mode: 0
-    position: {x: 460.86957, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 107
+    position: {x: 879.5, y: 9.5}
+    deltaX: 8
+  - beat: 110.875
     order: 0
     mode: 0
-    position: {x: 465.2174, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 107.125
+    position: {x: 887.5, y: 9.5}
+    deltaX: 8
+  - beat: 112.875
     order: 0
     mode: 0
-    position: {x: 465.76086, y: 0.5}
-    deltaX: 0.54345703
-  - beat: 107.25
+    position: {x: 903.5, y: 9.5}
+    deltaX: 16
+  - beat: 114.875
     order: 0
     mode: 0
-    position: {x: 466.30435, y: 0.5}
-    deltaX: 0.54348755
-  - beat: 108
+    position: {x: 919.5, y: 9.5}
+    deltaX: 16
+  - beat: 116.875
     order: 0
     mode: 0
-    position: {x: 469.5652, y: 0.5}
-    deltaX: 3.2608337
-  - beat: 109
-    order: 0
-    mode: 0
-    position: {x: 473.91302, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 110
-    order: 0
-    mode: 0
-    position: {x: 478.26086, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 111
-    order: 0
-    mode: 0
-    position: {x: 482.60867, y: 0.5}
-    deltaX: 4.347809
-  - beat: 112
-    order: 0
-    mode: 0
-    position: {x: 486.9565, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 112.125
-    order: 0
-    mode: 0
-    position: {x: 487.5, y: 0.5}
-    deltaX: 0.54348755
-  - beat: 112.25
-    order: 0
-    mode: 0
-    position: {x: 488.0435, y: 0.5}
-    deltaX: 0.54348755
-  - beat: 113
-    order: 0
-    mode: 0
-    position: {x: 491.30435, y: 0.5}
-    deltaX: 3.2608643
-  - beat: 115
-    order: 0
-    mode: 0
-    position: {x: 500, y: 0.5}
-    deltaX: 8.695648
-  - beat: 116
-    order: 0
-    mode: 0
-    position: {x: 504.34784, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 116.125
-    order: 0
-    mode: 0
-    position: {x: 504.89133, y: 0.5}
-    deltaX: 0.54348755
-  - beat: 116.25
-    order: 0
-    mode: 0
-    position: {x: 505.4348, y: 0.5}
-    deltaX: 0.54348755
-  - beat: 117
-    order: 0
-    mode: 0
-    position: {x: 508.69565, y: 0.5}
-    deltaX: 3.2608337
+    position: {x: 935.5, y: 9.5}
+    deltaX: 16
   - beat: 118
     order: 0
     mode: 1
-    position: {x: 513.04346, y: 0.5}
-    deltaX: 4.347809
+    position: {x: 944.5, y: 9.5}
+    deltaX: 9
   - beat: 118.75
     order: 0
     mode: 0
-    position: {x: 516.3044, y: 0.5}
-    deltaX: 3.2609253
-  - beat: 119.5
+    position: {x: 950.5, y: 9.5}
+    deltaX: 6
+  - beat: 119.75
     order: 0
     mode: 0
-    position: {x: 519.5652, y: 0.5}
-    deltaX: 3.2608032
-  - beat: 120.5
+    position: {x: 958.5, y: 9.5}
+    deltaX: 8
+  - beat: 120.625
     order: 0
     mode: 0
-    position: {x: 523.913, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 120.75
+    position: {x: 965.5, y: 9.5}
+    deltaX: 7
+  - beat: 121.125
     order: 0
     mode: 0
-    position: {x: 525, y: 0.5}
-    deltaX: 1.0869751
-  - beat: 121.5
+    position: {x: 969.5, y: 9.5}
+    deltaX: 4
+  - beat: 121.625
     order: 0
     mode: 0
-    position: {x: 528.26086, y: 0.5}
-    deltaX: 3.2608643
-  - beat: 122.5
+    position: {x: 973.5, y: 9.5}
+    deltaX: 4
+  - beat: 122.625
     order: 0
     mode: 0
-    position: {x: 532.6087, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 123.375
+    position: {x: 981.5, y: 9.5}
+    deltaX: 8
+  - beat: 123.625
     order: 0
     mode: 0
-    position: {x: 536.413, y: 0.5}
-    deltaX: 3.8043213
+    position: {x: 989.5, y: 9.5}
+    deltaX: 8
   - beat: 124
     order: 0
     mode: 1
-    position: {x: 539.13043, y: 0.5}
-    deltaX: 2.7174072
-  - beat: 125
+    position: {x: 992.5, y: 9.5}
+    deltaX: 3
+  - beat: 125.125
     order: 0
     mode: 0
-    position: {x: 543.4783, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 125.25
+    position: {x: 1001.5, y: 9.5}
+    deltaX: 9
+  - beat: 125.625
     order: 0
     mode: 0
-    position: {x: 544.5652, y: 0.5}
-    deltaX: 1.0869141
-  - beat: 126
-    order: 0
-    mode: 0
-    position: {x: 547.82605, y: 0.5}
-    deltaX: 3.2608643
-  - beat: 126.125
-    order: 0
-    mode: 0
-    position: {x: 548.36957, y: 0.5}
-    deltaX: 0.54351807
-  - beat: 126.375
-    order: 0
-    mode: 0
-    position: {x: 549.45654, y: 0.5}
-    deltaX: 1.0869751
-  - beat: 127.25
-    order: 0
-    mode: 0
-    position: {x: 553.26086, y: 0.5}
-    deltaX: 3.8043213
+    position: {x: 1005.5, y: 9.5}
+    deltaX: 4
   - beat: 127.375
     order: 0
     mode: 0
-    position: {x: 553.8044, y: 0.5}
-    deltaX: 0.54351807
-  - beat: 128.5
+    position: {x: 1019.5, y: 9.5}
+    deltaX: 14
+  - beat: 127.625
     order: 0
     mode: 0
-    position: {x: 558.6956, y: 0.5}
-    deltaX: 4.8912354
-  - beat: 129.375
+    position: {x: 1021.5, y: 9.5}
+    deltaX: 2
+  - beat: 128.625
     order: 0
     mode: 0
-    position: {x: 562.5, y: 0.5}
-    deltaX: 3.8043823
-  - beat: 130.375
+    position: {x: 1029.5, y: 9.5}
+    deltaX: 8
+  - beat: 129.625
     order: 0
     mode: 0
-    position: {x: 566.84784, y: 0.5}
-    deltaX: 4.3478394
+    position: {x: 1037.5, y: 9.5}
+    deltaX: 8
+  - beat: 130.625
+    order: 0
+    mode: 0
+    position: {x: 1045.5, y: 9.5}
+    deltaX: 8
   - beat: 131
     order: 0
     mode: 0
-    position: {x: 569.5652, y: 0.5}
-    deltaX: 2.7173462
-  - beat: 131.25
+    position: {x: 1048.5, y: 9.5}
+    deltaX: 3
+  - beat: 131.375
     order: 0
     mode: 0
-    position: {x: 570.65216, y: 0.5}
-    deltaX: 1.0869751
-  - beat: 132.375
+    position: {x: 1051.5, y: 9.5}
+    deltaX: 3
+  - beat: 132.5
     order: 0
     mode: 0
-    position: {x: 575.54346, y: 0.5}
-    deltaX: 4.8912964
-  - beat: 132.625
+    position: {x: 1060.5, y: 9.5}
+    deltaX: 9
+  - beat: 132.875
     order: 0
     mode: 0
-    position: {x: 576.63043, y: 0.5}
-    deltaX: 1.0869751
-  - beat: 133
-    order: 0
-    mode: 0
-    position: {x: 578.26086, y: 0.5}
-    deltaX: 1.6304321
-  - beat: 133.125
-    order: 0
-    mode: 0
-    position: {x: 578.8044, y: 0.5}
-    deltaX: 0.54351807
+    position: {x: 1063.5, y: 9.5}
+    deltaX: 3
   - beat: 133.25
     order: 0
     mode: 0
-    position: {x: 579.34784, y: 0.5}
-    deltaX: 0.54345703
-  - beat: 133.75
+    position: {x: 1066.5, y: 9.5}
+    deltaX: 3
+  - beat: 133.375
     order: 0
     mode: 0
-    position: {x: 581.5217, y: 0.5}
-    deltaX: 2.1738892
-  - beat: 133.875
+    position: {x: 1067.5, y: 9.5}
+    deltaX: 1
+  - beat: 133.5
     order: 0
     mode: 0
-    position: {x: 582.0652, y: 0.5}
-    deltaX: 0.54345703
+    position: {x: 1068.5, y: 9.5}
+    deltaX: 1
   - beat: 134
     order: 0
     mode: 0
-    position: {x: 582.6087, y: 0.5}
-    deltaX: 0.54351807
-  - beat: 134.25
-    order: 0
-    mode: 0
-    position: {x: 583.6956, y: 0.5}
-    deltaX: 1.0869141
+    position: {x: 1072.5, y: 9.5}
+    deltaX: 4
   - beat: 134.5
     order: 0
     mode: 1
-    position: {x: 584.7826, y: 0.5}
-    deltaX: 1.0869751
-  - beat: 135.25
+    position: {x: 1076.5, y: 9.5}
+    deltaX: 4
+  - beat: 135.5
     order: 0
     mode: 0
-    position: {x: 588.04346, y: 0.5}
-    deltaX: 3.2608643
-  - beat: 136.25
+    position: {x: 1084.5, y: 9.5}
+    deltaX: 8
+  - beat: 136.5
     order: 0
     mode: 0
-    position: {x: 592.3913, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 137.25
+    position: {x: 1092.5, y: 9.5}
+    deltaX: 8
+  - beat: 137.5
     order: 0
     mode: 0
-    position: {x: 596.73914, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 138.25
+    position: {x: 1100.5, y: 9.5}
+    deltaX: 8
+  - beat: 138.5
     order: 0
     mode: 0
-    position: {x: 601.087, y: 0.5}
-    deltaX: 4.3478394
+    position: {x: 1108.5, y: 9.5}
+    deltaX: 8
   - beat: 139
     order: 0
     mode: 0
-    position: {x: 604.34784, y: 0.5}
-    deltaX: 3.2608643
-  - beat: 139.25
+    position: {x: 1112.5, y: 9.5}
+    deltaX: 4
+  - beat: 139.5
     order: 0
     mode: 0
-    position: {x: 605.4348, y: 0.5}
-    deltaX: 1.0869751
+    position: {x: 1116.5, y: 9.5}
+    deltaX: 4
   - beat: 140
     order: 0
     mode: 1
-    position: {x: 608.6956, y: 0.5}
-    deltaX: 3.2608032
+    position: {x: 1120.5, y: 9.5}
+    deltaX: 4
   - beat: 141
     order: 0
     mode: 0
-    position: {x: 613.04346, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 141.25
+    position: {x: 1128.5, y: 9.5}
+    deltaX: 8
+  - beat: 141.5
     order: 0
     mode: 0
-    position: {x: 614.13043, y: 0.5}
-    deltaX: 1.0869751
-  - beat: 142.25
-    order: 0
-    mode: 0
-    position: {x: 618.4783, y: 0.5}
-    deltaX: 4.3478394
+    position: {x: 1132.5, y: 9.5}
+    deltaX: 4
   - beat: 142.375
     order: 0
     mode: 0
-    position: {x: 619.0217, y: 0.5}
-    deltaX: 0.54345703
-  - beat: 142.5
+    position: {x: 1139.5, y: 9.5}
+    deltaX: 7
+  - beat: 142.625
     order: 0
     mode: 0
-    position: {x: 619.5652, y: 0.5}
-    deltaX: 0.54345703
-  - beat: 143.25
+    position: {x: 1141.5, y: 9.5}
+    deltaX: 2
+  - beat: 142.875
     order: 0
     mode: 0
-    position: {x: 622.82605, y: 0.5}
-    deltaX: 3.2608643
-  - beat: 144.125
+    position: {x: 1143.5, y: 9.5}
+    deltaX: 2
+  - beat: 143.5
     order: 0
     mode: 0
-    position: {x: 626.63043, y: 0.5}
-    deltaX: 3.8043823
-  - beat: 145.125
+    position: {x: 1148.5, y: 9.5}
+    deltaX: 5
+  - beat: 144.375
     order: 0
     mode: 0
-    position: {x: 630.9783, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 146.125
+    position: {x: 1155.5, y: 9.5}
+    deltaX: 7
+  - beat: 145.375
     order: 0
     mode: 0
-    position: {x: 635.32605, y: 0.5}
-    deltaX: 4.3477783
+    position: {x: 1163.5, y: 9.5}
+    deltaX: 8
+  - beat: 146.375
+    order: 0
+    mode: 0
+    position: {x: 1171.5, y: 9.5}
+    deltaX: 8
   - beat: 147.125
     order: 0
     mode: 0
-    position: {x: 639.67395, y: 0.5}
-    deltaX: 4.3479004
-  - beat: 147.25
+    position: {x: 1177.5, y: 9.5}
+    deltaX: 6
+  - beat: 147.375
     order: 0
     mode: 0
-    position: {x: 640.21735, y: 0.5}
-    deltaX: 0.543396
-  - beat: 148.125
-    order: 0
-    mode: 0
-    position: {x: 644.0217, y: 0.5}
-    deltaX: 3.8043823
-  - beat: 148.25
-    order: 0
-    mode: 0
-    position: {x: 644.5652, y: 0.5}
-    deltaX: 0.54345703
+    position: {x: 1179.5, y: 9.5}
+    deltaX: 2
   - beat: 148.375
     order: 0
     mode: 0
-    position: {x: 645.1087, y: 0.5}
-    deltaX: 0.54351807
+    position: {x: 1187.5, y: 9.5}
+    deltaX: 8
   - beat: 149
     order: 0
     mode: 1
-    position: {x: 647.82605, y: 0.5}
-    deltaX: 2.7173462
-  - beat: 150
+    position: {x: 1192.5, y: 9.5}
+    deltaX: 5
+  - beat: 150.25
     order: 0
     mode: 0
-    position: {x: 652.17395, y: 0.5}
-    deltaX: 4.3479004
-  - beat: 151
+    position: {x: 1202.5, y: 9.5}
+    deltaX: 10
+  - beat: 151.25
     order: 0
     mode: 0
-    position: {x: 656.5217, y: 0.5}
-    deltaX: 4.3477783
-  - beat: 152
+    position: {x: 1210.5, y: 9.5}
+    deltaX: 8
+  - beat: 152.25
     order: 0
     mode: 0
-    position: {x: 660.8696, y: 0.5}
-    deltaX: 4.3479004
-  - beat: 152.5
-    order: 0
-    mode: 0
-    position: {x: 663.04346, y: 0.5}
-    deltaX: 2.1738281
+    position: {x: 1218.5, y: 9.5}
+    deltaX: 8
   - beat: 152.75
     order: 0
     mode: 0
-    position: {x: 664.1304, y: 0.5}
-    deltaX: 1.0869141
-  - beat: 153
-    order: 0
-    mode: 0
-    position: {x: 665.21735, y: 0.5}
-    deltaX: 1.0869751
+    position: {x: 1222.5, y: 9.5}
+    deltaX: 4
   - beat: 153.25
     order: 0
     mode: 0
-    position: {x: 666.3043, y: 0.5}
-    deltaX: 1.0869751
-  - beat: 153.375
-    order: 0
-    mode: 0
-    position: {x: 666.84784, y: 0.5}
-    deltaX: 0.54351807
+    position: {x: 1226.5, y: 9.5}
+    deltaX: 4
   - beat: 153.5
     order: 0
     mode: 0
-    position: {x: 667.3913, y: 0.5}
-    deltaX: 0.54345703
-  - beat: 154.625
+    position: {x: 1228.5, y: 9.5}
+    deltaX: 2
+  - beat: 153.75
     order: 0
     mode: 0
-    position: {x: 672.28265, y: 0.5}
-    deltaX: 4.8913574
-  - beat: 154.875
+    position: {x: 1230.5, y: 9.5}
+    deltaX: 2
+  - beat: 154.75
     order: 0
     mode: 0
-    position: {x: 673.3696, y: 0.5}
-    deltaX: 1.0869751
+    position: {x: 1238.5, y: 9.5}
+    deltaX: 8
+  - beat: 155.125
+    order: 0
+    mode: 0
+    position: {x: 1241.5, y: 9.5}
+    deltaX: 3
   - beat: 155.5
     order: 0
     mode: 0
-    position: {x: 676.087, y: 0.5}
-    deltaX: 2.7173462
+    position: {x: 1244.5, y: 9.5}
+    deltaX: 3
   - beat: 155.75
     order: 0
     mode: 0
-    position: {x: 677.17395, y: 0.5}
-    deltaX: 1.0869751
+    position: {x: 1246.5, y: 9.5}
+    deltaX: 2
   - beat: 156
     order: 0
     mode: 1
-    position: {x: 678.26086, y: 0.5}
-    deltaX: 1.0869141
+    position: {x: 1248.5, y: 9.5}
+    deltaX: 2
   - beat: 157.25
     order: 0
     mode: 0
-    position: {x: 683.6957, y: 0.5}
-    deltaX: 5.4348145
+    position: {x: 1258.5, y: 9.5}
+    deltaX: 10
   - beat: 157.625
     order: 0
     mode: 0
-    position: {x: 685.32605, y: 0.5}
-    deltaX: 1.6303711
-  - beat: 157.75
+    position: {x: 1261.5, y: 9.5}
+    deltaX: 3
+  - beat: 157.875
     order: 0
     mode: 0
-    position: {x: 685.8696, y: 0.5}
-    deltaX: 0.5435791
-  - beat: 158
+    position: {x: 1263.5, y: 9.5}
+    deltaX: 2
+  - beat: 158.625
     order: 0
     mode: 0
-    position: {x: 686.95654, y: 0.5}
-    deltaX: 1.0869141
-  - beat: 158.5
-    order: 0
-    mode: 0
-    position: {x: 689.1304, y: 0.5}
-    deltaX: 2.1738281
+    position: {x: 1269.5, y: 9.5}
+    deltaX: 6
   - beat: 159
     order: 0
     mode: 0
-    position: {x: 691.3043, y: 0.5}
-    deltaX: 2.1739502
-  - beat: 159.5
+    position: {x: 1272.5, y: 9.5}
+    deltaX: 3
+  - beat: 159.125
     order: 0
     mode: 0
-    position: {x: 693.4783, y: 0.5}
-    deltaX: 2.1739502
-  - beat: 160
-    order: 0
-    mode: 2
-    position: {x: 695.65216, y: 0.5}
-    deltaX: 2.1738892
-  - beat: 160.5
-    order: 0
-    mode: 2
-    position: {x: 697.82605, y: 0.5}
-    deltaX: 2.1738892
-  - beat: 161
-    order: 0
-    mode: 2
-    position: {x: 700, y: 0.5}
-    deltaX: 2.1739502
-  - beat: 161.5
-    order: 0
-    mode: 2
-    position: {x: 702.17395, y: 0.5}
-    deltaX: 2.1739502
-  - beat: 162
+    position: {x: 1273.5, y: 9.5}
+    deltaX: 1
+  - beat: 159.625
     order: 0
     mode: 0
-    position: {x: 704.34784, y: 0.5}
-    deltaX: 2.1738892
-  - beat: 162.5
+    position: {x: 1277.5, y: 9.5}
+    deltaX: 4
+  - beat: 160.125
     order: 0
     mode: 0
-    position: {x: 706.5217, y: 0.5}
-    deltaX: 2.1738892
-  - beat: 163
+    position: {x: 1281.5, y: 9.5}
+    deltaX: 4
+  - beat: 160.625
     order: 0
     mode: 0
-    position: {x: 708.6957, y: 0.5}
-    deltaX: 2.1739502
-  - beat: 163.5
+    position: {x: 1285.5, y: 9.5}
+    deltaX: 4
+  - beat: 161.125
     order: 0
     mode: 0
-    position: {x: 710.8696, y: 0.5}
-    deltaX: 2.1739502
-  - beat: 164
+    position: {x: 1289.5, y: 9.5}
+    deltaX: 4
+  - beat: 161.25
     order: 0
     mode: 0
-    position: {x: 713.04346, y: 0.5}
-    deltaX: 2.1738281
-  - beat: 164.5
+    position: {x: 1290.5, y: 9.5}
+    deltaX: 1
+  - beat: 161.625
     order: 0
     mode: 0
-    position: {x: 715.21735, y: 0.5}
-    deltaX: 2.1738892
-  - beat: 165
+    position: {x: 1293.5, y: 9.5}
+    deltaX: 3
+  - beat: 162.125
     order: 0
     mode: 0
-    position: {x: 717.3913, y: 0.5}
-    deltaX: 2.1739502
-  - beat: 165.5
+    position: {x: 1297.5, y: 9.5}
+    deltaX: 4
+  - beat: 162.625
     order: 0
     mode: 0
-    position: {x: 719.5652, y: 0.5}
-    deltaX: 2.1738892
+    position: {x: 1301.5, y: 9.5}
+    deltaX: 4
+  - beat: 163.125
+    order: 0
+    mode: 0
+    position: {x: 1305.5, y: 9.5}
+    deltaX: 4
+  - beat: 163.625
+    order: 0
+    mode: 0
+    position: {x: 1309.5, y: 9.5}
+    deltaX: 4
+  - beat: 164.125
+    order: 0
+    mode: 0
+    position: {x: 1313.5, y: 9.5}
+    deltaX: 4
+  - beat: 164.625
+    order: 0
+    mode: 0
+    position: {x: 1317.5, y: 9.5}
+    deltaX: 4
+  - beat: 165.125
+    order: 0
+    mode: 0
+    position: {x: 1321.5, y: 9.5}
+    deltaX: 4
   - beat: 165.625
     order: 0
     mode: 0
-    position: {x: 720.1087, y: 0.5}
-    deltaX: 0.54351807
-  - beat: 166
+    position: {x: 1325.5, y: 9.5}
+    deltaX: 4
+  - beat: 166.125
     order: 0
     mode: 0
-    position: {x: 721.73914, y: 0.5}
-    deltaX: 1.6304321
-  - beat: 166.5
+    position: {x: 1329.5, y: 9.5}
+    deltaX: 4
+  - beat: 166.625
     order: 0
     mode: 0
-    position: {x: 723.913, y: 0.5}
-    deltaX: 2.1738892
-  - beat: 167
+    position: {x: 1333.5, y: 9.5}
+    deltaX: 4
+  - beat: 167.125
     order: 0
     mode: 0
-    position: {x: 726.087, y: 0.5}
-    deltaX: 2.1739502
-  - beat: 167.5
+    position: {x: 1337.5, y: 9.5}
+    deltaX: 4
+  - beat: 167.625
     order: 0
     mode: 0
-    position: {x: 728.26086, y: 0.5}
-    deltaX: 2.1738892
-  - beat: 167.875
-    order: 0
-    mode: 0
-    position: {x: 729.8913, y: 0.5}
-    deltaX: 1.6304321
+    position: {x: 1341.5, y: 9.5}
+    deltaX: 4
   - beat: 168.125
     order: 0
     mode: 0
-    position: {x: 730.9783, y: 0.5}
-    deltaX: 1.0869751
-  - beat: 168.375
-    order: 0
-    mode: 0
-    position: {x: 732.0652, y: 0.5}
-    deltaX: 1.0869141
+    position: {x: 1345.5, y: 9.5}
+    deltaX: 4
   - beat: 168.625
     order: 0
     mode: 0
-    position: {x: 733.15216, y: 0.5}
-    deltaX: 1.0869751
-  - beat: 168.875
-    order: 0
-    mode: 0
-    position: {x: 734.23914, y: 0.5}
-    deltaX: 1.0869751
+    position: {x: 1349.5, y: 9.5}
+    deltaX: 4
   - beat: 169.125
     order: 0
     mode: 0
-    position: {x: 735.32605, y: 0.5}
-    deltaX: 1.0869141
-  - beat: 169.375
-    order: 0
-    mode: 0
-    position: {x: 736.413, y: 0.5}
-    deltaX: 1.0869751
+    position: {x: 1353.5, y: 9.5}
+    deltaX: 4
   - beat: 169.625
     order: 0
     mode: 0
-    position: {x: 737.5, y: 0.5}
-    deltaX: 1.0869751
-  - beat: 169.875
-    order: 0
-    mode: 0
-    position: {x: 738.587, y: 0.5}
-    deltaX: 1.0869751
-  - beat: 170
-    order: 0
-    mode: 0
-    position: {x: 739.1304, y: 0.5}
-    deltaX: 0.543396
+    position: {x: 1357.5, y: 9.5}
+    deltaX: 4
   - beat: 170.125
     order: 0
     mode: 0
-    position: {x: 739.67395, y: 0.5}
-    deltaX: 0.5435791
-  - beat: 171
+    position: {x: 1361.5, y: 9.5}
+    deltaX: 4
+  - beat: 170.125
     order: 0
     mode: 0
-    position: {x: 743.4783, y: 0.5}
-    deltaX: 3.8043213
+    position: {x: 1361.5, y: 9.5}
+    deltaX: 0
+  - beat: 170.625
+    order: 0
+    mode: 0
+    position: {x: 1365.5, y: 9.5}
+    deltaX: 4
+  - beat: 170.875
+    order: 0
+    mode: 0
+    position: {x: 1367.5, y: 9.5}
+    deltaX: 2
   - beat: 171.125
     order: 0
     mode: 0
-    position: {x: 744.0217, y: 0.5}
-    deltaX: 0.54345703
-  - beat: 171.25
+    position: {x: 1369.5, y: 9.5}
+    deltaX: 2
+  - beat: 171.375
     order: 0
     mode: 0
-    position: {x: 744.5652, y: 0.5}
-    deltaX: 0.54345703
+    position: {x: 1371.5, y: 9.5}
+    deltaX: 2
+  - beat: 171.5
+    order: 0
+    mode: 0
+    position: {x: 1372.5, y: 9.5}
+    deltaX: 1
   - beat: 171.625
     order: 0
     mode: 0
-    position: {x: 746.1957, y: 0.5}
-    deltaX: 1.6304932
-  - beat: 171.75
+    position: {x: 1373.5, y: 9.5}
+    deltaX: 1
+  - beat: 172
     order: 0
     mode: 0
-    position: {x: 746.73914, y: 0.5}
-    deltaX: 0.54345703
-  - beat: 171.875
+    position: {x: 1376.5, y: 9.5}
+    deltaX: 3
+  - beat: 172.5
     order: 0
     mode: 0
-    position: {x: 747.28265, y: 0.5}
-    deltaX: 0.54351807
+    position: {x: 1380.5, y: 9.5}
+    deltaX: 4
+  - beat: 172.625
+    order: 0
+    mode: 0
+    position: {x: 1381.5, y: 9.5}
+    deltaX: 1
   - beat: 172.75
     order: 0
     mode: 0
-    position: {x: 751.087, y: 0.5}
-    deltaX: 3.8043213
+    position: {x: 1382.5, y: 9.5}
+    deltaX: 1
   - beat: 172.875
     order: 0
     mode: 0
-    position: {x: 751.6304, y: 0.5}
-    deltaX: 0.543396
-  - beat: 173
+    position: {x: 1383.5, y: 9.5}
+    deltaX: 1
+  - beat: 173.125
     order: 0
     mode: 0
-    position: {x: 752.17395, y: 0.5}
-    deltaX: 0.5435791
-  - beat: 173.375
-    order: 0
-    mode: 0
-    position: {x: 753.8043, y: 0.5}
-    deltaX: 1.6303711
-  - beat: 173.5
-    order: 0
-    mode: 0
-    position: {x: 754.34784, y: 0.5}
-    deltaX: 0.54351807
+    position: {x: 1385.5, y: 9.5}
+    deltaX: 2
   - beat: 173.625
     order: 0
     mode: 0
-    position: {x: 754.8913, y: 0.5}
-    deltaX: 0.54345703
-  - beat: 174
+    position: {x: 1389.5, y: 9.5}
+    deltaX: 4
+  - beat: 174.125
     order: 0
     mode: 0
-    position: {x: 756.5217, y: 0.5}
-    deltaX: 1.6304321
-  - beat: 175.75
+    position: {x: 1393.5, y: 9.5}
+    deltaX: 4
+  - beat: 175.875
     order: 0
     mode: 0
-    position: {x: 764.1304, y: 0.5}
-    deltaX: 7.6086426
-  - beat: 176.625
+    position: {x: 1407.5, y: 9.5}
+    deltaX: 14
+  - beat: 176.875
     order: 0
     mode: 0
-    position: {x: 767.9348, y: 0.5}
-    deltaX: 3.8044434
-  - beat: 177.5
+    position: {x: 1415.5, y: 9.5}
+    deltaX: 8
+  - beat: 177.875
     order: 0
     mode: 0
-    position: {x: 771.73914, y: 0.5}
-    deltaX: 3.8043213
-  - beat: 178.5
+    position: {x: 1423.5, y: 9.5}
+    deltaX: 8
+  - beat: 178.875
     order: 0
     mode: 0
-    position: {x: 776.087, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 179.5
+    position: {x: 1431.5, y: 9.5}
+    deltaX: 8
+  - beat: 179.875
     order: 0
     mode: 0
-    position: {x: 780.4348, y: 0.5}
-    deltaX: 4.3478394
-  - beat: 179.625
+    position: {x: 1439.5, y: 9.5}
+    deltaX: 8
+  - beat: 180
     order: 0
     mode: 0
-    position: {x: 780.9783, y: 0.5}
-    deltaX: 0.54345703
-  - beat: 179.75
+    position: {x: 1440.5, y: 9.5}
+    deltaX: 1
+  - beat: 180.125
     order: 0
     mode: 0
-    position: {x: 781.5217, y: 0.5}
-    deltaX: 0.54345703
+    position: {x: 1441.5, y: 9.5}
+    deltaX: 1
   - beat: 181.875
     order: 0
     mode: 0
-    position: {x: 790.76086, y: 0.5}
-    deltaX: 9.239136
+    position: {x: 1455.5, y: 9.5}
+    deltaX: 14
   bpmTimeline:
     segments:
     - beat: 0
       bpm: 69
-      speed: 5
+      speed: 8
   globalOffsetBeats: 0

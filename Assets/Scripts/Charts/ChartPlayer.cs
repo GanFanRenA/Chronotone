@@ -14,6 +14,15 @@ public class ChartPlayer : MonoBehaviour
     public NodeAppearanceSet nodeAppearanceSet;
     public bool autoBake = false;   // 想要旧行为就勾上
 
+    [Header("Chart Timeline Preview")]
+    [Tooltip("Chart Timeline 播放经过节点时使用的卡点音效。")]
+    public AudioClip timelineNodeClickClip;
+    [Range(0f, 1f)]
+    public float timelineNodeClickVolume = 0.8f;
+    [Tooltip("用于预调度卡点音效的 AudioSource 池。留空时自动使用本对象上的所有 AudioSource。")]
+    public AudioSource[] timelineNodeClickSources =
+        System.Array.Empty<AudioSource>();
+
     [System.NonSerialized] private bool updatingPositions;
 
     public bool IsUpdatingPositions => updatingPositions;
@@ -95,7 +104,7 @@ public class ChartPlayer : MonoBehaviour
                 float beat = Mathf.Max(0f, marker.beat);
                 float deltaX = timeline != null
                     ? timeline.DistanceBetweenBeats(previousBeat, beat)
-                    : (beat - previousBeat) * 60f / 120f * 5f;
+                    : (beat - previousBeat) * 5f;
                 float x = previousX + deltaX;
 
                 bool changed = marker.UpdatePos(x, deltaX);

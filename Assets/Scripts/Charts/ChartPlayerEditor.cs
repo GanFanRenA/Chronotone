@@ -8,6 +8,9 @@ public class ChartPlayerEditor : Editor
     private SerializedProperty scanRootProperty;
     private SerializedProperty nodePrefabProperty;
     private SerializedProperty autoBakeProperty;
+    private SerializedProperty timelineNodeClickClipProperty;
+    private SerializedProperty timelineNodeClickVolumeProperty;
+    private SerializedProperty timelineNodeClickSourcesProperty;
 
     private ChartPlayer pendingAutoLoadPlayer;
     private ChartSO pendingAutoLoadChart;
@@ -19,6 +22,12 @@ public class ChartPlayerEditor : Editor
         scanRootProperty = serializedObject.FindProperty("scanRoot");
         nodePrefabProperty = serializedObject.FindProperty("nodePrefab");
         autoBakeProperty = serializedObject.FindProperty("autoBake");
+        timelineNodeClickClipProperty =
+            serializedObject.FindProperty("timelineNodeClickClip");
+        timelineNodeClickVolumeProperty =
+            serializedObject.FindProperty("timelineNodeClickVolume");
+        timelineNodeClickSourcesProperty =
+            serializedObject.FindProperty("timelineNodeClickSources");
     }
 
     public override void OnInspectorGUI()
@@ -34,6 +43,18 @@ public class ChartPlayerEditor : Editor
         EditorGUILayout.PropertyField(scanRootProperty);
         EditorGUILayout.PropertyField(nodePrefabProperty);
         EditorGUILayout.PropertyField(autoBakeProperty);
+        EditorGUILayout.Space(6);
+        EditorGUILayout.LabelField(
+            "Chart Timeline Preview",
+            EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(timelineNodeClickClipProperty);
+        EditorGUILayout.PropertyField(timelineNodeClickVolumeProperty);
+        EditorGUILayout.PropertyField(
+            timelineNodeClickSourcesProperty,
+            new GUIContent(
+                "Node Click Sources",
+                "建议在独立音源对象上添加 8 个 AudioSource 并全部引用。数组留空时才使用本对象上的全部 AudioSource。"),
+            true);
         bool inspectorChanged = EditorGUI.EndChangeCheck();
 
         ChartSO selectedChart = (ChartSO)chartProperty.objectReferenceValue;

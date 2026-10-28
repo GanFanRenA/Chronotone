@@ -5,7 +5,11 @@ public enum NodeMode
 {
     JumpNode = 0,
     RespawnNode = 1,
-    GravityNode = 2
+    GravityNode = 2,
+    FastFallNode = 3,
+    GravityFastFallNode = 4,
+    WeakGravityNode = 5,
+    GravityJumpNode = 6
 }
 
 [Serializable]

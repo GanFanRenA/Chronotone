@@ -5,6 +5,8 @@ using UnityEngine;
 
 public partial class ChartTimelineWindow
 {
+    private NodeMarker rangeSelectionAnchor;
+
     private void RequestRepaint()
     {
         if (windowVisible)
@@ -15,6 +17,7 @@ public partial class ChartTimelineWindow
     {
         markersDirty = true;
         RequestRepaint();
+        SceneView.RepaintAll();
     }
 
     private NodeMarker[] GetMarkers()
@@ -153,15 +156,58 @@ public partial class ChartTimelineWindow
         ReplaceSelection(GetMarkers());
         SyncSelectionToUnity();
         RequestRepaint();
+        SceneView.RepaintAll();
     }
 
-    private void CreateNodeFromClick(Event e, Rect trackRect, NodeMarker[] markers)
+    private void SelectRangeTo(NodeMarker target, NodeMarker[] markers)
     {
-        float clickBeat = scrollBeat + (e.mousePosition.x - trackRect.x) / pixelsPerBeat;
-        if (snap > 0f) clickBeat = Mathf.Round(clickBeat / snap) * snap;
-        if (clickBeat < 0f) clickBeat = 0f;
+        int targetIndex = System.Array.IndexOf(markers, target);
+        if (targetIndex < 0)
+            return;
 
-        CreateNodeAtBeat(clickBeat, markers, false);
+        NodeMarker anchor = ResolveRangeSelectionAnchor(markers);
+        if (anchor == null)
+        {
+            rangeSelectionAnchor = target;
+            ReplaceSelection(new[] { target });
+            return;
+        }
+
+        int anchorIndex = System.Array.IndexOf(markers, anchor);
+        if (anchorIndex < 0)
+        {
+            rangeSelectionAnchor = target;
+            ReplaceSelection(new[] { target });
+            return;
+        }
+
+        int firstIndex = Mathf.Min(anchorIndex, targetIndex);
+        int lastIndex = Mathf.Max(anchorIndex, targetIndex);
+        ClearSelection();
+        for (int i = firstIndex; i <= lastIndex; i++)
+            AddToSelection(markers[i]);
+        rangeSelectionAnchor = anchor;
+    }
+
+    private NodeMarker ResolveRangeSelectionAnchor(NodeMarker[] markers)
+    {
+        if (rangeSelectionAnchor != null &&
+            selectionLookup.Contains(rangeSelectionAnchor) &&
+            System.Array.IndexOf(markers, rangeSelectionAnchor) >= 0)
+        {
+            return rangeSelectionAnchor;
+        }
+
+        foreach (NodeMarker marker in selection)
+        {
+            if (marker != null &&
+                System.Array.IndexOf(markers, marker) >= 0)
+            {
+                return marker;
+            }
+        }
+
+        return null;
     }
 
     private void CreateNodeAtPlayhead()
@@ -290,10 +336,13 @@ public partial class ChartTimelineWindow
             float minBeat = newSelection.Min(m => m.beat);
             float viewBeats = Mathf.Max(1f, position.width) / pixelsPerBeat;
             if (minBeat < scrollBeat || minBeat > scrollBeat + viewBeats * 0.8f)
-                scrollBeat = Mathf.Max(0f, minBeat - viewBeats * 0.2f);
+                scrollBeat = Mathf.Max(
+                    MinScrollBeat,
+                    minBeat - viewBeats * 0.2f);
         }
 
         RequestRepaint();
+        SceneView.RepaintAll();
     }
 
     private static IEnumerable<NodeMarker> GetSelectedNodeMarkers()

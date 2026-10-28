@@ -1,8 +1,9 @@
 using UnityEngine;
 
 /// <summary>
-/// X 轴强制跟随谱面时间轴；Y 轴完全交给 Rigidbody2D。
-/// 跳跃输入沿重力反方向施加物理速度；重力反转后同样成立。
+/// X 轴强制跟随谱面时间轴；Y 轴由本模式自行积分。
+/// Kinematic Rigidbody2D 只负责平滑移动和碰撞查询，不受物理力驱动。
+/// 空中持续旋转碰撞体；重力反转后同样成立。
 /// </summary>
 public sealed class PhysicsActionMode : PlayerActionMode
 {
@@ -10,32 +11,51 @@ public sealed class PhysicsActionMode : PlayerActionMode
     [Tooltip("沿重力反方向施加的起跳速度。")]
     [SerializeField, Min(0.1f)] private float jumpVelocity = 8f;
     [SerializeField, Min(0f)] private float gravityScale = 3f;
-    [Tooltip("起跳角速度，单位为度/秒。")]
+    [Tooltip("空中旋转角速度，单位为度/秒。")]
     [SerializeField] private float angularSpeed = 220f;
+    [Tooltip("速坠期间的重力倍率，范围为普通重力的 2 至 3 倍。")]
+    [SerializeField, Range(2f, 3f)] private float fastFallGravityMultiplier = 2.5f;
 
-    [Header("落地检测")]
+    [Header("地面")]
     [SerializeField] private LayerMask groundLayers = ~0;
 
     [Header("阻挡检测")]
-    [SerializeField, Min(0.01f)] private float minExpectedSpeed = 0.2f;
-    [SerializeField, Range(0.01f, 0.9f)] private float minVelocityRatio = 0.1f;
+    [Tooltip("用于检测横向撞墙的层。地面正下方接触不会触发阻挡。")]
+    [SerializeField] private LayerMask blockingLayers = 1 << 6;
     [SerializeField, Min(0.01f)] private float blockedCheckWindow = 0.12f;
+    [SerializeField, Min(0.0001f)] private float minMoveDistance = 0.001f;
+    [SerializeField, Min(0f)] private float collisionSkin = 0.002f;
+
+    [Header("落地检测")]
+    [SerializeField, Min(0.001f)] private float groundProbeDistance = 0.03f;
 
     private Rigidbody2D body;
     private BoxCollider2D bodyCollider;
     private ChartMotionTimeline timeline;
-    private Transform cameraTransform;
-    private Quaternion cameraWorldRotation;
-    private float jumpAge;
     private Vector2 respawnPosition;
-    private float lastTargetX;
     private float blockedElapsed;
     private int blockedDirection;
     private bool jumpQueued;
-    private bool jumpActive;
+    private bool grounded;
     private bool gravityInverted;
+    private bool fastFallActive;
     private bool respawnStartPending;
-    private readonly ContactPoint2D[] groundContacts = new ContactPoint2D[16];
+    private float verticalSpeed;
+    private float spinAngle;
+    private ContactFilter2D groundFilter;
+    private ContactFilter2D blockingFilter;
+    private ContactFilter2D solidFilter;
+    private readonly RaycastHit2D[] castHits = new RaycastHit2D[16];
+    public float JumpVelocity => jumpVelocity;
+    public float GravityScale => gravityScale;
+    public float FastFallGravityMultiplier => fastFallGravityMultiplier;
+    public float AngularSpeed => angularSpeed;
+    public LayerMask GroundLayers => groundLayers;
+    public LayerMask BlockingLayers => blockingLayers;
+    public float BlockedCheckWindow => blockedCheckWindow;
+    public float MinMoveDistance => minMoveDistance;
+    public float CollisionSkin => collisionSkin;
+    public float GroundProbeDistance => groundProbeDistance;
 
     public override string DisplayName => "物理移动";
 
@@ -52,13 +72,14 @@ public sealed class PhysicsActionMode : PlayerActionMode
 
         if (body != null)
         {
-            body.bodyType = RigidbodyType2D.Dynamic;
-            ApplyGravityScale();
-            body.constraints &= ~RigidbodyConstraints2D.FreezeRotation;
+            body.bodyType = RigidbodyType2D.Kinematic;
+            body.constraints = RigidbodyConstraints2D.None;
             body.interpolation = RigidbodyInterpolation2D.Interpolate;
             body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             body.simulated = false;
         }
+
+        ConfigureCollisionFilters();
     }
 
     protected override void OnModeEnter()
@@ -73,22 +94,20 @@ public sealed class PhysicsActionMode : PlayerActionMode
             Player.Chart.bpmTimeline);
 
         gravityInverted = false;
-        ApplyGravityScale();
         body.simulated = true;
 
         float targetX = timeline.Sample(Player.SongTime).x;
-        body.position = new Vector2(targetX, Player.OriginalPosition.y);
-        body.linearVelocity = Vector2.zero;
-        body.angularVelocity = 0f;
+        body.position = new Vector2(targetX, Player.PlaybackStartPosition.y);
+        spinAngle = NormalizeAngle(Player.OriginalRotation.eulerAngles.z);
         SetPlayerRotation(Player.OriginalRotation);
         IgnoreNodeCollisions();
 
-        lastTargetX = targetX;
+        verticalSpeed = 0f;
+        fastFallActive = false;
+        grounded = HasSupport(body.position, spinAngle);
         ResetBlockedState();
         jumpQueued = false;
-        jumpActive = false;
         respawnStartPending = false;
-        jumpAge = 0f;
     }
 
     protected override void OnModeFixedUpdate(double songTime, float fixedDeltaTime)
@@ -99,8 +118,10 @@ public sealed class PhysicsActionMode : PlayerActionMode
         if (respawnStartPending)
         {
             body.position = respawnPosition;
-            body.linearVelocity = Vector2.zero;
-            body.angularVelocity = 0f;
+            spinAngle = NormalizeAngle(Player.OriginalRotation.eulerAngles.z);
+            SetPlayerRotation(Player.OriginalRotation);
+            verticalSpeed = 0f;
+            grounded = false;
 
             if (!Player.AudioHasStarted)
             {
@@ -110,31 +131,23 @@ public sealed class PhysicsActionMode : PlayerActionMode
 
             body.simulated = true;
             respawnStartPending = false;
-            lastTargetX = timeline.Sample(Player.SongTime).x;
             ResetBlockedState();
             return;
         }
 
         float targetX = timeline.Sample(songTime).x;
         float deltaTime = Mathf.Max(0.0001f, fixedDeltaTime);
-        float expectedVelocityX = (targetX - lastTargetX) / deltaTime;
+        float deltaX = targetX - body.position.x;
+        bool horizontallyBlocked = IsMovementBlocked(deltaX);
         if (UpdateBlockedState(
-                expectedVelocityX,
-                body.linearVelocity.x,
-                fixedDeltaTime))
+                horizontallyBlocked,
+                deltaX,
+                deltaTime))
             return;
 
-        Vector2 lockedPosition = body.position;
-        lockedPosition.x = targetX;
-        body.position = lockedPosition;
-        body.linearVelocity = new Vector2(
-            expectedVelocityX,
-            body.linearVelocity.y);
-        lastTargetX = targetX;
-
-        bool grounded = IsGrounded();
-        if (grounded && !jumpActive)
-            body.linearVelocity = new Vector2(body.linearVelocity.x, 0f);
+        Vector2 nextPosition = body.position;
+        if (!horizontallyBlocked)
+            nextPosition.x = targetX;
 
         if (jumpQueued)
         {
@@ -142,15 +155,41 @@ public sealed class PhysicsActionMode : PlayerActionMode
             jumpQueued = false;
         }
 
-        if (!jumpActive)
-            return;
-
-        jumpAge += fixedDeltaTime;
-        if (grounded && jumpAge > 0.05f)
+        if (grounded &&
+            !HasSupport(
+                new Vector2(nextPosition.x, body.position.y),
+                spinAngle))
         {
-            jumpActive = false;
-            body.linearVelocity = new Vector2(body.linearVelocity.x, 0f);
+            grounded = false;
+            verticalSpeed = 0f;
         }
+
+        if (grounded)
+        {
+            verticalSpeed = 0f;
+            fastFallActive = false;
+            spinAngle = NormalizeAngle(
+                Player.OriginalRotation.eulerAngles.z);
+        }
+        else
+        {
+            spinAngle = NormalizeAngle(
+                spinAngle + angularSpeed * deltaTime);
+            float gravityMultiplier =
+                fastFallActive ? fastFallGravityMultiplier : 1f;
+            verticalSpeed +=
+                GravityAccelerationY * gravityMultiplier * deltaTime;
+
+            float verticalDisplacement =
+                verticalSpeed * deltaTime;
+            ResolveVerticalMotion(
+                ref nextPosition,
+                ref spinAngle,
+                verticalDisplacement);
+        }
+
+        body.MoveRotation(spinAngle);
+        body.MovePosition(nextPosition);
     }
 
     protected override void OnModeRequestJump()
@@ -166,11 +205,25 @@ public sealed class PhysicsActionMode : PlayerActionMode
             result.NoteIndex >= Player.Nodes.Count)
             return;
 
-        if (Player.Nodes[result.NoteIndex].mode != NodeMode.GravityNode)
-            return;
-
-        gravityInverted = !gravityInverted;
-        ApplyGravityScale();
+        switch (Player.Nodes[result.NoteIndex].mode)
+        {
+            case NodeMode.GravityNode:
+            case NodeMode.GravityFastFallNode:
+                ApplyFastFall(true);
+                break;
+            case NodeMode.FastFallNode:
+                ApplyFastFall(false);
+                break;
+            case NodeMode.WeakGravityNode:
+                gravityInverted = !gravityInverted;
+                grounded = false;
+                fastFallActive = false;
+                break;
+            case NodeMode.GravityJumpNode:
+                gravityInverted = !gravityInverted;
+                BeginPhysicalJump();
+                break;
+        }
     }
 
     protected override void OnModeRespawn(
@@ -188,13 +241,14 @@ public sealed class PhysicsActionMode : PlayerActionMode
             Player.Chart.bpmTimeline);
 
         gravityInverted = IsGravityInvertedAtCheckpoint(checkpointNodeIndex);
-        ApplyGravityScale();
+        grounded = false;
+        fastFallActive = false;
+        verticalSpeed = 0f;
 
         if (body != null)
         {
             body.position = position;
-            body.linearVelocity = Vector2.zero;
-            body.angularVelocity = 0f;
+            spinAngle = NormalizeAngle(Player.OriginalRotation.eulerAngles.z);
             body.simulated = false;
         }
 
@@ -202,10 +256,7 @@ public sealed class PhysicsActionMode : PlayerActionMode
         respawnStartPending = true;
         SetPlayerRotation(Player.OriginalRotation);
         jumpQueued = false;
-        jumpActive = false;
-        lastTargetX = position.x;
         ResetBlockedState();
-        jumpAge = 0f;
     }
 
     protected override void OnModeControlLockChanged(bool locked)
@@ -214,16 +265,15 @@ public sealed class PhysicsActionMode : PlayerActionMode
             return;
 
         jumpQueued = false;
-        jumpActive = false;
         respawnStartPending = false;
         ResetBlockedState();
-        jumpAge = 0f;
+        grounded = false;
+        fastFallActive = false;
+        verticalSpeed = 0f;
 
         if (body == null)
             return;
 
-        body.linearVelocity = Vector2.zero;
-        body.angularVelocity = 0f;
         body.simulated = false;
     }
 
@@ -237,6 +287,7 @@ public sealed class PhysicsActionMode : PlayerActionMode
             return;
 
         body.position = position;
+        spinAngle = NormalizeAngle(rotation.eulerAngles.z);
         body.MoveRotation(rotation.eulerAngles.z);
     }
 
@@ -244,64 +295,57 @@ public sealed class PhysicsActionMode : PlayerActionMode
     {
         timeline = null;
         jumpQueued = false;
-        jumpActive = false;
         respawnStartPending = false;
-        lastTargetX = 0f;
+        grounded = false;
+        fastFallActive = false;
+        verticalSpeed = 0f;
         ResetBlockedState();
-        jumpAge = 0f;
 
         if (body != null)
         {
-            body.linearVelocity = Vector2.zero;
-            body.angularVelocity = 0f;
             gravityInverted = false;
-            ApplyGravityScale();
             body.simulated = false;
         }
 
         Player.transform.localRotation = Player.OriginalRotation;
-
-        if (cameraTransform != null)
-            cameraTransform.rotation = cameraWorldRotation;
-
-        cameraTransform = null;
     }
 
     private void BeginPhysicalJump()
     {
-        body.linearVelocity = new Vector2(
-            body.linearVelocity.x,
-            SupportDirectionY * jumpVelocity);
-        body.angularVelocity = angularSpeed;
-        jumpAge = 0f;
-        jumpActive = true;
+        grounded = false;
+        fastFallActive = false;
+        verticalSpeed = SupportNormalY * jumpVelocity;
+    }
+
+    private void ApplyFastFall(bool invertGravity)
+    {
+        if (invertGravity)
+            gravityInverted = !gravityInverted;
+
+        grounded = false;
+        verticalSpeed = 0f;
+        fastFallActive = true;
     }
 
     private bool UpdateBlockedState(
-        float expectedVelocityX,
-        float actualVelocityX,
+        bool horizontallyBlocked,
+        float deltaX,
         float deltaTime)
     {
-        float expectedSpeed = Mathf.Abs(expectedVelocityX);
-        if (expectedSpeed < minExpectedSpeed)
+        if (Mathf.Abs(deltaX) < minMoveDistance)
         {
             ResetBlockedState();
             return false;
         }
 
-        int direction = expectedVelocityX > 0f ? 1 : -1;
-        if (blockedDirection == 0)
-        {
-            blockedDirection = direction;
-        }
-        else if (blockedDirection != direction)
+        int direction = deltaX > 0f ? 1 : -1;
+        if (blockedDirection != direction)
         {
             ResetBlockedState();
             blockedDirection = direction;
         }
 
-        float actualAlongTrack = actualVelocityX * direction;
-        if (actualAlongTrack >= expectedSpeed * minVelocityRatio)
+        if (!horizontallyBlocked)
         {
             blockedElapsed = 0f;
             return false;
@@ -330,27 +374,263 @@ public sealed class PhysicsActionMode : PlayerActionMode
             Player.transform.localRotation = rotation;
     }
 
-    private bool IsGrounded()
+    private bool IsMovementBlocked(float deltaX)
     {
-        int contactCount = bodyCollider.GetContacts(groundContacts);
-        for (int i = 0; i < contactCount; i++)
+        float distance = Mathf.Abs(deltaX);
+        if (distance < minMoveDistance)
+            return false;
+
+        Vector2 direction = deltaX > 0f
+            ? Vector2.right
+            : Vector2.left;
+        Vector2 castPosition = body.position;
+        if (grounded)
         {
-            ContactPoint2D contact = groundContacts[i];
-            int layerBit = 1 << contact.collider.gameObject.layer;
-            if ((groundLayers.value & layerBit) != 0 &&
-                contact.normal.y * SupportDirectionY > 0.5f)
+            castPosition += Vector2.up * SupportNormalY *
+                (groundProbeDistance + collisionSkin + 0.02f);
+        }
+
+        int count = CastAtPose(
+            castPosition,
+            spinAngle,
+            direction,
+            distance + collisionSkin,
+            blockingFilter);
+
+        for (int i = 0; i < count; i++)
+        {
+            RaycastHit2D hit = castHits[i];
+            if (IsIgnoredHit(hit))
+                continue;
+
+            if (Vector2.Dot(hit.normal, direction) <= -0.55f)
                 return true;
         }
 
         return false;
     }
 
-    private float SupportDirectionY => gravityInverted ? -1f : 1f;
-
-    private void ApplyGravityScale()
+    private bool HasSupport(Vector2 position, float angle)
     {
-        if (body != null)
-            body.gravityScale = gravityScale * (gravityInverted ? -1f : 1f);
+        return TryGetSupportHit(
+            position,
+            angle,
+            groundProbeDistance + collisionSkin,
+            out _);
+    }
+
+    private bool TryGetSupportHit(
+        Vector2 position,
+        float angle,
+        float distance,
+        out RaycastHit2D supportHit)
+    {
+        supportHit = default;
+
+        Vector2 supportNormal =
+            Vector2.up * SupportNormalY;
+        Vector2 castDirection = -supportNormal;
+        float probeLift = Mathf.Max(
+            groundProbeDistance,
+            collisionSkin * 2f);
+        Vector2 probePosition = position + supportNormal * probeLift;
+        int count = CastAtPose(
+            probePosition,
+            angle,
+            castDirection,
+            distance + probeLift,
+            groundFilter);
+
+        float nearestDistance = float.PositiveInfinity;
+        for (int i = 0; i < count; i++)
+        {
+            RaycastHit2D hit = castHits[i];
+            if (IsIgnoredHit(hit) ||
+                Vector2.Dot(hit.normal, supportNormal) <= 0.5f)
+                continue;
+
+            if (hit.distance >= nearestDistance)
+                continue;
+
+            nearestDistance = hit.distance;
+            supportHit = hit;
+        }
+
+        return nearestDistance < float.PositiveInfinity;
+    }
+
+    private void ResolveVerticalMotion(
+        ref Vector2 position,
+        ref float angle,
+        float displacement)
+    {
+        if (Mathf.Abs(displacement) < 0.00001f)
+            return;
+
+        Vector2 direction = displacement > 0f
+            ? Vector2.up
+            : Vector2.down;
+        int count = CastAtPose(
+            position,
+            angle,
+            direction,
+            Mathf.Abs(displacement) + collisionSkin,
+            solidFilter);
+
+        RaycastHit2D nearestHit = default;
+        float nearestDistance = float.PositiveInfinity;
+        for (int i = 0; i < count; i++)
+        {
+            RaycastHit2D hit = castHits[i];
+            if (IsIgnoredHit(hit) ||
+                Vector2.Dot(hit.normal, direction) > -0.1f ||
+                hit.distance >= nearestDistance)
+                continue;
+
+            nearestDistance = hit.distance;
+            nearestHit = hit;
+        }
+
+        if (nearestDistance == float.PositiveInfinity)
+        {
+            position += direction * Mathf.Abs(displacement);
+            return;
+        }
+
+        float allowedDistance =
+            Mathf.Max(0f, nearestDistance - collisionSkin);
+        position += direction * allowedDistance;
+
+        bool movingTowardSupport =
+            direction.y * SupportNormalY < 0f;
+        bool hitSupport =
+            Vector2.Dot(
+                nearestHit.normal,
+                Vector2.up * SupportNormalY) > 0.5f;
+
+        if (movingTowardSupport && hitSupport)
+        {
+            grounded = true;
+            verticalSpeed = 0f;
+            LandOnSupport(
+                ref position,
+                ref angle,
+                nearestHit);
+            return;
+        }
+
+        verticalSpeed = 0f;
+    }
+
+    private void LandOnSupport(
+        ref Vector2 position,
+        ref float angle,
+        RaycastHit2D hit)
+    {
+        angle = NormalizeAngle(
+            Player.OriginalRotation.eulerAngles.z);
+
+        Vector2 halfSize = GetColliderWorldSize() * 0.5f;
+        float radians = angle * Mathf.Deg2Rad;
+        Vector2 localX = new Vector2(
+            Mathf.Cos(radians),
+            Mathf.Sin(radians));
+        Vector2 localY = new Vector2(
+            -Mathf.Sin(radians),
+            Mathf.Cos(radians));
+        float supportExtent =
+            Mathf.Abs(Vector2.Dot(hit.normal, localX)) * halfSize.x +
+            Mathf.Abs(Vector2.Dot(hit.normal, localY)) * halfSize.y;
+        Vector2 colliderOffset =
+            GetColliderCenter(position, angle) - position;
+        Vector2 uprightCenter =
+            hit.point + hit.normal * (supportExtent + collisionSkin);
+        position.y = uprightCenter.y - colliderOffset.y;
+    }
+
+    private int CastAtPose(
+        Vector2 position,
+        float angle,
+        Vector2 direction,
+        float distance,
+        ContactFilter2D filter)
+    {
+        return Physics2D.BoxCast(
+            GetColliderCenter(position, angle),
+            GetColliderWorldSize(),
+            angle,
+            direction,
+            filter,
+            castHits,
+            distance);
+    }
+
+    private Vector2 GetColliderCenter(
+        Vector2 position,
+        float angle)
+    {
+        Vector3 lossyScale = bodyCollider.transform.lossyScale;
+        Vector3 scaledOffset = Vector3.Scale(
+            bodyCollider.offset,
+            lossyScale);
+        Vector2 rotatedOffset =
+            Quaternion.Euler(0f, 0f, angle) * scaledOffset;
+        return position + rotatedOffset;
+    }
+
+    private Vector2 GetColliderWorldSize()
+    {
+        Vector3 lossyScale = bodyCollider.transform.lossyScale;
+        return new Vector2(
+            Mathf.Abs(bodyCollider.size.x * lossyScale.x),
+            Mathf.Abs(bodyCollider.size.y * lossyScale.y));
+    }
+
+    private bool IsIgnoredHit(RaycastHit2D hit)
+    {
+        Collider2D hitCollider = hit.collider;
+        if (hitCollider == null || hitCollider.isTrigger)
+            return true;
+
+        if (hitCollider == bodyCollider ||
+            hitCollider.attachedRigidbody == body)
+            return true;
+
+        return hitCollider.GetComponentInParent<NodeMarker>() != null;
+    }
+
+    private void ConfigureCollisionFilters()
+    {
+        groundFilter = new ContactFilter2D
+        {
+            useTriggers = false,
+            useLayerMask = true,
+            layerMask = groundLayers.value
+        };
+        blockingFilter = new ContactFilter2D
+        {
+            useTriggers = false,
+            useLayerMask = true,
+            layerMask = blockingLayers.value
+        };
+        solidFilter = new ContactFilter2D
+        {
+            useTriggers = false,
+            useLayerMask = true,
+            layerMask = blockingLayers.value | groundLayers.value
+        };
+    }
+
+    private float GravityAccelerationY =>
+        Physics2D.gravity.y *
+        gravityScale *
+        (gravityInverted ? -1f : 1f);
+
+    private float SupportNormalY => gravityInverted ? -1f : 1f;
+
+    private static float NormalizeAngle(float angle)
+    {
+        return Mathf.DeltaAngle(0f, angle);
     }
 
     private bool IsGravityInvertedAtCheckpoint(int checkpointNodeIndex)
@@ -362,7 +642,10 @@ public sealed class PhysicsActionMode : PlayerActionMode
         int lastIndex = Mathf.Min(checkpointNodeIndex, Player.Nodes.Count - 1);
         for (int i = 0; i <= lastIndex; i++)
         {
-            if (Player.Nodes[i].mode == NodeMode.GravityNode)
+            if (Player.Nodes[i].mode == NodeMode.GravityNode ||
+                Player.Nodes[i].mode == NodeMode.GravityFastFallNode ||
+                Player.Nodes[i].mode == NodeMode.WeakGravityNode ||
+                Player.Nodes[i].mode == NodeMode.GravityJumpNode)
                 inverted = !inverted;
         }
 

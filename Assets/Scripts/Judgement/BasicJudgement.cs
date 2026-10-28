@@ -21,6 +21,7 @@ public class BasicJudgement : MonoBehaviour
     private bool[] judged;
     private int nextPendingNodeIndex;
     private bool blocked;
+    public float GreatWindowSeconds => greatWindowSeconds;
 
     public event Action<JudgementResult> JudgementResolved;
 
@@ -63,8 +64,10 @@ public class BasicJudgement : MonoBehaviour
         for (int i = 0; i < nodes.Count; i++)
             noteTimes[i] = player.chartPlayer.chart.bpmTimeline.BeatToSeconds(nodes[i].beat);
 
-        nextPendingNodeIndex = FindFirstNodeAtOrAfter(
-            player.PlaybackStartBeat);
+        nextPendingNodeIndex = Mathf.Clamp(
+            player.PlaybackStartNodeIndex + 1,
+            0,
+            nodes.Count);
         for (int i = 0; i < judged.Length; i++)
             judged[i] = i < nextPendingNodeIndex;
 
@@ -78,11 +81,14 @@ public class BasicJudgement : MonoBehaviour
             !player.IsRunning || !player.AudioHasStarted)
             return;
 
+        if (player.AutoModeEnabled)
+        {
+            TickAutoPlay(songTime);
+            return;
+        }
+
         ExpireMissedNotes(songTime);
         if (blocked)
-            return;
-
-        if (player.AutoModeEnabled)
             return;
 
         if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame)
@@ -108,22 +114,24 @@ public class BasicJudgement : MonoBehaviour
         }
     }
 
-    public void ProcessNodeDue(int nodeIndex)
+    private void TickAutoPlay(double songTime)
     {
-        if (!isActiveAndEnabled ||
-            nodeIndex != nextPendingNodeIndex ||
-            !IsValidPendingNode(nodeIndex) ||
-            blocked || player == null ||
-            !player.AudioHasStarted)
-            return;
-
-        if (player.AutoModeEnabled)
+        while (!blocked && nextPendingNodeIndex >= 0)
         {
+            int nodeIndex = nextPendingNodeIndex;
+            double timeDelta = Math.Clamp(
+                player.AutoPlayOffsetSeconds,
+                -greatWindowSeconds,
+                greatWindowSeconds);
+            double autoPlaySongTime = noteTimes[nodeIndex] + timeDelta;
+            if (songTime < autoPlaySongTime)
+                return;
+
             player.RequestNodeAction(nodes[nodeIndex].mode);
             ResolveNote(
                 nodeIndex,
-                noteTimes[nodeIndex],
-                0d);
+                autoPlaySongTime,
+                timeDelta);
         }
     }
 
@@ -228,23 +236,11 @@ public class BasicJudgement : MonoBehaviour
     {
         NodeMode mode = nodes[nodeIndex].mode;
         return mode == NodeMode.JumpNode ||
-            mode == NodeMode.GravityNode;
-    }
-
-    private int FindFirstNodeAtOrAfter(float beat)
-    {
-        int low = 0;
-        int high = nodes.Count;
-        while (low < high)
-        {
-            int middle = low + (high - low) / 2;
-            NodeData node = nodes[middle];
-            if (node != null && node.beat < beat)
-                low = middle + 1;
-            else
-                high = middle;
-        }
-        return low;
+            mode == NodeMode.GravityNode ||
+            mode == NodeMode.FastFallNode ||
+            mode == NodeMode.GravityFastFallNode ||
+            mode == NodeMode.WeakGravityNode ||
+            mode == NodeMode.GravityJumpNode;
     }
 
     private void AdvanceToNextPendingNode()
