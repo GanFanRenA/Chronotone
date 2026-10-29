@@ -5,6 +5,8 @@ using UnityEngine;
 
 public partial class ChartTimelineWindow
 {
+    private bool duplicateDragNotificationShown;
+
     private void HandleInput(Rect rulerRect, Rect trackRect, Rect scrollRect, NodeMarker[] markers)
     {
         Event e = Event.current;
@@ -78,8 +80,11 @@ public partial class ChartTimelineWindow
                 }
                 else
                 {
-                    ClearSelection();
-                    AddToSelection(hit);
+                    if (!IsSelected(hit))
+                    {
+                        ClearSelection();
+                        AddToSelection(hit);
+                    }
                     rangeSelectionAnchor = hit;
                     BeginDrag(e, trackRect);
                 }
@@ -245,6 +250,7 @@ public partial class ChartTimelineWindow
     {
         targetPlayer.BeginPositionUpdateBatch();
         draggingNodes = true;
+        duplicateDragNotificationShown = false;
         dragMouseStartBeat = scrollBeat + (e.mousePosition.x - trackRect.x) / pixelsPerBeat;
         dragStartBeats = new Dictionary<NodeMarker, float>();
         dragMinBeat = float.MaxValue;
@@ -271,6 +277,22 @@ public partial class ChartTimelineWindow
 
         delta = Mathf.Max(delta, -dragMinBeat);
 
+        NodeMarker[] markers = GetMarkers();
+        foreach (var kv in dragStartBeats)
+        {
+            if (kv.Key == null) continue;
+            float newBeat = kv.Value + delta;
+            if (FindMarkerAtBeat(newBeat, markers, true) != null)
+            {
+                if (!duplicateDragNotificationShown)
+                {
+                    ShowDuplicateBeatNotification(newBeat);
+                    duplicateDragNotificationShown = true;
+                }
+                return;
+            }
+        }
+
         foreach (var kv in dragStartBeats)
         {
             if (kv.Key == null) continue;
@@ -288,6 +310,7 @@ public partial class ChartTimelineWindow
     {
         float fromBeat = GetEarliestSelectedBeat();
         draggingNodes = false;
+        duplicateDragNotificationShown = false;
         dragStartBeats = null;
         targetPlayer.EndPositionUpdateBatch(fromBeat);
         InvalidateMarkerCache();

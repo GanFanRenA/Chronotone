@@ -5,6 +5,8 @@ using UnityEngine;
 
 public partial class ChartTimelineWindow
 {
+    private const float DuplicateBeatEpsilon = 0.0001f;
+
     private NodeMarker rangeSelectionAnchor;
 
     private void RequestRepaint()
@@ -223,6 +225,13 @@ public partial class ChartTimelineWindow
 
     private void CreateNodeAtBeat(float beat, NodeMarker[] markers, bool inheritPreviousMode)
     {
+        NodeMarker occupiedMarker = FindMarkerAtBeat(beat, markers, false);
+        if (occupiedMarker != null)
+        {
+            ShowDuplicateBeatNotification(beat);
+            return;
+        }
+
         Transform root = targetPlayer.scanRoot != null ? targetPlayer.scanRoot : targetPlayer.transform;
         NodeMarker previous = null;
         foreach (NodeMarker candidate in markers)
@@ -264,6 +273,28 @@ public partial class ChartTimelineWindow
         EditorUtility.SetDirty(targetPlayer);
         Selection.activeGameObject = go;
         InvalidateMarkerCache();
+    }
+
+    private NodeMarker FindMarkerAtBeat(
+        float beat,
+        NodeMarker[] markers,
+        bool ignoreSelected)
+    {
+        foreach (NodeMarker marker in markers)
+        {
+            if (marker == null || (ignoreSelected && IsSelected(marker)))
+                continue;
+            if (Mathf.Abs(marker.beat - beat) <= DuplicateBeatEpsilon)
+                return marker;
+        }
+
+        return null;
+    }
+
+    private void ShowDuplicateBeatNotification(float beat)
+    {
+        ShowNotification(
+            new GUIContent($"Beat {beat:0.###} 已有节点，不能双压"));
     }
 
     private void DeleteSelection()

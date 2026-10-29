@@ -994,11 +994,6 @@ MonoBehaviour:
     mode: 0
     position: {x: 1361.5, y: 9.5}
     deltaX: 4
-  - beat: 170.125
-    order: 0
-    mode: 0
-    position: {x: 1361.5, y: 9.5}
-    deltaX: 0
   - beat: 170.625
     order: 0
     mode: 0

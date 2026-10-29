@@ -44,6 +44,25 @@ public partial class ChartTimelineWindow
             return;
         }
 
+        Transform root = targetPlayer.scanRoot != null
+            ? targetPlayer.scanRoot
+            : targetPlayer.transform;
+        NodeMarker[] existingMarkers =
+            root.GetComponentsInChildren<NodeMarker>(false);
+        if (TryFindDuplicateImportedBeat(
+                beats,
+                existingMarkers,
+                out float duplicateBeat,
+                out string conflictDescription))
+        {
+            EditorUtility.DisplayDialog(
+                "CSV 导入失败",
+                conflictDescription +
+                $"\nBeat {duplicateBeat:0.###} 已存在或重复，禁止双压。",
+                "确定");
+            return;
+        }
+
         int createdCount = CreateImportedBeatNodes(beats, prefab);
         Debug.Log(
             $"Chart Timeline: 已从 CSV 导入 {createdCount} 个 beat：" +
@@ -130,6 +149,56 @@ public partial class ChartTimelineWindow
         }
 
         return true;
+    }
+
+    private static bool TryFindDuplicateImportedBeat(
+        List<float> beats,
+        NodeMarker[] existingMarkers,
+        out float duplicateBeat,
+        out string conflictDescription)
+    {
+        duplicateBeat = 0f;
+        conflictDescription = string.Empty;
+
+        float[] sortedBeats = beats.OrderBy(beat => beat).ToArray();
+        for (int i = 1; i < sortedBeats.Length; i++)
+        {
+            if (Mathf.Abs(sortedBeats[i] - sortedBeats[i - 1]) >
+                DuplicateBeatEpsilon)
+            {
+                continue;
+            }
+
+            duplicateBeat = sortedBeats[i];
+            conflictDescription = "CSV 内包含相同 Beat。";
+            return true;
+        }
+
+        NodeMarker[] sortedMarkers = existingMarkers
+            .Where(marker => marker != null)
+            .OrderBy(marker => marker.beat)
+            .ToArray();
+        int markerIndex = 0;
+        foreach (float beat in sortedBeats)
+        {
+            while (markerIndex < sortedMarkers.Length &&
+                   sortedMarkers[markerIndex].beat <
+                   beat - DuplicateBeatEpsilon)
+            {
+                markerIndex++;
+            }
+
+            if (markerIndex < sortedMarkers.Length &&
+                Mathf.Abs(sortedMarkers[markerIndex].beat - beat) <=
+                DuplicateBeatEpsilon)
+            {
+                duplicateBeat = beat;
+                conflictDescription = "当前谱面中已经有相同 Beat 的节点。";
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private int CreateImportedBeatNodes(List<float> beats, NodeMarker prefab)

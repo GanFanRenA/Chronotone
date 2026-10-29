@@ -9,6 +9,10 @@ public partial class ChartTimelineWindow
 
     private readonly List<double> pendingNodeClickDspTimes =
         new List<double>();
+    private readonly List<float> pendingNodeClickBeats =
+        new List<float>();
+    private readonly List<PendingNodeClickLog> pendingNodeClickLogs =
+        new List<PendingNodeClickLog>();
 
     private AudioSource[] scheduledNodeClickSources =
         System.Array.Empty<AudioSource>();
@@ -16,8 +20,21 @@ public partial class ChartTimelineWindow
         System.Array.Empty<double>();
 
     private int nextNodeClickIndex;
+    private int nextNodeClickLogIndex;
     private bool nodeClickScheduleActive;
     private bool warnedNodeClickScheduling;
+
+    private readonly struct PendingNodeClickLog
+    {
+        public PendingNodeClickLog(double dspTime, float beat)
+        {
+            DspTime = dspTime;
+            Beat = beat;
+        }
+
+        public double DspTime { get; }
+        public float Beat { get; }
+    }
 
     private bool CanUseNodeClickAudio
     {
@@ -115,6 +132,7 @@ public partial class ChartTimelineWindow
         float speed = Mathf.Max(0.1f, playbackSpeed);
 
         pendingNodeClickDspTimes.Clear();
+        pendingNodeClickBeats.Clear();
         float previousBeat = float.NegativeInfinity;
         foreach (NodeMarker marker in GetMarkers())
         {
@@ -136,6 +154,7 @@ public partial class ChartTimelineWindow
                 startDspTime +
                 (nodeSeconds - anchorSeconds) / speed;
             pendingNodeClickDspTimes.Add(eventDspTime);
+            pendingNodeClickBeats.Add(beat);
         }
 
         nextNodeClickIndex = 0;
@@ -192,6 +211,8 @@ public partial class ChartTimelineWindow
 
     private void UpdateNodeClickSchedule()
     {
+        LogStartedNodeClicks(AudioSettings.dspTime);
+
         if (!nodeClickScheduleActive)
             return;
 
@@ -254,6 +275,7 @@ public partial class ChartTimelineWindow
             }
 
             AudioSource source = scheduledNodeClickSources[sourceIndex];
+            float beat = pendingNodeClickBeats[nextNodeClickIndex];
             source.Stop();
             source.clip = clip;
             source.timeSamples = 0;
@@ -264,7 +286,25 @@ public partial class ChartTimelineWindow
 
             nodeClickSourceBusyUntil[sourceIndex] =
                 eventDspTime + clip.length + 0.01;
+            pendingNodeClickLogs.Add(
+                new PendingNodeClickLog(eventDspTime, beat));
             nextNodeClickIndex++;
+        }
+    }
+
+    private void LogStartedNodeClicks(double now)
+    {
+        while (nextNodeClickLogIndex < pendingNodeClickLogs.Count)
+        {
+            PendingNodeClickLog pending =
+                pendingNodeClickLogs[nextNodeClickLogIndex];
+            if (pending.DspTime > now)
+                break;
+
+            Debug.Log(
+                $"Beat: {pending.Beat:0.###} 成功播放",
+                targetPlayer);
+            nextNodeClickLogIndex++;
         }
     }
 
@@ -294,7 +334,10 @@ public partial class ChartTimelineWindow
     {
         nodeClickScheduleActive = false;
         nextNodeClickIndex = 0;
+        nextNodeClickLogIndex = 0;
         pendingNodeClickDspTimes.Clear();
+        pendingNodeClickBeats.Clear();
+        pendingNodeClickLogs.Clear();
 
         foreach (AudioSource source in scheduledNodeClickSources)
         {
