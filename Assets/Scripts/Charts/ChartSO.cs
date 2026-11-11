@@ -52,7 +52,7 @@ public class ChartSO : ScriptableObject
     private void OnValidate()
     {
         if (!Application.isPlaying)
-            ChartPlayer.RequestPositionUpdates(this);
+            ChartPlayer.RequestChartChanged(this);
     }
 #endif
 }

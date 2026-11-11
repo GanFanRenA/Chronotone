@@ -4,7 +4,7 @@ using UnityEngine;
 [CustomEditor(typeof(ChartPlayer))]
 public class ChartPlayerEditor : Editor
 {
-    private SerializedProperty chartProperty;
+    private SerializedProperty stageProperty;
     private SerializedProperty scanRootProperty;
     private SerializedProperty nodePrefabProperty;
     private SerializedProperty autoBakeProperty;
@@ -13,12 +13,12 @@ public class ChartPlayerEditor : Editor
     private SerializedProperty timelineNodeClickSourcesProperty;
 
     private ChartPlayer pendingAutoLoadPlayer;
-    private ChartSO pendingAutoLoadChart;
+    private StageDefinitionSO pendingAutoLoadStage;
     private bool autoLoadQueued;
 
     private void OnEnable()
     {
-        chartProperty = serializedObject.FindProperty("chart");
+        stageProperty = serializedObject.FindProperty("stage");
         scanRootProperty = serializedObject.FindProperty("scanRoot");
         nodePrefabProperty = serializedObject.FindProperty("nodePrefab");
         autoBakeProperty = serializedObject.FindProperty("autoBake");
@@ -37,9 +37,10 @@ public class ChartPlayerEditor : Editor
 
         serializedObject.Update();
 
-        ChartSO previousChart = (ChartSO)chartProperty.objectReferenceValue;
+        StageDefinitionSO previousStage =
+            (StageDefinitionSO)stageProperty.objectReferenceValue;
         EditorGUI.BeginChangeCheck();
-        EditorGUILayout.PropertyField(chartProperty);
+        EditorGUILayout.PropertyField(stageProperty);
         EditorGUILayout.PropertyField(scanRootProperty);
         EditorGUILayout.PropertyField(nodePrefabProperty);
         EditorGUILayout.PropertyField(autoBakeProperty);
@@ -57,33 +58,51 @@ public class ChartPlayerEditor : Editor
             true);
         bool inspectorChanged = EditorGUI.EndChangeCheck();
 
-        ChartSO selectedChart = (ChartSO)chartProperty.objectReferenceValue;
-        if (inspectorChanged && selectedChart != previousChart &&
-            p.dirty && previousChart != null)
+        StageDefinitionSO selectedStage =
+            (StageDefinitionSO)stageProperty.objectReferenceValue;
+        if (inspectorChanged &&
+            selectedStage != previousStage &&
+            p.dirty &&
+            previousStage != null)
         {
             int choice = EditorUtility.DisplayDialogComplex(
-                "切换谱面",
-                BuildSwitchMessage(p, previousChart, selectedChart),
+                "切换关卡",
+                BuildSwitchMessage(p, previousStage, selectedStage),
                 "烘焙后切换",
                 "取消",
                 "直接切换");
 
             if (choice == 1)
             {
-                selectedChart = previousChart;
-                chartProperty.objectReferenceValue = previousChart;
+                selectedStage = previousStage;
+                stageProperty.objectReferenceValue = previousStage;
             }
             else if (choice == 0)
             {
-                // serializedObject 尚未应用，当前 ChartPlayer.chart 仍指向旧谱面。
+                // serializedObject 尚未应用，当前 ChartPlayer.Stage 仍指向旧关卡。
                 p.Bake();
             }
         }
 
         serializedObject.ApplyModifiedProperties();
 
-        if (selectedChart != previousChart && selectedChart != null)
-            QueueAutoLoad(p, selectedChart);
+        if (selectedStage != previousStage && selectedStage != null)
+            QueueAutoLoad(p, selectedStage);
+
+        if (p.Stage != null && !p.Stage.IsComplete)
+        {
+            EditorGUILayout.HelpBox(
+                "当前 Stage 缺少 Scene、Chart 或 Track。",
+                MessageType.Error);
+        }
+        else if (p.Track == null ||
+                 !p.Track.HasSamples ||
+                 !p.Track.IsComplete)
+        {
+            EditorGUILayout.HelpBox(
+                "ChartTrack 尚未烘焙或已失效，进入 Play 前会自动烘焙。",
+                MessageType.Warning);
+        }
 
         EditorGUILayout.Space(6);
 
@@ -92,10 +111,10 @@ public class ChartPlayerEditor : Editor
         else
             EditorGUILayout.HelpBox("谱面已同步。", MessageType.Info);
 
-        if (GUILayout.Button("Bake From Scene"))
+        if (GUILayout.Button("Bake Chart + Track"))
             p.Bake();
 
-        using (new EditorGUI.DisabledScope(p.chart == null || Application.isPlaying))
+        using (new EditorGUI.DisabledScope(p.Chart == null || Application.isPlaying))
         {
             if (GUILayout.Button("Load From Chart") &&
                 EditorUtility.DisplayDialog(
@@ -109,10 +128,12 @@ public class ChartPlayerEditor : Editor
         }
     }
 
-    private void QueueAutoLoad(ChartPlayer player, ChartSO expectedChart)
+    private void QueueAutoLoad(
+        ChartPlayer player,
+        StageDefinitionSO expectedStage)
     {
         pendingAutoLoadPlayer = player;
-        pendingAutoLoadChart = expectedChart;
+        pendingAutoLoadStage = expectedStage;
         if (autoLoadQueued) return;
 
         autoLoadQueued = true;
@@ -124,12 +145,12 @@ public class ChartPlayerEditor : Editor
         autoLoadQueued = false;
 
         ChartPlayer player = pendingAutoLoadPlayer;
-        ChartSO expectedChart = pendingAutoLoadChart;
+        StageDefinitionSO expectedStage = pendingAutoLoadStage;
         pendingAutoLoadPlayer = null;
-        pendingAutoLoadChart = null;
+        pendingAutoLoadStage = null;
 
         if (player == null || Application.isPlaying ||
-            player.chart != expectedChart)
+            player.Stage != expectedStage)
         {
             return;
         }
@@ -140,19 +161,26 @@ public class ChartPlayerEditor : Editor
 
     private static string BuildSwitchMessage(
         ChartPlayer player,
-        ChartSO previousChart,
-        ChartSO selectedChart)
+        StageDefinitionSO previousStage,
+        StageDefinitionSO selectedStage)
     {
-        string previousName = previousChart != null ? previousChart.name : "无";
-        string selectedName = selectedChart != null ? selectedChart.name : "无";
+        string previousName = previousStage != null
+            ? previousStage.name
+            : "无";
+        string selectedName = selectedStage != null
+            ? selectedStage.name
+            : "无";
         int existingCount = GetMarkerCount(player);
-        int selectedCount = selectedChart != null && selectedChart.nodes != null
-            ? selectedChart.nodes.Count
+        int selectedCount =
+            selectedStage != null &&
+            selectedStage.Chart != null &&
+            selectedStage.Chart.nodes != null
+            ? selectedStage.Chart.nodes.Count
             : 0;
 
         return
             $"从“{previousName}”切换到“{selectedName}”。\n\n" +
-            $"旧谱面有未烘焙改动。选择“烘焙后切换”会先保存旧谱面的 " +
+            $"旧关卡有未烘焙改动。选择“烘焙后切换”会先保存旧关卡的 " +
             $"{existingCount} 个节点，再加载新谱面的 {selectedCount} 个节点。" +
             "选择“直接切换”会丢弃当前场景中的未烘焙改动。";
     }
@@ -168,7 +196,9 @@ public class ChartPlayerEditor : Editor
     private static string BuildLoadConfirmation(ChartPlayer player)
     {
         int existingCount = GetMarkerCount(player);
-        int chartNodeCount = player.chart != null ? player.chart.nodes.Count : 0;
+        int chartNodeCount = player.Chart != null
+            ? player.Chart.nodes.Count
+            : 0;
 
         return existingCount > 0
             ? $"将删除 scanRoot 下现有 {existingCount} 个节点，并从 ChartSO 重建 {chartNodeCount} 个节点。"

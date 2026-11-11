@@ -6,7 +6,7 @@ using UnityEditor;
 
 public class ChartPlayer : MonoBehaviour
 {
-    public ChartSO chart;
+    [SerializeField] private StageDefinitionSO stage;
     public Transform scanRoot;
     [Tooltip("留空时使用 Assets/Prefabs/Node.prefab。")]
     public NodeMarker nodePrefab;
@@ -25,10 +25,48 @@ public class ChartPlayer : MonoBehaviour
 
     [System.NonSerialized] private bool updatingPositions;
 
+    public StageDefinitionSO Stage => stage;
+    public ChartSO Chart => stage != null ? stage.Chart : null;
+    public ChartTrackSO Track => stage != null ? stage.Track : null;
     public bool IsUpdatingPositions => updatingPositions;
+
+    public Player ResolvePlayer()
+    {
+        Player[] players = Object.FindObjectsByType<Player>(
+            FindObjectsSortMode.None);
+        foreach (Player player in players)
+        {
+            if (player != null && player.chartPlayer == this)
+                return player;
+        }
+
+        return players.Length == 1 ? players[0] : null;
+    }
 
     private void Awake()
     {
+        if (stage == null || !stage.IsComplete)
+        {
+            Debug.LogError(
+                "ChartPlayer 必须绑定包含 Scene、Chart 和 Track 的 StageDefinition",
+                this);
+            enabled = false;
+            return;
+        }
+
+        string ownerScenePath = gameObject.scene.path;
+        if (!string.Equals(
+                ownerScenePath,
+                stage.ScenePath,
+                System.StringComparison.Ordinal))
+        {
+            Debug.LogError(
+                $"Stage '{stage.name}' 属于场景 '{stage.ScenePath}'，当前对象位于 '{ownerScenePath}'",
+                this);
+            enabled = false;
+            return;
+        }
+
         RefreshChartPositions();
         RefreshNodeAppearances();
     }
@@ -55,6 +93,7 @@ public class ChartPlayer : MonoBehaviour
 
     public void RefreshChartPositions()
     {
+        ChartSO chart = Chart;
         if (chart == null) return;
         Transform root = scanRoot != null ? scanRoot : transform;
         chart.UpdatePos(root.position.x);
@@ -62,6 +101,7 @@ public class ChartPlayer : MonoBehaviour
 
     public void UpdatePos(float fromBeat = 0f)
     {
+        ChartSO chart = Chart;
         if (chart == null) return;
 
         Transform root = scanRoot != null ? scanRoot : transform;
@@ -169,8 +209,8 @@ public class ChartPlayer : MonoBehaviour
 
     private static string BuildEditorPlayStartBeatKey(ChartPlayer player)
     {
-        string chartPath = player.chart != null
-            ? AssetDatabase.GetAssetPath(player.chart)
+        string chartPath = player.Chart != null
+            ? AssetDatabase.GetAssetPath(player.Chart)
             : string.Empty;
         return EditorPlayStartBeatPrefix +
             System.Uri.EscapeDataString(chartPath);
@@ -189,7 +229,30 @@ public class ChartPlayer : MonoBehaviour
     {
         if (state != PlayModeStateChange.ExitingEditMode) return;
         foreach (var p in Object.FindObjectsByType<ChartPlayer>(FindObjectsSortMode.None))
-            if (p.dirty) p.Bake();
+            if (p.NeedsTrackBake()) p.Bake();
+    }
+
+    private bool NeedsTrackBake()
+    {
+        ChartSO chart = Chart;
+        ChartTrackSO track = Track;
+        Player player = ResolvePlayer();
+        if (chart == null ||
+            track == null ||
+            !track.HasSamples ||
+            !track.IsComplete ||
+            player == null)
+        {
+            return true;
+        }
+
+        PerfectRouteSample first = track.Samples[0];
+        return dirty ||
+            System.Math.Abs(
+                first.Time + chart.GlobalOffsetSeconds) > 0.00001d ||
+            Vector2.SqrMagnitude(
+                first.Position - (Vector2)player.transform.position) >
+            0.000001f;
     }
 
     private static void RefreshAllPositions()
@@ -199,7 +262,7 @@ public class ChartPlayer : MonoBehaviour
         foreach (ChartPlayer player in
                  Object.FindObjectsByType<ChartPlayer>(FindObjectsSortMode.None))
         {
-            if (player != null && player.chart != null)
+            if (player != null && player.Chart != null)
                 player.UpdatePos();
         }
     }
@@ -263,21 +326,25 @@ public class ChartPlayer : MonoBehaviour
         UpdatePos(fromBeat);
     }
 
-    public static void RequestPositionUpdates(ChartSO changedChart)
+    public static void RequestChartChanged(ChartSO changedChart)
     {
         if (changedChart == null) return;
 
         foreach (ChartPlayer player in
                  Object.FindObjectsByType<ChartPlayer>(FindObjectsSortMode.None))
         {
-            if (player != null && player.chart == changedChart)
+            if (player != null && player.Chart == changedChart)
+            {
+                player.MarkDirty();
                 player.QueueUpdatePos();
+            }
         }
     }
 
     [ContextMenu("Load From Chart")]
     public void LoadFromChart()
     {
+        ChartSO chart = Chart;
         if (this == null || chart == null || Application.isPlaying) return;
 
         if (nodePrefab == null)
@@ -338,10 +405,18 @@ public class ChartPlayer : MonoBehaviour
         EditorUtility.SetDirty(this);
     }
 
-    [ContextMenu("Bake From Scene")]
+    [ContextMenu("Bake Chart + Track")]
     public void Bake()
     {
-        if (this == null || chart == null || Application.isPlaying) return;
+        ChartSO chart = Chart;
+        ChartTrackSO track = Track;
+        if (this == null ||
+            chart == null ||
+            track == null ||
+            Application.isPlaying)
+        {
+            return;
+        }
 
         UpdatePos();
 
@@ -375,13 +450,113 @@ public class ChartPlayer : MonoBehaviour
             });
         }
 
+        if (!TryBuildTrack(result, out PerfectRoute route))
+            return;
+
         chart.nodes = result;
         chart.UpdatePos(root.position.x);
+        track.Set(route);
         EditorUtility.SetDirty(chart);
+        EditorUtility.SetDirty(track);
         AssetDatabase.SaveAssets();
 
         dirty = false;
         EditorUtility.SetDirty(this);
+    }
+
+    private bool TryBuildTrack(
+        IReadOnlyList<NodeData> nodes,
+        out PerfectRoute route)
+    {
+        route = null;
+
+        ChartSO chart = Chart;
+        Player scenePlayer = ResolvePlayer();
+        PhysicsActionMode physicsMode = scenePlayer != null
+            ? scenePlayer.GetComponent<PhysicsActionMode>()
+            : null;
+        BoxCollider2D bodyCollider = scenePlayer != null
+            ? scenePlayer.GetComponent<BoxCollider2D>()
+            : null;
+        Rigidbody2D body = scenePlayer != null
+            ? scenePlayer.GetComponent<Rigidbody2D>()
+            : null;
+
+        if (chart == null ||
+            chart.bpmTimeline == null ||
+            scenePlayer == null ||
+            physicsMode == null ||
+            bodyCollider == null)
+        {
+            Debug.LogError(
+                "烘焙 ChartTrack 需要 Chart、Player、PhysicsActionMode 和 BoxCollider2D",
+                this);
+            return false;
+        }
+
+        double startSongTime = -chart.GlobalOffsetSeconds;
+        double endSongTime = startSongTime;
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            NodeData node = nodes[i];
+            if (node == null)
+                continue;
+
+            endSongTime = System.Math.Max(
+                endSongTime,
+                chart.bpmTimeline.BeatToSeconds(node.beat));
+        }
+
+        if (chart.clip != null)
+        {
+            endSongTime = System.Math.Max(
+                endSongTime,
+                chart.clip.length - chart.GlobalOffsetSeconds);
+        }
+
+        endSongTime += Mathf.Max(1f, Time.fixedDeltaTime * 2f);
+
+        Vector2 startPosition = scenePlayer.transform.position;
+        var config = new PerfectRouteConfig(
+            physicsMode,
+            scenePlayer.transform.localEulerAngles.z);
+        route = PerfectRouteBuilder.Build(
+            startPosition,
+            startSongTime,
+            nodes,
+            chart.bpmTimeline,
+            config,
+            bodyCollider,
+            body,
+            endSongTime);
+
+        if (route == null ||
+            route.Count == 0 ||
+            route.Blocked ||
+            !route.IsComplete)
+        {
+            route = null;
+            Debug.LogError(
+                "ChartTrack 烘焙失败或轨道不完整，未保存谱面和轨道",
+                this);
+            return false;
+        }
+
+        PerfectRouteSample first = route.Samples[0];
+        bool anchorMatches =
+            System.Math.Abs(first.Time - startSongTime) <= 0.00001d &&
+            Vector2.SqrMagnitude(first.Position - startPosition) <=
+            0.000001f;
+        if (!anchorMatches)
+        {
+            route = null;
+            Debug.LogError(
+                "ChartTrack 首点必须等于角色起点和歌曲起始时刻",
+                this);
+            return false;
+        }
+
+        return true;
     }
 
     private void OnValidate()

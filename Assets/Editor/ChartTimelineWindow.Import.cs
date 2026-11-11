@@ -11,7 +11,7 @@ public partial class ChartTimelineWindow
 {
     private void ImportBeatsFromCsv()
     {
-        if (targetPlayer == null || targetPlayer.chart == null) return;
+        if (targetPlayer == null || targetPlayer.Chart == null) return;
         if (EditorApplication.isPlayingOrWillChangePlaymode)
         {
             EditorUtility.DisplayDialog(

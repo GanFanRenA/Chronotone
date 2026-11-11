@@ -1,20 +1,21 @@
 using UnityEngine;
 
 /// <summary>
-/// X 轴强制跟随谱面时间轴；Y 轴由本模式自行积分。
-/// Kinematic Rigidbody2D 只负责平滑移动和碰撞查询，不受物理力驱动。
-/// 空中持续旋转碰撞体；重力反转后同样成立。
+/// 有轨道权限时严格跟随唯一完美轨道；失去权限后才运行自由物理。
+/// 节点模式只影响轨道形状，不再在运行时执行角色动作。
 /// </summary>
 public sealed class PhysicsActionMode : PlayerActionMode
 {
-    [Header("跳跃物理")]
-    [Tooltip("沿重力反方向施加的起跳速度。")]
+    [Header("自由物理")]
+    [Tooltip("完美轨道中的起跳速度，同时决定脱轨瞬间的竖直速度。")]
     [SerializeField, Min(0.1f)] private float jumpVelocity = 8f;
     [SerializeField, Min(0f)] private float gravityScale = 3f;
     [Tooltip("空中旋转角速度，单位为度/秒。")]
     [SerializeField] private float angularSpeed = 220f;
     [Tooltip("速坠期间的重力倍率，范围为普通重力的 2 至 3 倍。")]
     [SerializeField, Range(2f, 3f)] private float fastFallGravityMultiplier = 2.5f;
+    [Tooltip("脱轨后沿反重力方向离开交接点多远时死亡。")]
+    [SerializeField, Min(1f)] private float fallDeathDistance = 12f;
 
     [Header("地面")]
     [SerializeField] private LayerMask groundLayers = ~0;
@@ -31,21 +32,23 @@ public sealed class PhysicsActionMode : PlayerActionMode
 
     private Rigidbody2D body;
     private BoxCollider2D bodyCollider;
-    private ChartMotionTimeline timeline;
-    private Vector2 respawnPosition;
+    private PerfectRoute perfectRoute;
     private float blockedElapsed;
     private int blockedDirection;
-    private bool jumpQueued;
     private bool grounded;
     private bool gravityInverted;
     private bool fastFallActive;
-    private bool respawnStartPending;
+    private bool wasTrackEnabled;
+    private bool freeFallOriginValid;
+    private float freeFallOriginY;
+    private float horizontalSpeed;
     private float verticalSpeed;
     private float spinAngle;
     private ContactFilter2D groundFilter;
     private ContactFilter2D blockingFilter;
     private ContactFilter2D solidFilter;
     private readonly RaycastHit2D[] castHits = new RaycastHit2D[16];
+
     public float JumpVelocity => jumpVelocity;
     public float GravityScale => gravityScale;
     public float FastFallGravityMultiplier => fastFallGravityMultiplier;
@@ -59,7 +62,7 @@ public sealed class PhysicsActionMode : PlayerActionMode
 
     public override string DisplayName => "物理移动";
 
-    void Awake()
+    private void Awake()
     {
         body = GetComponent<Rigidbody2D>();
         bodyCollider = GetComponent<BoxCollider2D>();
@@ -75,7 +78,8 @@ public sealed class PhysicsActionMode : PlayerActionMode
             body.bodyType = RigidbodyType2D.Kinematic;
             body.constraints = RigidbodyConstraints2D.None;
             body.interpolation = RigidbodyInterpolation2D.Interpolate;
-            body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            body.collisionDetectionMode =
+                CollisionDetectionMode2D.Continuous;
             body.simulated = false;
         }
 
@@ -84,76 +88,196 @@ public sealed class PhysicsActionMode : PlayerActionMode
 
     protected override void OnModeEnter()
     {
+        if (body == null || bodyCollider == null || Player.Chart == null)
+            return;
+
+        EnsurePerfectRoute();
+
+        IgnoreNodeCollisions();
+        ResetMotionState();
+
+        if (!TryApplyTrackState(
+                Player.SongTime,
+                true,
+                out _))
+        {
+            SetBodyPose(
+                Player.PlaybackStartPosition,
+                Player.OriginalRotation.eulerAngles.z);
+        }
+
+        body.simulated = Player.AudioHasStarted &&
+            !Player.IsTrackEnabled;
+        wasTrackEnabled = Player.IsTrackEnabled;
+    }
+
+    protected override void OnModePrepareForPlayback()
+    {
+        if (body == null || bodyCollider == null || Player.Chart == null)
+            return;
+
+        EnsurePerfectRoute();
+    }
+
+    protected override void OnModeFixedUpdate(
+        double songTime,
+        float fixedDeltaTime)
+    {
         if (body == null || bodyCollider == null)
             return;
 
-        timeline = new ChartMotionTimeline(
-            Player.PlaybackStartPosition,
-            Player.PlaybackStartSongTime,
-            Player.Nodes,
-            Player.Chart.bpmTimeline);
+        if (Player.IsTrackEnabled)
+        {
+            TickTracked(songTime, fixedDeltaTime);
+        }
+        else
+        {
+            if (wasTrackEnabled)
+                BeginFreeMotion();
 
-        gravityInverted = false;
-        body.simulated = true;
+            TickFree(fixedDeltaTime);
+        }
 
-        float targetX = timeline.Sample(Player.SongTime).x;
-        body.position = new Vector2(targetX, Player.PlaybackStartPosition.y);
-        spinAngle = NormalizeAngle(Player.OriginalRotation.eulerAngles.z);
-        SetPlayerRotation(Player.OriginalRotation);
-        IgnoreNodeCollisions();
-
-        verticalSpeed = 0f;
-        fastFallActive = false;
-        grounded = HasSupport(body.position, spinAngle);
-        ResetBlockedState();
-        jumpQueued = false;
-        respawnStartPending = false;
+        wasTrackEnabled = Player.IsTrackEnabled;
     }
 
-    protected override void OnModeFixedUpdate(double songTime, float fixedDeltaTime)
+    protected override void OnModeRespawn(
+        Vector2 position,
+        double checkpointSongTime,
+        int checkpointNodeIndex)
     {
-        if (timeline == null || body == null || bodyCollider == null)
+        if (body == null)
             return;
 
-        if (respawnStartPending)
+        ResetMotionState();
+        SetBodyPose(
+            position,
+            Player.OriginalRotation.eulerAngles.z);
+        body.simulated = false;
+        wasTrackEnabled = Player.IsTrackEnabled;
+    }
+
+    protected override void OnModeControlLockChanged(bool locked)
+    {
+        ResetMotionState();
+
+        if (body != null)
+            body.simulated = false;
+    }
+
+    protected override void OnModeRewindPose(
+        Vector2 position,
+        Quaternion rotation)
+    {
+        base.OnModeRewindPose(position, rotation);
+
+        if (body == null)
+            return;
+
+        body.position = position;
+        spinAngle = NormalizeAngle(rotation.eulerAngles.z);
+        body.rotation = spinAngle;
+        body.simulated = false;
+    }
+
+    protected override void OnModeExit()
+    {
+        ResetMotionState();
+
+        if (body != null)
+            body.simulated = false;
+
+        Player.transform.localRotation = Player.OriginalRotation;
+    }
+
+    private void TickTracked(double songTime, float fixedDeltaTime)
+    {
+        float deltaTime = Mathf.Max(0.0001f, fixedDeltaTime);
+        if (!TryApplyTrackState(
+                songTime,
+                true,
+                out PerfectRouteSample sample))
         {
-            body.position = respawnPosition;
-            spinAngle = NormalizeAngle(Player.OriginalRotation.eulerAngles.z);
-            SetPlayerRotation(Player.OriginalRotation);
-            verticalSpeed = 0f;
-            grounded = false;
-
-            if (!Player.AudioHasStarted)
-            {
-                body.simulated = false;
-                return;
-            }
-
-            body.simulated = true;
-            respawnStartPending = false;
-            ResetBlockedState();
+            body.simulated = false;
             return;
         }
 
-        float targetX = timeline.Sample(songTime).x;
+        if (perfectRoute.TrySampleAt(
+                songTime - deltaTime,
+                out PerfectRouteSample previousSample))
+        {
+            horizontalSpeed =
+                (sample.Position.x - previousSample.Position.x) /
+                deltaTime;
+        }
+
+        // 跟轨期间轨道位置是唯一权威，不需要 Physics2D 再推进一次刚体。
+        body.simulated = false;
+        ResetBlockedState();
+    }
+
+    private void BeginFreeMotion()
+    {
+        double releaseTime = Player.TrackReleaseSongTime;
+        int nodeIndex = Player.TrackReleaseNodeIndex;
+
+        if (nodeIndex >= 0 &&
+            Player.Nodes != null &&
+            nodeIndex < Player.Nodes.Count &&
+            Player.Nodes[nodeIndex] != null &&
+            Player.Chart != null &&
+            Player.Chart.bpmTimeline != null)
+        {
+            double nodeTime =
+                Player.Chart.bpmTimeline.BeatToSeconds(
+                    Player.Nodes[nodeIndex].beat);
+            if (releaseTime + 0.00001d >= nodeTime)
+                releaseTime = nodeTime - 0.00001d;
+        }
+
+        if (TryApplyTrackState(
+                releaseTime,
+                false,
+                out PerfectRouteSample releaseSample) &&
+            Player.Chart != null &&
+            Time.fixedDeltaTime > 0f)
+        {
+            double previousTime =
+                releaseTime - Time.fixedDeltaTime;
+            if (perfectRoute.TrySampleAt(
+                    previousTime,
+                    out PerfectRouteSample previousSample))
+            {
+                horizontalSpeed =
+                    (releaseSample.Position.x -
+                     previousSample.Position.x) /
+                    Time.fixedDeltaTime;
+            }
+
+            freeFallOriginValid = true;
+            freeFallOriginY = releaseSample.Position.y;
+        }
+
+        body.simulated = true;
+        ResetBlockedState();
+    }
+
+    private void TickFree(float fixedDeltaTime)
+    {
         float deltaTime = Mathf.Max(0.0001f, fixedDeltaTime);
-        float deltaX = targetX - body.position.x;
+        float deltaX = horizontalSpeed * deltaTime;
         bool horizontallyBlocked = IsMovementBlocked(deltaX);
         if (UpdateBlockedState(
                 horizontallyBlocked,
                 deltaX,
                 deltaTime))
+        {
             return;
+        }
 
         Vector2 nextPosition = body.position;
         if (!horizontallyBlocked)
-            nextPosition.x = targetX;
-
-        if (jumpQueued)
-        {
-            BeginPhysicalJump();
-            jumpQueued = false;
-        }
+            nextPosition.x += deltaX;
 
         if (grounded &&
             !HasSupport(
@@ -180,151 +304,48 @@ public sealed class PhysicsActionMode : PlayerActionMode
             verticalSpeed +=
                 GravityAccelerationY * gravityMultiplier * deltaTime;
 
-            float verticalDisplacement =
-                verticalSpeed * deltaTime;
             ResolveVerticalMotion(
                 ref nextPosition,
                 ref spinAngle,
-                verticalDisplacement);
+                verticalSpeed * deltaTime);
+        }
+
+        if (freeFallOriginValid &&
+            (nextPosition.y - freeFallOriginY) * SupportNormalY <
+            -fallDeathDistance)
+        {
+            Player.ReportBlockedDeath();
+            return;
         }
 
         body.MoveRotation(spinAngle);
         body.MovePosition(nextPosition);
     }
 
-    protected override void OnModeRequestJump()
+    private bool TryApplyTrackState(
+        double songTime,
+        bool updateBody,
+        out PerfectRouteSample sample)
     {
-        jumpQueued = true;
-    }
-
-    protected override void OnModeJudgement(JudgementResult result)
-    {
-        if (!result.IsSuccessfulHit ||
-            Player.Nodes == null ||
-            result.NoteIndex < 0 ||
-            result.NoteIndex >= Player.Nodes.Count)
-            return;
-
-        switch (Player.Nodes[result.NoteIndex].mode)
+        sample = default;
+        if (perfectRoute == null ||
+            !perfectRoute.TrySampleAt(
+                songTime,
+                out sample))
         {
-            case NodeMode.GravityNode:
-            case NodeMode.GravityFastFallNode:
-                ApplyFastFall(true);
-                break;
-            case NodeMode.FastFallNode:
-                ApplyFastFall(false);
-                break;
-            case NodeMode.WeakGravityNode:
-                gravityInverted = !gravityInverted;
-                grounded = false;
-                fastFallActive = false;
-                break;
-            case NodeMode.GravityJumpNode:
-                gravityInverted = !gravityInverted;
-                BeginPhysicalJump();
-                break;
-        }
-    }
-
-    protected override void OnModeRespawn(
-        Vector2 position,
-        double checkpointSongTime,
-        int checkpointNodeIndex)
-    {
-        if (Player.Chart == null)
-            return;
-
-        timeline = new ChartMotionTimeline(
-            position,
-            checkpointSongTime,
-            Player.Nodes,
-            Player.Chart.bpmTimeline);
-
-        gravityInverted = IsGravityInvertedAtCheckpoint(checkpointNodeIndex);
-        grounded = false;
-        fastFallActive = false;
-        verticalSpeed = 0f;
-
-        if (body != null)
-        {
-            body.position = position;
-            spinAngle = NormalizeAngle(Player.OriginalRotation.eulerAngles.z);
-            body.simulated = false;
+            return false;
         }
 
-        respawnPosition = position;
-        respawnStartPending = true;
-        SetPlayerRotation(Player.OriginalRotation);
-        jumpQueued = false;
-        ResetBlockedState();
-    }
+        spinAngle = sample.Angle;
+        verticalSpeed = sample.VerticalSpeed;
+        grounded = sample.Grounded;
+        gravityInverted = sample.GravityInverted;
+        fastFallActive = sample.FastFallActive;
 
-    protected override void OnModeControlLockChanged(bool locked)
-    {
-        if (!locked)
-            return;
+        if (updateBody && body != null)
+            SetBodyPose(sample.Position, sample.Angle);
 
-        jumpQueued = false;
-        respawnStartPending = false;
-        ResetBlockedState();
-        grounded = false;
-        fastFallActive = false;
-        verticalSpeed = 0f;
-
-        if (body == null)
-            return;
-
-        body.simulated = false;
-    }
-
-    protected override void OnModeRewindPose(
-        Vector2 position,
-        Quaternion rotation)
-    {
-        base.OnModeRewindPose(position, rotation);
-
-        if (body == null)
-            return;
-
-        body.position = position;
-        spinAngle = NormalizeAngle(rotation.eulerAngles.z);
-        body.MoveRotation(rotation.eulerAngles.z);
-    }
-
-    protected override void OnModeExit()
-    {
-        timeline = null;
-        jumpQueued = false;
-        respawnStartPending = false;
-        grounded = false;
-        fastFallActive = false;
-        verticalSpeed = 0f;
-        ResetBlockedState();
-
-        if (body != null)
-        {
-            gravityInverted = false;
-            body.simulated = false;
-        }
-
-        Player.transform.localRotation = Player.OriginalRotation;
-    }
-
-    private void BeginPhysicalJump()
-    {
-        grounded = false;
-        fastFallActive = false;
-        verticalSpeed = SupportNormalY * jumpVelocity;
-    }
-
-    private void ApplyFastFall(bool invertGravity)
-    {
-        if (invertGravity)
-            gravityInverted = !gravityInverted;
-
-        grounded = false;
-        verticalSpeed = 0f;
-        fastFallActive = true;
+        return true;
     }
 
     private bool UpdateBlockedState(
@@ -356,7 +377,7 @@ public sealed class PhysicsActionMode : PlayerActionMode
             return false;
 
         ResetBlockedState();
-        Player.ReportBlockedBad();
+        Player.ReportBlockedDeath();
         return true;
     }
 
@@ -366,12 +387,33 @@ public sealed class PhysicsActionMode : PlayerActionMode
         blockedDirection = 0;
     }
 
-    private void SetPlayerRotation(Quaternion rotation)
+    private void ResetMotionState()
+    {
+        horizontalSpeed = 0f;
+        verticalSpeed = 0f;
+        grounded = false;
+        gravityInverted = false;
+        fastFallActive = false;
+        freeFallOriginValid = false;
+        spinAngle = NormalizeAngle(
+            Player.OriginalRotation.eulerAngles.z);
+        ResetBlockedState();
+    }
+
+    private void SetBodyPose(Vector2 position, float angle)
     {
         if (body != null)
-            body.MoveRotation(rotation.eulerAngles.z);
-        else
-            Player.transform.localRotation = rotation;
+        {
+            body.position = position;
+            body.rotation = angle;
+        }
+
+        Vector3 worldPosition = Player.transform.position;
+        worldPosition.x = position.x;
+        worldPosition.y = position.y;
+        Player.transform.SetPositionAndRotation(
+            worldPosition,
+            Quaternion.Euler(0f, 0f, angle));
     }
 
     private bool IsMovementBlocked(float deltaX)
@@ -446,11 +488,11 @@ public sealed class PhysicsActionMode : PlayerActionMode
         {
             RaycastHit2D hit = castHits[i];
             if (IsIgnoredHit(hit) ||
-                Vector2.Dot(hit.normal, supportNormal) <= 0.5f)
+                Vector2.Dot(hit.normal, supportNormal) <= 0.5f ||
+                hit.distance >= nearestDistance)
+            {
                 continue;
-
-            if (hit.distance >= nearestDistance)
-                continue;
+            }
 
             nearestDistance = hit.distance;
             supportHit = hit;
@@ -485,7 +527,9 @@ public sealed class PhysicsActionMode : PlayerActionMode
             if (IsIgnoredHit(hit) ||
                 Vector2.Dot(hit.normal, direction) > -0.1f ||
                 hit.distance >= nearestDistance)
+            {
                 continue;
+            }
 
             nearestDistance = hit.distance;
             nearestHit = hit;
@@ -512,6 +556,7 @@ public sealed class PhysicsActionMode : PlayerActionMode
         {
             grounded = true;
             verticalSpeed = 0f;
+            fastFallActive = false;
             LandOnSupport(
                 ref position,
                 ref angle,
@@ -594,7 +639,9 @@ public sealed class PhysicsActionMode : PlayerActionMode
 
         if (hitCollider == bodyCollider ||
             hitCollider.attachedRigidbody == body)
+        {
             return true;
+        }
 
         return hitCollider.GetComponentInParent<NodeMarker>() != null;
     }
@@ -628,28 +675,58 @@ public sealed class PhysicsActionMode : PlayerActionMode
 
     private float SupportNormalY => gravityInverted ? -1f : 1f;
 
-    private static float NormalizeAngle(float angle)
+    private void EnsurePerfectRoute()
     {
-        return Mathf.DeltaAngle(0f, angle);
-    }
+        if (perfectRoute != null)
+            return;
 
-    private bool IsGravityInvertedAtCheckpoint(int checkpointNodeIndex)
-    {
-        if (Player.Nodes == null || checkpointNodeIndex < 0)
-            return false;
-
-        bool inverted = false;
-        int lastIndex = Mathf.Min(checkpointNodeIndex, Player.Nodes.Count - 1);
-        for (int i = 0; i <= lastIndex; i++)
+        ChartTrackSO track = Player.Track;
+        if (track == null)
         {
-            if (Player.Nodes[i].mode == NodeMode.GravityNode ||
-                Player.Nodes[i].mode == NodeMode.GravityFastFallNode ||
-                Player.Nodes[i].mode == NodeMode.WeakGravityNode ||
-                Player.Nodes[i].mode == NodeMode.GravityJumpNode)
-                inverted = !inverted;
+            Debug.LogError(
+                "Player 的 Stage 没有绑定 ChartTrack，角色无法移动",
+                this);
+            return;
         }
 
-        return inverted;
+        perfectRoute = track.CreateRoute();
+        if (perfectRoute == null || perfectRoute.Count == 0)
+        {
+            perfectRoute = null;
+            Debug.LogError(
+                "ChartTrack 没有可用于开局的轨道样本，请重新烘焙轨道",
+                this);
+            return;
+        }
+
+        if (!perfectRoute.IsComplete || perfectRoute.Blocked)
+        {
+            Debug.LogWarning(
+                $"ChartTrack 未完整生成，将使用现有 {perfectRoute.Count} 个样本继续跟轨",
+                this);
+        }
+
+        PerfectRouteSample first = perfectRoute.Samples[0];
+        bool anchorMatches =
+            Player.Chart != null &&
+            System.Math.Abs(
+                first.Time + Player.Chart.GlobalOffsetSeconds) <=
+            0.00001d &&
+            Vector2.SqrMagnitude(
+                first.Position - Player.OriginalPosition) <=
+            0.000001f;
+        if (!anchorMatches)
+        {
+            Debug.LogError(
+                "ChartTrack 首点必须对应角色起点和音乐起始时刻，请重新烘焙轨道",
+                this);
+            perfectRoute = null;
+            return;
+        }
+
+        Debug.Log(
+            $"[轨道] 已接入 ChartTrack：{perfectRoute.Count} 个样本，首点 {first.Position}",
+            this);
     }
 
     private void IgnoreNodeCollisions()
@@ -670,5 +747,10 @@ public sealed class PhysicsActionMode : PlayerActionMode
             foreach (Collider2D nodeCollider in nodeColliders)
                 Physics2D.IgnoreCollision(bodyCollider, nodeCollider, true);
         }
+    }
+
+    private static float NormalizeAngle(float angle)
+    {
+        return Mathf.DeltaAngle(0f, angle);
     }
 }

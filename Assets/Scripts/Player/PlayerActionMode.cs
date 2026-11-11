@@ -29,6 +29,11 @@ public abstract class PlayerActionMode : MonoBehaviour
         OnModeEnter();
     }
 
+    internal void PrepareForPlayback()
+    {
+        OnModePrepareForPlayback();
+    }
+
     internal void Exit()
     {
         if (!IsActive) return;
@@ -43,24 +48,9 @@ public abstract class PlayerActionMode : MonoBehaviour
         }
     }
 
-    internal void Tick(double songTime)
-    {
-        if (IsActive) OnModeUpdate(songTime);
-    }
-
     internal void FixedTick(double songTime, float fixedDeltaTime)
     {
         if (IsActive) OnModeFixedUpdate(songTime, fixedDeltaTime);
-    }
-
-    internal void Judge(JudgementResult result)
-    {
-        if (IsActive) OnModeJudgement(result);
-    }
-
-    internal void RequestJump()
-    {
-        if (IsActive) OnModeRequestJump();
     }
 
     internal void RespawnTo(
@@ -85,10 +75,8 @@ public abstract class PlayerActionMode : MonoBehaviour
     }
 
     protected abstract void OnModeEnter();
-    protected virtual void OnModeUpdate(double songTime) { }
+    protected virtual void OnModePrepareForPlayback() { }
     protected virtual void OnModeFixedUpdate(double songTime, float fixedDeltaTime) { }
-    protected virtual void OnModeJudgement(JudgementResult result) { }
-    protected virtual void OnModeRequestJump() { }
     protected virtual void OnModeRespawn(
         Vector2 position,
         double checkpointSongTime,

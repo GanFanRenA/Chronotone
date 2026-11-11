@@ -18,13 +18,14 @@ public partial class ChartTimelineWindow
     private void InvalidateMarkerCache()
     {
         markersDirty = true;
+        editorPerfectRouteDirty = true;
         RequestRepaint();
         SceneView.RepaintAll();
     }
 
     private NodeMarker[] GetMarkers()
     {
-        if (targetPlayer == null || targetPlayer.chart == null)
+        if (targetPlayer == null || targetPlayer.Chart == null)
             return System.Array.Empty<NodeMarker>();
 
         Transform root = targetPlayer.scanRoot != null ? targetPlayer.scanRoot : targetPlayer.transform;
@@ -100,8 +101,8 @@ public partial class ChartTimelineWindow
         if (state == PlayModeStateChange.ExitingEditMode)
         {
             if (targetPlayer != null &&
-                targetPlayer.chart != null &&
-                targetPlayer.chart.bpmTimeline != null)
+                targetPlayer.Chart != null &&
+                targetPlayer.Chart.bpmTimeline != null)
             {
                 ChartPlayer.SetEditorPlayStartBeat(
                     targetPlayer,
@@ -137,11 +138,18 @@ public partial class ChartTimelineWindow
             Object target = modification.currentValue.target;
             if (target is NodeMarker ||
                 target == targetPlayer ||
-                (targetPlayer != null && target == targetPlayer.chart))
+                (targetPlayer != null && target == targetPlayer.Chart))
             {
                 InvalidateMarkerCache();
                 if (targetPlayer != null)
                 {
+                    if (target is NodeMarker ||
+                        (targetPlayer.Chart != null &&
+                         target == targetPlayer.Chart))
+                    {
+                        targetPlayer.MarkDirty();
+                    }
+
                     targetPlayer.QueueUpdatePos(
                         target is NodeMarker marker ? marker.beat : 0f);
                 }
@@ -153,7 +161,7 @@ public partial class ChartTimelineWindow
 
     private void SelectAllNodes()
     {
-        if (targetPlayer == null || targetPlayer.chart == null) return;
+        if (targetPlayer == null || targetPlayer.Chart == null) return;
 
         ReplaceSelection(GetMarkers());
         SyncSelectionToUnity();
@@ -214,7 +222,7 @@ public partial class ChartTimelineWindow
 
     private void CreateNodeAtPlayhead()
     {
-        if (targetPlayer == null || targetPlayer.chart == null) return;
+        if (targetPlayer == null || targetPlayer.Chart == null) return;
 
         float beat = Mathf.Max(0f, playheadBeat);
         if (snap > 0f)

@@ -41,7 +41,7 @@ public partial class ChartTimelineWindow
         get
         {
             if (targetPlayer == null ||
-                targetPlayer.chart == null ||
+                targetPlayer.Chart == null ||
                 targetPlayer.timelineNodeClickClip == null)
             {
                 return false;
@@ -104,8 +104,8 @@ public partial class ChartTimelineWindow
 
         if (!nodeClickEnabled ||
             targetPlayer == null ||
-            targetPlayer.chart == null ||
-            targetPlayer.chart.bpmTimeline == null ||
+            targetPlayer.Chart == null ||
+            targetPlayer.Chart.bpmTimeline == null ||
             targetPlayer.timelineNodeClickClip == null)
         {
             return;
@@ -126,7 +126,7 @@ public partial class ChartTimelineWindow
         for (int i = 0; i < nodeClickSourceBusyUntil.Length; i++)
             nodeClickSourceBusyUntil[i] = double.NegativeInfinity;
 
-        BpmTimeline timeline = targetPlayer.chart.bpmTimeline;
+        BpmTimeline timeline = targetPlayer.Chart.bpmTimeline;
         float safeAnchorBeat = Mathf.Max(0f, anchorBeat);
         double anchorSeconds = timeline.BeatToSeconds(safeAnchorBeat);
         float speed = Mathf.Max(0.1f, playbackSpeed);

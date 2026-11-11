@@ -21,6 +21,8 @@ public class BasicJudgement : MonoBehaviour
     private bool[] judged;
     private int nextPendingNodeIndex;
     private bool blocked;
+    private bool manualInputQueued;
+    private double manualInputSongTime;
     public float GreatWindowSeconds => greatWindowSeconds;
 
     public event Action<JudgementResult> JudgementResolved;
@@ -45,14 +47,19 @@ public class BasicJudgement : MonoBehaviour
 
     void Start()
     {
-        if (player == null || player.chartPlayer == null || player.chartPlayer.chart == null)
+        if (player == null ||
+            player.chartPlayer == null ||
+            player.chartPlayer.Chart == null)
         {
             enabled = false;
             return;
         }
 
-        nodes = player.chartPlayer.chart.nodes;
-        if (nodes == null || nodes.Count == 0)
+        ChartSO chart = player.chartPlayer.Chart;
+        nodes = chart.nodes;
+        if (nodes == null ||
+            nodes.Count == 0 ||
+            chart.bpmTimeline == null)
         {
             enabled = false;
             return;
@@ -62,7 +69,12 @@ public class BasicJudgement : MonoBehaviour
         judged = new bool[nodes.Count];
 
         for (int i = 0; i < nodes.Count; i++)
-            noteTimes[i] = player.chartPlayer.chart.bpmTimeline.BeatToSeconds(nodes[i].beat);
+        {
+            noteTimes[i] = nodes[i] != null
+                ? chart.bpmTimeline.BeatToSeconds(
+                    nodes[i].beat)
+                : double.PositiveInfinity;
+        }
 
         nextPendingNodeIndex = Mathf.Clamp(
             player.PlaybackStartNodeIndex + 1,
@@ -72,6 +84,41 @@ public class BasicJudgement : MonoBehaviour
             judged[i] = i < nextPendingNodeIndex;
 
         AdvanceToNextPendingNode();
+    }
+
+    public void CaptureInput()
+    {
+        if (!isActiveAndEnabled ||
+            blocked ||
+            player == null ||
+            player.AutoModeEnabled ||
+            !player.AudioHasStarted)
+        {
+            return;
+        }
+
+        if (Keyboard.current != null &&
+            Keyboard.current.anyKey.wasPressedThisFrame)
+        {
+            manualInputQueued = true;
+            manualInputSongTime = player.SongTime;
+        }
+
+        Touchscreen touchscreen = Touchscreen.current;
+        if (touchscreen == null)
+            return;
+
+        var touches = touchscreen.touches;
+        for (int i = 0; i < touches.Count; i++)
+        {
+            var touch = touches[i];
+            if (touch != null && touch.press.wasPressedThisFrame)
+            {
+                manualInputQueued = true;
+                manualInputSongTime = player.SongTime;
+                return;
+            }
+        }
     }
 
     public void Tick(double songTime)
@@ -87,31 +134,16 @@ public class BasicJudgement : MonoBehaviour
             return;
         }
 
-        ExpireMissedNotes(songTime);
-        if (blocked)
-            return;
-
-        if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame)
-            HandlePress(songTime);
-
-        if (blocked)
-            return;
-
-        Touchscreen touchscreen = Touchscreen.current;
-        if (touchscreen == null)
-            return;
-
-        var touches = touchscreen.touches;
-        for (int i = 0; i < touches.Count; i++)
+        if (manualInputQueued)
         {
-            var touch = touches[i];
-            if (touch != null && touch.press.wasPressedThisFrame)
-            {
-                HandlePress(songTime);
-                if (blocked)
-                    return;
-            }
+            manualInputQueued = false;
+            HandlePress(manualInputSongTime);
         }
+
+        if (blocked)
+            return;
+
+        ExpireMissedNotes(songTime);
     }
 
     private void TickAutoPlay(double songTime)
@@ -127,7 +159,6 @@ public class BasicJudgement : MonoBehaviour
             if (songTime < autoPlaySongTime)
                 return;
 
-            player.RequestNodeAction(nodes[nodeIndex].mode);
             ResolveNote(
                 nodeIndex,
                 autoPlaySongTime,
@@ -140,8 +171,6 @@ public class BasicJudgement : MonoBehaviour
         int noteIndex = nextPendingNodeIndex;
         if (noteIndex < 0)
             return;
-
-        player.RequestNodeAction(nodes[noteIndex].mode);
 
         double timeDelta = songTime - noteTimes[noteIndex];
         if (timeDelta < -badWindowSeconds ||
@@ -208,6 +237,7 @@ public class BasicJudgement : MonoBehaviour
     public void Pause()
     {
         blocked = true;
+        manualInputQueued = false;
     }
 
     public void ResetFromCheckpoint(int checkpointNodeIndex)
@@ -222,6 +252,7 @@ public class BasicJudgement : MonoBehaviour
         nextPendingNodeIndex = nextIndex;
         AdvanceToNextPendingNode();
         blocked = false;
+        manualInputQueued = false;
     }
 
     private bool IsValidPendingNode(int nodeIndex)
@@ -234,6 +265,9 @@ public class BasicJudgement : MonoBehaviour
 
     private bool IsJudgeable(int nodeIndex)
     {
+        if (nodes[nodeIndex] == null)
+            return false;
+
         NodeMode mode = nodes[nodeIndex].mode;
         return mode == NodeMode.JumpNode ||
             mode == NodeMode.GravityNode ||
@@ -270,7 +304,8 @@ public class BasicJudgement : MonoBehaviour
     private void ResolveJudgement(JudgementResult result)
     {
         if (!result.HasNote || nodes == null ||
-            result.NoteIndex >= nodes.Count)
+            result.NoteIndex >= nodes.Count ||
+            nodes[result.NoteIndex] == null)
         {
             Debug.LogError(
                 $"[判定] 已拒绝无节点判定结果：{result.Grade}",

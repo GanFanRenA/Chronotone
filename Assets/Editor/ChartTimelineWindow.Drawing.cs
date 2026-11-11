@@ -104,7 +104,7 @@ public partial class ChartTimelineWindow
 
         EditorGUI.BeginDisabledGroup(
             targetPlayer == null ||
-            targetPlayer.chart == null ||
+            targetPlayer.Chart == null ||
             EditorApplication.isPlayingOrWillChangePlaymode);
         if (GUILayout.Button(
                 new GUIContent("导入CSV", "导入每行一个 beat 数字的 CSV，并追加到当前谱面"),
@@ -125,24 +125,24 @@ public partial class ChartTimelineWindow
         GUILayout.EndHorizontal();
 
         GUILayout.BeginHorizontal(EditorStyles.toolbar);
-        EditorGUI.BeginDisabledGroup(targetPlayer == null || targetPlayer.chart == null);
+        EditorGUI.BeginDisabledGroup(targetPlayer == null || targetPlayer.Chart == null);
 
         GUILayout.Label(OffsetLabel, EditorStyles.miniLabel, GUILayout.Width(40));
-        float currentOffset = targetPlayer != null && targetPlayer.chart != null
-            ? targetPlayer.chart.globalOffsetBeats
+        float currentOffset = targetPlayer != null && targetPlayer.Chart != null
+            ? targetPlayer.Chart.globalOffsetBeats
             : 0f;
 
         EditorGUI.BeginChangeCheck();
         float newOffset = EditorGUILayout.DelayedFloatField(currentOffset, GUILayout.Width(62));
-        if (EditorGUI.EndChangeCheck() && targetPlayer != null && targetPlayer.chart != null)
+        if (EditorGUI.EndChangeCheck() && targetPlayer != null && targetPlayer.Chart != null)
         {
-            Undo.RecordObject(targetPlayer.chart, "Change Chart Global Offset");
-            targetPlayer.chart.globalOffsetBeats = Mathf.Clamp(newOffset, -64f, 64f);
-            EditorUtility.SetDirty(targetPlayer.chart);
+            Undo.RecordObject(targetPlayer.Chart, "Change Chart Global Offset");
+            targetPlayer.Chart.globalOffsetBeats = Mathf.Clamp(newOffset, -64f, 64f);
+            EditorUtility.SetDirty(targetPlayer.Chart);
         }
 
-        float offsetSeconds = targetPlayer != null && targetPlayer.chart != null
-            ? targetPlayer.chart.GlobalOffsetSeconds
+        float offsetSeconds = targetPlayer != null && targetPlayer.Chart != null
+            ? targetPlayer.Chart.GlobalOffsetSeconds
             : 0f;
         GUILayout.Label(
             $"{offsetSeconds * 1000f:+0.0;-0.0;0} ms",

@@ -66,7 +66,9 @@ public class Player : MonoBehaviour
     private PlayerActionMode currentActionMode;
     private bool modesInitialized;
     private bool playbackStarted;
-    private bool playbackStartNodeActionPending;
+    private bool trackEnabled;
+    private int trackReleaseNodeIndex = -1;
+    private double trackReleaseSongTime;
     private float playbackStartBeat;
     private int playbackStartNodeIndex = -1;
     private Vector2 playbackStartPosition;
@@ -91,12 +93,18 @@ public class Player : MonoBehaviour
     public int PlaybackStartNodeIndex => playbackStartNodeIndex;
     public Vector2 PlaybackStartPosition => playbackStartPosition;
     public double PlaybackStartSongTime => playbackStartSongTime;
-    public ChartSO Chart => chartPlayer != null ? chartPlayer.chart : null;
+    public StageDefinitionSO Stage =>
+        chartPlayer != null ? chartPlayer.Stage : null;
+    public ChartSO Chart => Stage != null ? Stage.Chart : null;
+    public ChartTrackSO Track => Stage != null ? Stage.Track : null;
     public IReadOnlyList<NodeData> Nodes => nodes;
     public IReadOnlyList<PlayerActionMode> ActionModes => actionModes;
     public PlayerActionMode CurrentActionMode => currentActionMode;
     public bool IsRewinding => rewindState != RewindState.None;
     public bool IsControlLocked => IsRewinding;
+    public bool IsTrackEnabled => trackEnabled;
+    public int TrackReleaseNodeIndex => trackReleaseNodeIndex;
+    public double TrackReleaseSongTime => trackReleaseSongTime;
     public bool AutoModeEnabled
     {
         get => autoModeEnabled;
@@ -156,14 +164,14 @@ public class Player : MonoBehaviour
 
     private void Start()
     {
-        if (chartPlayer == null || chartPlayer.chart == null)
+        if (chartPlayer == null || chartPlayer.Chart == null)
         {
             Debug.LogError("Block 没有绑定 ChartPlayer 或 ChartSO", this);
             enabled = false;
             return;
         }
 
-        var chart = chartPlayer.chart;
+        ChartSO chart = chartPlayer.Chart;
         if (chart.clip == null)
         {
             Debug.LogError("ChartSO 上没有 AudioClip", this);
@@ -220,18 +228,18 @@ public class Player : MonoBehaviour
 
     private void BeginPlayback(ChartSO chart)
     {
+        playbackStarted = true;
+        trackEnabled = true;
+        trackReleaseNodeIndex = -1;
+
         float startSongTime =
             chart.bpmTimeline.BeatToSeconds(playbackStartBeat);
         double audioSeconds;
-        double scheduledDspTime;
         if (playbackStartNodeIndex < 0 && playbackStartBeat <= 0f)
         {
             playbackStartPosition = OriginalPosition;
             playbackStartSongTime = -chart.GlobalOffsetSeconds;
             audioSeconds = 0d;
-            scheduledDspTime = songClock.Schedule(
-                scheduleLead,
-                chart.GlobalOffsetSeconds);
         }
         else
         {
@@ -248,10 +256,18 @@ public class Player : MonoBehaviour
                     this);
             }
 
-            scheduledDspTime = songClock.Seek(
-                scheduleLead,
-                playbackStartSongTime);
         }
+
+        // 轨道模拟必须在音频调度前完成，避免同步构建吞掉 scheduleLead。
+        currentActionMode?.PrepareForPlayback();
+        double scheduledDspTime = playbackStartNodeIndex < 0 &&
+            playbackStartBeat <= 0f
+                ? songClock.Schedule(
+                    scheduleLead,
+                    chart.GlobalOffsetSeconds)
+                : songClock.Seek(
+                    scheduleLead,
+                    playbackStartSongTime);
 
         // dspTime 和 PlayScheduled 共用同一时钟；音频数据必须已加载，
         // 否则首次播放会比计划晚，而重生时因缓存已就绪反而能对齐。
@@ -261,9 +277,7 @@ public class Player : MonoBehaviour
             Math.Max(0d, audioSource.clip.length - 0.001d));
         audioSource.PlayScheduled(scheduledDspTime);
 
-        playbackStarted = true;
         currentActionMode?.Enter();
-        playbackStartNodeActionPending = true;
     }
 
     private static float ClampAudioSeconds(
@@ -278,6 +292,9 @@ public class Player : MonoBehaviour
     void Update()
     {
         if (!playbackStarted)
+            return;
+
+        if (!songClock.AudioHasStarted)
             return;
 
         double songTime = SongTime;
@@ -295,28 +312,31 @@ public class Player : MonoBehaviour
             return;
         }
 
-        if (playbackStartNodeActionPending && songClock.AudioHasStarted)
-        {
-            playbackStartNodeActionPending = false;
-            PerformPlaybackStartNodeActionOnce();
-        }
-
         RecordMotion(songTime);
-        ProcessDueNodes(songTime);
-        if (IsControlLocked)
-            return;
-
-        basicJudgement.Tick(songTime);
-        if (IsControlLocked)
-            return;
-
-        currentActionMode?.Tick(songTime);
+        basicJudgement.CaptureInput();
     }
 
     void FixedUpdate()
     {
-        if (playbackStarted && !IsControlLocked)
-            currentActionMode?.FixedTick(SongTime, Time.fixedDeltaTime);
+        if (!playbackStarted ||
+            IsControlLocked ||
+            !songClock.AudioHasStarted)
+        {
+            return;
+        }
+
+        double fixedSongTime = SongTime;
+        ProcessDueNodes(fixedSongTime);
+        if (IsControlLocked)
+            return;
+
+        basicJudgement.Tick(fixedSongTime);
+        if (IsControlLocked)
+            return;
+
+        currentActionMode?.FixedTick(
+            fixedSongTime,
+            Time.fixedDeltaTime);
     }
 
     void OnEnable()
@@ -337,7 +357,9 @@ public class Player : MonoBehaviour
     void OnDestroy()
     {
         if (basicJudgement != null)
+        {
             basicJudgement.JudgementResolved -= HandleJudgement;
+        }
     }
 
     public bool SwitchActionMode(PlayerActionMode mode)
@@ -379,50 +401,69 @@ public class Player : MonoBehaviour
         return false;
     }
 
-    public void RequestJump()
-    {
-        if (playbackStarted && !IsControlLocked)
-            currentActionMode?.RequestJump();
-    }
-
-    public void RequestNodeAction(NodeMode mode)
-    {
-        if (mode == NodeMode.JumpNode)
-            RequestJump();
-    }
-
-    public void ReportBlockedBad()
+    public void ReportBlockedDeath()
     {
         if (!playbackStarted || IsControlLocked || !songClock.AudioHasStarted)
             return;
 
-        Debug.Log("[判定] 节点 无 (阻挡) | Bad");
+        Debug.Log("[死亡] 脱轨后持续受阻");
         BeginDeathRewind();
     }
 
     private void HandleJudgement(JudgementResult result)
     {
-        if (!result.HasNote && result.Grade != JudgementGrade.Bad)
+        if (!playbackStarted ||
+            !result.HasNote ||
+            nodes == null ||
+            result.NoteIndex < 0 ||
+            result.NoteIndex >= nodes.Count ||
+            nodes[result.NoteIndex] == null)
+            return;
+
+        if (result.Grade != JudgementGrade.Perfect &&
+            result.Grade != JudgementGrade.Great &&
+            result.Grade != JudgementGrade.Bad &&
+            result.Grade != JudgementGrade.Miss)
         {
             Debug.LogError(
-                $"[判定] 已忽略无节点判定结果：{result.Grade}",
+                $"[判定] 已忽略未知判定结果：{result.Grade}",
                 this);
             return;
         }
 
-        if (playbackStarted && result.HasNote)
-            currentActionMode?.Judge(result);
+        if (result.IsSuccessfulHit)
+        {
+            trackEnabled = true;
+            trackReleaseNodeIndex = -1;
+            return;
+        }
 
-        if (result.Grade == JudgementGrade.Miss && !IsControlLocked)
+        if (result.Grade == JudgementGrade.Miss)
+        {
+            Debug.Log("[死亡] Miss，启动回溯");
             BeginDeathRewind();
+            return;
+        }
+
+        if (!trackEnabled)
+            return;
+
+        ReleaseTrack(result.NoteIndex, result.SongTime);
+    }
+
+    private void ReleaseTrack(int nodeIndex, double songTime)
+    {
+        trackEnabled = false;
+        trackReleaseNodeIndex = nodeIndex;
+        trackReleaseSongTime = songTime;
     }
 
     private void BeginDeathRewind()
     {
         if (!TryBuildCheckpoint(
-                out int checkpointNodeIndex,
-                out Vector2 checkpointPosition,
-                out double checkpointSongTime))
+            out int checkpointNodeIndex,
+            out Vector2 checkpointPosition,
+            out double checkpointSongTime))
             return;
 
         rewindCheckpointNodeIndex = checkpointNodeIndex;
@@ -433,6 +474,7 @@ public class Player : MonoBehaviour
         respawnDelayRemaining = Mathf.Max(0f, respawnDelaySeconds);
         rewindElapsed = 0f;
         rewindState = RewindState.Waiting;
+        trackEnabled = false;
 
         basicJudgement.Pause();
         currentActionMode?.SetControlLocked(true);
@@ -597,8 +639,8 @@ public class Player : MonoBehaviour
             latestRespawnNodeIndex >= 0 &&
             latestRespawnNodeIndex < nodes.Count &&
             chartPlayer != null &&
-            chartPlayer.chart != null &&
-            chartPlayer.chart.bpmTimeline != null;
+            chartPlayer.Chart != null &&
+            chartPlayer.Chart.bpmTimeline != null;
 
         checkpointNodeIndex = hasCheckpoint ? latestRespawnNodeIndex : -1;
         checkpointPosition = hasCheckpoint
@@ -607,8 +649,8 @@ public class Player : MonoBehaviour
         checkpointSongTime =
             hasCheckpoint &&
             chartPlayer != null &&
-            chartPlayer.chart != null
-                ? chartPlayer.chart.bpmTimeline.BeatToSeconds(
+            chartPlayer.Chart != null
+                ? chartPlayer.Chart.bpmTimeline.BeatToSeconds(
                     nodes[checkpointNodeIndex].beat)
                 : playbackStartSongTime;
         return playbackStarted;
@@ -621,8 +663,8 @@ public class Player : MonoBehaviour
         playbackStartNodeIndex = -1;
 
         if (chartPlayer == null ||
-            chartPlayer.chart == null ||
-            chartPlayer.chart.bpmTimeline == null)
+            chartPlayer.Chart == null ||
+            chartPlayer.Chart.bpmTimeline == null)
             return;
 
 #if UNITY_EDITOR
@@ -631,7 +673,7 @@ public class Player : MonoBehaviour
             out playbackStartBeat);
 #endif
 
-        ChartSO chart = chartPlayer.chart;
+        ChartSO chart = chartPlayer.Chart;
         if (chart.clip == null)
             return;
 
@@ -707,51 +749,25 @@ public class Player : MonoBehaviour
             chart.bpmTimeline.BeatToSeconds(playbackStartBeat));
     }
 
-    private void PerformPlaybackStartNodeActionOnce()
-    {
-        if (nodes == null ||
-            playbackStartNodeIndex < 0 ||
-            playbackStartNodeIndex >= nodes.Count)
-            return;
-
-        NodeData startNode = nodes[playbackStartNodeIndex];
-        if (startNode == null)
-            return;
-
-        switch (startNode.mode)
-        {
-            case NodeMode.JumpNode:
-                RequestNodeAction(NodeMode.JumpNode);
-                break;
-            case NodeMode.GravityNode:
-            case NodeMode.FastFallNode:
-            case NodeMode.GravityFastFallNode:
-            case NodeMode.WeakGravityNode:
-            case NodeMode.GravityJumpNode:
-                // 这些节点由成功判定路径改变物理状态，补执行时复用同一逻辑。
-                currentActionMode?.Judge(new JudgementResult(
-                    playbackStartNodeIndex,
-                    JudgementGrade.Perfect,
-                    0d,
-                    playbackStartSongTime,
-                    true));
-                break;
-        }
-    }
-
     private void ProcessDueNodes(double songTime)
     {
         if (nodes == null || nodes.Count == 0 ||
-            chartPlayer == null || chartPlayer.chart == null ||
-            chartPlayer.chart.bpmTimeline == null ||
+            chartPlayer == null || chartPlayer.Chart == null ||
+            chartPlayer.Chart.bpmTimeline == null ||
             !songClock.AudioHasStarted)
             return;
 
         while (nextDueNodeIndex < nodes.Count)
         {
             NodeData node = nodes[nextDueNodeIndex];
+            if (node == null)
+            {
+                nextDueNodeIndex++;
+                continue;
+            }
+
             double nodeSongTime =
-                chartPlayer.chart.bpmTimeline.BeatToSeconds(node.beat);
+                chartPlayer.Chart.bpmTimeline.BeatToSeconds(node.beat);
             if (songTime < nodeSongTime)
                 break;
 
@@ -769,7 +785,7 @@ public class Player : MonoBehaviour
     private void RespawnToLatestCheckpoint()
     {
         if (!playbackStarted || audioSource == null ||
-            chartPlayer == null || chartPlayer.chart == null)
+            chartPlayer == null || chartPlayer.Chart == null)
             return;
 
         int checkpointNodeIndex = rewindCheckpointNodeIndex;
@@ -777,7 +793,7 @@ public class Player : MonoBehaviour
         double checkpointSongTime = rewindCheckpointSongTime;
 
         double audioSeconds =
-            checkpointSongTime + chartPlayer.chart.GlobalOffsetSeconds;
+            checkpointSongTime + chartPlayer.Chart.GlobalOffsetSeconds;
         double maxAudioSeconds = Math.Max(0d, audioSource.clip.length - 0.001d);
         audioSeconds = Math.Max(0d, Math.Min(audioSeconds, maxAudioSeconds));
 
@@ -788,11 +804,14 @@ public class Player : MonoBehaviour
             ? checkpointNodeIndex
             : playbackStartNodeIndex;
         basicJudgement.ResetFromCheckpoint(resetNodeIndex);
+
         currentActionMode?.RespawnTo(
             checkpointPosition,
             checkpointSongTime,
             checkpointNodeIndex);
 
+        trackEnabled = true;
+        trackReleaseNodeIndex = -1;
         nextDueNodeIndex = resetNodeIndex + 1;
         respawnDelayRemaining = 0f;
         recordedMotion.Clear();

@@ -176,8 +176,13 @@ public partial class ChartTimelineWindow
                 DeleteSelection();
                 break;
             case KeyCode.A:
-                if (!e.control && !e.command) return false;
-                SelectAllNodes();
+                if (e.control || e.command)
+                {
+                    SelectAllNodes();
+                    break;
+                }
+                if (e.alt || e.shift) return false;
+                AdjustSelectedNodesToPerfectPath();
                 break;
             case KeyCode.Space:
                 TogglePlayback();
