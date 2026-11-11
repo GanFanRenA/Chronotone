@@ -334,6 +334,7 @@ public class Player : MonoBehaviour
         if (IsControlLocked)
             return;
 
+        ReleaseTrackForUnconsumedDueNode(fixedSongTime);
         currentActionMode?.FixedTick(
             fixedSongTime,
             Time.fixedDeltaTime);
@@ -456,6 +457,21 @@ public class Player : MonoBehaviour
         trackEnabled = false;
         trackReleaseNodeIndex = nodeIndex;
         trackReleaseSongTime = songTime;
+    }
+
+    private void ReleaseTrackForUnconsumedDueNode(double songTime)
+    {
+        if (!trackEnabled ||
+            AutoModeEnabled ||
+            !basicJudgement.TryGetUnresolvedPendingNoteAtOrBefore(
+                songTime,
+                out int nodeIndex,
+                out double noteSongTime))
+        {
+            return;
+        }
+
+        ReleaseTrack(nodeIndex, noteSongTime);
     }
 
     private void BeginDeathRewind()

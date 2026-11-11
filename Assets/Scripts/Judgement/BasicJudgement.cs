@@ -146,6 +146,42 @@ public class BasicJudgement : MonoBehaviour
         ExpireMissedNotes(songTime);
     }
 
+    /// <summary>
+    /// 当前待判定节点已越过正拍但尚未被消费时返回 true。
+    /// 用于在节点正拍后取消轨道跟踪，等待玩家在后续判定窗内输入。
+    /// </summary>
+    public bool TryGetUnresolvedPendingNoteAtOrBefore(
+        double songTime,
+        out int nodeIndex,
+        out double noteSongTime)
+    {
+        nodeIndex = -1;
+        noteSongTime = 0d;
+
+        if (!isActiveAndEnabled || blocked ||
+            nodes == null || judged == null || noteTimes == null ||
+            nextPendingNodeIndex < 0 ||
+            nextPendingNodeIndex >= nodes.Count)
+        {
+            return false;
+        }
+
+        int pendingNodeIndex = nextPendingNodeIndex;
+        if (judged[pendingNodeIndex] ||
+            !IsJudgeable(pendingNodeIndex))
+        {
+            return false;
+        }
+
+        double pendingNoteSongTime = noteTimes[pendingNodeIndex];
+        if (songTime < pendingNoteSongTime)
+            return false;
+
+        nodeIndex = pendingNodeIndex;
+        noteSongTime = pendingNoteSongTime;
+        return true;
+    }
+
     private void TickAutoPlay(double songTime)
     {
         while (!blocked && nextPendingNodeIndex >= 0)

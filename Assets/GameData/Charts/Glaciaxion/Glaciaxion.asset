@@ -17,7 +17,7 @@ MonoBehaviour:
   - beat: 2.25
     order: 0
     mode: 0
-    position: {x: 18.5, y: 0.5}
+    position: {x: 18.5, y: 0.4795}
     deltaX: 18
   - beat: 4.25
     order: 0
@@ -397,77 +397,77 @@ MonoBehaviour:
   - beat: 76.25
     order: 0
     mode: 0
-    position: {x: 610.5, y: -8.106652}
+    position: {x: 610.5, y: 7.4172854}
     deltaX: 8
   - beat: 77.25
     order: 0
     mode: 0
-    position: {x: 618.5, y: -22.98037}
+    position: {x: 618.5, y: 7.4172854}
     deltaX: 8
   - beat: 78.25
     order: 0
     mode: 0
-    position: {x: 626.5, y: -37.83387}
+    position: {x: 626.5, y: 7.675235}
     deltaX: 8
   - beat: 79.25
     order: 0
     mode: 0
-    position: {x: 634.5, y: -52.708637}
+    position: {x: 634.5, y: 5.871895}
     deltaX: 8
   - beat: 80.25
     order: 0
     mode: 0
-    position: {x: 642.5, y: -67.56069}
+    position: {x: 642.5, y: 4.748299}
     deltaX: 8
   - beat: 84
     order: 0
     mode: 1
-    position: {x: 672.5, y: -444.9436}
+    position: {x: 672.5, y: 1.4795}
     deltaX: 30
   - beat: 85.125
     order: 0
     mode: 0
-    position: {x: 681.5, y: -730.67084}
+    position: {x: 681.5, y: 0.5029591}
     deltaX: 9
   - beat: 86.125
     order: 0
     mode: 0
-    position: {x: 689.5, y: -750.65765}
+    position: {x: 689.5, y: 2.4599729}
     deltaX: 8
   - beat: 87.125
     order: 0
     mode: 0
-    position: {x: 697.5, y: -765.50684}
+    position: {x: 697.5, y: 4.475295}
     deltaX: 8
   - beat: 88.125
     order: 0
     mode: 0
-    position: {x: 705.5, y: -780.38586}
+    position: {x: 705.5, y: 6.4795}
     deltaX: 8
   - beat: 89.125
     order: 0
     mode: 0
-    position: {x: 713.5, y: -795.2336}
+    position: {x: 713.5, y: 8.475294}
     deltaX: 8
   - beat: 90.125
     order: 0
     mode: 0
-    position: {x: 721.5, y: -810.1145}
+    position: {x: 721.5, y: 10.463493}
     deltaX: 8
   - beat: 91.125
     order: 0
     mode: 0
-    position: {x: 729.5, y: -824.96173}
+    position: {x: 729.5, y: 12.5137005}
     deltaX: 8
   - beat: 92.125
     order: 0
     mode: 0
-    position: {x: 737.5, y: -839.8239}
+    position: {x: 737.5, y: 14.452591}
     deltaX: 8
   - beat: 93.125
     order: 0
     mode: 0
-    position: {x: 745.5, y: -854.6903}
+    position: {x: 745.5, y: 0.16904682}
     deltaX: 8
   - beat: 94.125
     order: 0

@@ -32,6 +32,66 @@ public readonly struct PerfectRouteConfig
     public float UprightAngle { get; }
 }
 
+public enum PerfectRouteBuildFailureReason
+{
+    None,
+    MissingBpmTimeline,
+    MissingBodyCollider,
+    Blocked,
+    SimulationIncomplete
+}
+
+public readonly struct PerfectRouteBuildFailure
+{
+    public PerfectRouteBuildFailure(
+        PerfectRouteBuildFailureReason reason,
+        double songTime,
+        Vector2 position,
+        float verticalSpeed,
+        float angle,
+        bool grounded,
+        int previousNodeIndex,
+        int targetNodeIndex,
+        float targetNodeBeat,
+        Vector2 targetNodePosition,
+        string blockingObjectName,
+        string blockingLayerName,
+        Vector2 blockingPoint,
+        Vector2 blockingNormal)
+    {
+        Reason = reason;
+        SongTime = songTime;
+        Position = position;
+        VerticalSpeed = verticalSpeed;
+        Angle = angle;
+        Grounded = grounded;
+        PreviousNodeIndex = previousNodeIndex;
+        TargetNodeIndex = targetNodeIndex;
+        TargetNodeBeat = targetNodeBeat;
+        TargetNodePosition = targetNodePosition;
+        BlockingObjectName = blockingObjectName;
+        BlockingLayerName = blockingLayerName;
+        BlockingPoint = blockingPoint;
+        BlockingNormal = blockingNormal;
+    }
+
+    public PerfectRouteBuildFailureReason Reason { get; }
+    public double SongTime { get; }
+    public Vector2 Position { get; }
+    public float VerticalSpeed { get; }
+    public float Angle { get; }
+    public bool Grounded { get; }
+    public int PreviousNodeIndex { get; }
+    public int TargetNodeIndex { get; }
+    public float TargetNodeBeat { get; }
+    public Vector2 TargetNodePosition { get; }
+    public string BlockingObjectName { get; }
+    public string BlockingLayerName { get; }
+    public Vector2 BlockingPoint { get; }
+    public Vector2 BlockingNormal { get; }
+    public bool Failed => Reason != PerfectRouteBuildFailureReason.None;
+}
+
 [Serializable]
 public struct PerfectRouteSample
 {
@@ -168,8 +228,53 @@ public static class PerfectRouteBuilder
         Rigidbody2D body,
         double endSongTime)
     {
-        if (bpmTimeline == null || bodyCollider == null)
+        return Build(
+            startPosition,
+            startSongTime,
+            nodes,
+            bpmTimeline,
+            config,
+            bodyCollider,
+            body,
+            endSongTime,
+            out _);
+    }
+
+    public static PerfectRoute Build(
+        Vector2 startPosition,
+        double startSongTime,
+        IReadOnlyList<NodeData> nodes,
+        BpmTimeline bpmTimeline,
+        PerfectRouteConfig config,
+        BoxCollider2D bodyCollider,
+        Rigidbody2D body,
+        double endSongTime,
+        out PerfectRouteBuildFailure failure)
+    {
+        failure = default;
+        if (bpmTimeline == null)
+        {
+            failure = CreateFailure(
+                PerfectRouteBuildFailureReason.MissingBpmTimeline,
+                startSongTime,
+                new RouteState { Position = startPosition },
+                nodes,
+                bpmTimeline,
+                default);
             return null;
+        }
+
+        if (bodyCollider == null)
+        {
+            failure = CreateFailure(
+                PerfectRouteBuildFailureReason.MissingBodyCollider,
+                startSongTime,
+                new RouteState { Position = startPosition },
+                nodes,
+                bpmTimeline,
+                default);
+            return null;
+        }
 
         Physics2D.SyncTransforms();
         double fixedDeltaTime = Mathf.Max(0.0001f, Time.fixedDeltaTime);
@@ -247,9 +352,19 @@ public static class PerfectRouteBuilder
             float targetX = xTimeline.Sample((float)tickTime);
             float deltaTime =
                 (float)(tickTime - previousTickTime);
-            if (physics.Step(targetX, deltaTime))
+            if (physics.Step(
+                    targetX,
+                    deltaTime,
+                    out RouteBlockInfo blockInfo))
             {
                 blocked = true;
+                failure = CreateFailure(
+                    PerfectRouteBuildFailureReason.Blocked,
+                    tickTime,
+                    state,
+                    nodes,
+                    bpmTimeline,
+                    blockInfo);
                 break;
             }
 
@@ -271,7 +386,126 @@ public static class PerfectRouteBuilder
             step++;
         }
 
+        if (!blocked && !complete)
+        {
+            failure = CreateFailure(
+                PerfectRouteBuildFailureReason.SimulationIncomplete,
+                endSongTime,
+                state,
+                nodes,
+                bpmTimeline,
+                default);
+        }
+
         return new PerfectRoute(samples.ToArray(), blocked, complete);
+    }
+
+    private static PerfectRouteBuildFailure CreateFailure(
+        PerfectRouteBuildFailureReason reason,
+        double songTime,
+        RouteState state,
+        IReadOnlyList<NodeData> nodes,
+        BpmTimeline bpmTimeline,
+        RouteBlockInfo blockInfo)
+    {
+        FindNodeContext(
+            nodes,
+            bpmTimeline,
+            songTime,
+            out int previousNodeIndex,
+            out int targetNodeIndex);
+
+        float targetBeat = 0f;
+        Vector2 targetPosition = default;
+        if (targetNodeIndex >= 0 &&
+            targetNodeIndex < nodes.Count &&
+            nodes[targetNodeIndex] != null)
+        {
+            targetBeat = nodes[targetNodeIndex].beat;
+            targetPosition = nodes[targetNodeIndex].position;
+        }
+
+        string blockingObjectName = string.Empty;
+        string blockingLayerName = string.Empty;
+        Vector2 blockingPoint = default;
+        Vector2 blockingNormal = default;
+        if (blockInfo.HasHit)
+        {
+            Collider2D collider = blockInfo.Hit.collider;
+            if (collider != null)
+            {
+                blockingObjectName =
+                    BuildHierarchyPath(collider.transform);
+                blockingLayerName =
+                    LayerMask.LayerToName(collider.gameObject.layer);
+            }
+
+            blockingPoint = blockInfo.Hit.point;
+            blockingNormal = blockInfo.Hit.normal;
+        }
+
+        return new PerfectRouteBuildFailure(
+            reason,
+            songTime,
+            state.Position,
+            state.VerticalSpeed,
+            state.Angle,
+            state.Grounded,
+            previousNodeIndex,
+            targetNodeIndex,
+            targetBeat,
+            targetPosition,
+            blockingObjectName,
+            blockingLayerName,
+            blockingPoint,
+            blockingNormal);
+    }
+
+    private static string BuildHierarchyPath(Transform transform)
+    {
+        if (transform == null)
+            return string.Empty;
+
+        var names = new List<string>();
+        Transform current = transform;
+        while (current != null)
+        {
+            names.Add(current.name);
+            current = current.parent;
+        }
+
+        names.Reverse();
+        return string.Join("/", names);
+    }
+
+    private static void FindNodeContext(
+        IReadOnlyList<NodeData> nodes,
+        BpmTimeline bpmTimeline,
+        double songTime,
+        out int previousNodeIndex,
+        out int targetNodeIndex)
+    {
+        previousNodeIndex = -1;
+        targetNodeIndex = -1;
+        if (nodes == null || bpmTimeline == null)
+            return;
+
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            NodeData node = nodes[i];
+            if (node == null)
+                continue;
+
+            double nodeTime = bpmTimeline.BeatToSeconds(node.beat);
+            if (nodeTime <= songTime + TimeEpsilon)
+            {
+                previousNodeIndex = i;
+                continue;
+            }
+
+            targetNodeIndex = i;
+            break;
+        }
     }
 
     private static PerfectRouteSample ToSample(
@@ -513,17 +747,22 @@ public static class PerfectRouteBuilder
                 out _);
         }
 
-        public bool Step(float targetX, float deltaTime)
+        public bool Step(
+            float targetX,
+            float deltaTime,
+            out RouteBlockInfo blockInfo)
         {
+            blockInfo = default;
             float safeDeltaTime = Mathf.Max(0.0001f, deltaTime);
             float deltaX = targetX - state.Position.x;
             bool horizontallyBlocked =
-                IsMovementBlocked(deltaX);
+                TryGetBlockingHit(deltaX, out RaycastHit2D blockingHit);
             if (UpdateBlockedState(
                     horizontallyBlocked,
                     deltaX,
                     safeDeltaTime))
             {
+                blockInfo = new RouteBlockInfo(blockingHit);
                 return true;
             }
 
@@ -609,8 +848,11 @@ public static class PerfectRouteBuilder
             state.BlockedDirection = 0;
         }
 
-        private bool IsMovementBlocked(float deltaX)
+        private bool TryGetBlockingHit(
+            float deltaX,
+            out RaycastHit2D blockingHit)
         {
+            blockingHit = default;
             float distance = Mathf.Abs(deltaX);
             if (distance < config.MinMoveDistance)
                 return false;
@@ -642,7 +884,10 @@ public static class PerfectRouteBuilder
                     continue;
 
                 if (Vector2.Dot(hit.normal, direction) <= -0.55f)
+                {
+                    blockingHit = hit;
                     return true;
+                }
             }
 
             return false;
@@ -844,5 +1089,16 @@ public static class PerfectRouteBuilder
 
         private float SupportNormalY =>
             state.GravityInverted ? -1f : 1f;
+    }
+
+    private readonly struct RouteBlockInfo
+    {
+        public RouteBlockInfo(RaycastHit2D hit)
+        {
+            Hit = hit;
+        }
+
+        public RaycastHit2D Hit { get; }
+        public bool HasHit => Hit.collider != null;
     }
 }

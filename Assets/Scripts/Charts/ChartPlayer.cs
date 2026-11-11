@@ -528,7 +528,8 @@ public class ChartPlayer : MonoBehaviour
             config,
             bodyCollider,
             body,
-            endSongTime);
+            endSongTime,
+            out PerfectRouteBuildFailure failure);
 
         if (route == null ||
             route.Count == 0 ||
@@ -536,9 +537,7 @@ public class ChartPlayer : MonoBehaviour
             !route.IsComplete)
         {
             route = null;
-            Debug.LogError(
-                "ChartTrack 烘焙失败或轨道不完整，未保存谱面和轨道",
-                this);
+            LogTrackBuildFailure(failure, nodes);
             return false;
         }
 
@@ -549,14 +548,127 @@ public class ChartPlayer : MonoBehaviour
             0.000001f;
         if (!anchorMatches)
         {
+            PerfectRouteSample actualFirst = route.Samples[0];
             route = null;
             Debug.LogError(
-                "ChartTrack 首点必须等于角色起点和歌曲起始时刻",
+                "ChartTrack 首点必须等于角色起点和歌曲起始时刻。\n" +
+                $"实际首点：时间 {actualFirst.Time:0.#####} 秒，" +
+                $"位置 {actualFirst.Position}\n" +
+                $"期望首点：时间 {startSongTime:0.#####} 秒，" +
+                $"位置 {startPosition}\n" +
+                "相关节点：无。这是起点/歌曲时间锚点问题，不是 Node 碰撞。",
                 this);
             return false;
         }
 
         return true;
+    }
+
+    private void LogTrackBuildFailure(
+        PerfectRouteBuildFailure failure,
+        IReadOnlyList<NodeData> nodes)
+    {
+        if (!failure.Failed)
+        {
+            Debug.LogError(
+                "ChartTrack 烘焙失败：轨道构建没有返回可用样本。",
+                this);
+            return;
+        }
+
+        string previousNode = DescribeNode(
+            nodes,
+            failure.PreviousNodeIndex);
+        string targetNode = DescribeNode(
+            nodes,
+            failure.TargetNodeIndex);
+
+        switch (failure.Reason)
+        {
+            case PerfectRouteBuildFailureReason.MissingBpmTimeline:
+                Debug.LogError(
+                    "ChartTrack 烘焙失败。\n" +
+                    "原因：Chart 没有配置 BpmTimeline。\n" +
+                    "相关节点：无，先检查 ChartSO 的 BPM 时间轴。",
+                    this);
+                return;
+
+            case PerfectRouteBuildFailureReason.MissingBodyCollider:
+                Debug.LogError(
+                    "ChartTrack 烘焙失败。\n" +
+                    "原因：Player 缺少 BoxCollider2D。\n" +
+                    "相关节点：无，先检查 Player 的碰撞体。",
+                    this);
+                return;
+
+            case PerfectRouteBuildFailureReason.Blocked:
+                Debug.LogError(
+                    "ChartTrack 烘焙失败。\n" +
+                    $"相关节点：前往 {targetNode} 的路径，" +
+                    $"上一个节点是 {previousNode}。\n" +
+                    $"原因：角色在歌曲时间 {failure.SongTime:0.###} 秒、" +
+                    $"位置 {failure.Position} 附近横向移动受阻。" +
+                    DescribeBlockingCollider(failure) + "\n" +
+                    $"角色状态：Grounded={failure.Grounded}，" +
+                    $"角度={failure.Angle:0.##}°，" +
+                    $"竖直速度={failure.VerticalSpeed:0.###}。\n" +
+                    "处理建议：检查该节点前后的跳跃/重力模式，或把地面物体从 " +
+                    "PhysicsActionMode 的 Blocking Layers 移到专用的 Wall 层。",
+                    this);
+                return;
+
+            case PerfectRouteBuildFailureReason.SimulationIncomplete:
+                Debug.LogError(
+                    "ChartTrack 烘焙失败。\n" +
+                    $"相关节点：前往 {targetNode} 的路径，" +
+                    $"上一个节点是 {previousNode}。\n" +
+                    $"原因：模拟在歌曲时间 {failure.SongTime:0.###} 秒仍未完成，" +
+                    "达到了模拟步数上限。\n" +
+                    $"最后位置：{failure.Position}。",
+                    this);
+                return;
+
+            default:
+                Debug.LogError(
+                    "ChartTrack 烘焙失败，未识别的构建错误。",
+                    this);
+                return;
+        }
+    }
+
+    private static string DescribeBlockingCollider(
+        PerfectRouteBuildFailure failure)
+    {
+        if (string.IsNullOrEmpty(failure.BlockingObjectName))
+            return "横向 BoxCast 检测到阻挡，但没有返回具体 Collider。";
+
+        string layer = string.IsNullOrEmpty(failure.BlockingLayerName)
+            ? "未命名层"
+            : failure.BlockingLayerName;
+        return
+            $"阻挡物体为 '{failure.BlockingObjectName}'" +
+            $"（Layer: {layer}），" +
+            $"接触点 {failure.BlockingPoint}，" +
+            $"法线 {failure.BlockingNormal}。";
+    }
+
+    private static string DescribeNode(
+        IReadOnlyList<NodeData> nodes,
+        int index)
+    {
+        if (nodes == null ||
+            index < 0 ||
+            index >= nodes.Count ||
+            nodes[index] == null)
+        {
+            return "无";
+        }
+
+        NodeData node = nodes[index];
+        return
+            $"Node_{index}（Beat {node.beat:0.###}，" +
+            $"模式 {node.mode}，" +
+            $"位置 {node.position}）";
     }
 
     private void OnValidate()
