@@ -16,7 +16,7 @@ MonoBehaviour:
   greatWindowSeconds: 0.12
   badWindowSeconds: 0.24
   autoModeEnabled: 0
-  autoPlayOffsetMilliseconds: 120
+  autoPlayOffsetMilliseconds: -120
   scheduleLeadSeconds: 0.15
   timelineNodeClickVolume: 1
   respawnDelaySeconds: 0.35

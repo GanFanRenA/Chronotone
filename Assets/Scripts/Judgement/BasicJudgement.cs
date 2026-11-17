@@ -139,17 +139,20 @@ public class BasicJudgement : MonoBehaviour
             !player.IsRunning || !player.AudioHasStarted)
             return;
 
-        if (player.AutoModeEnabled)
+        bool hasInput = manualInputQueued;
+        double inputSongTime = manualInputSongTime;
+        manualInputQueued = false;
+
+        if (!hasInput &&
+            player.AutoModeEnabled &&
+            TryGetAutoPlayInput(songTime, out double autoInputSongTime))
         {
-            TickAutoPlay(songTime);
-            return;
+            hasInput = true;
+            inputSongTime = autoInputSongTime;
         }
 
-        if (manualInputQueued)
-        {
-            manualInputQueued = false;
-            HandlePress(manualInputSongTime);
-        }
+        if (hasInput)
+            HandlePress(inputSongTime);
 
         if (blocked)
             return;
@@ -193,24 +196,22 @@ public class BasicJudgement : MonoBehaviour
         return true;
     }
 
-    private void TickAutoPlay(double songTime)
+    private bool TryGetAutoPlayInput(
+        double songTime,
+        out double inputSongTime)
     {
-        while (!blocked && nextPendingNodeIndex >= 0)
-        {
-            int nodeIndex = nextPendingNodeIndex;
-            double timeDelta = Math.Clamp(
-                player.AutoPlayOffsetSeconds,
-                -greatWindowSeconds,
-                greatWindowSeconds);
-            double autoPlaySongTime = noteTimes[nodeIndex] + timeDelta;
-            if (songTime < autoPlaySongTime)
-                return;
+        inputSongTime = 0d;
+        if (nextPendingNodeIndex < 0 ||
+            nextPendingNodeIndex >= noteTimes.Length)
+            return false;
 
-            ResolveNote(
-                nodeIndex,
-                autoPlaySongTime,
-                timeDelta);
-        }
+        double timeDelta = Math.Clamp(
+            player.AutoPlayOffsetSeconds,
+            -greatWindowSeconds,
+            greatWindowSeconds);
+        inputSongTime =
+            noteTimes[nextPendingNodeIndex] + timeDelta;
+        return songTime >= inputSongTime;
     }
 
     private void HandlePress(double songTime)

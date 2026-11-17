@@ -23,6 +23,14 @@ public class BasicJudgementFeedback : MonoBehaviour
     private static readonly Color GreatColor = new Color(0.22f, 0.62f, 1f, 1f);
     private static readonly Color BadColor = new Color(1f, 0.18f, 0.16f, 1f);
 
+    [Header("Successful Timing Feedback")]
+    [SerializeField, Min(0.005f)] private float earlyFlashHalfPeriod = 0.035f;
+    [SerializeField, Range(0f, 1f)] private float earlyFlashDimAlpha = 0.18f;
+    [SerializeField, Range(0f, 1f)] private float earlyFlashTintStrength = 0.85f;
+    [SerializeField, Min(0f)] private float ghostLifetime = 1f;
+    [SerializeField, Range(0f, 1f)] private float ghostStartAlpha = 0.65f;
+    [SerializeField, Min(0f)] private float ghostEndScale = 1.12f;
+
     [System.NonSerialized] private float sizeMultiplier;
     [System.NonSerialized] private float worldUnitsPerReferencePixel;
     [System.NonSerialized] private float perfectDiamondSize;
@@ -39,6 +47,23 @@ public class BasicJudgementFeedback : MonoBehaviour
     private Material effectMaterial;
     private int effectSortingLayerId;
     private int effectSortingOrder = 100;
+    private SpriteRenderer playerRenderer;
+    private SpriteRenderer timingGhostRenderer;
+    private bool earlyFlashActive;
+    private bool playerRendererColorCached;
+    private float earlyFlashElapsed;
+    private float earlyFlashRemaining;
+    private float ghostElapsed;
+    private bool missingGhostRendererReported;
+    private Color cachedPlayerRendererColor;
+    private Color earlyFlashTint;
+    private Color ghostColor;
+    private Vector3 ghostPosition;
+    private Quaternion ghostRotation;
+    private Vector3 ghostScale;
+    private Vector3 feedbackLocalPosition;
+    private Quaternion feedbackLocalRotation;
+    private Vector3 feedbackLocalScale;
 
     /// <summary>运行时也可以直接修改这个值。</summary>
     public float SizeMultiplier
@@ -60,6 +85,7 @@ public class BasicJudgementFeedback : MonoBehaviour
     {
         EnsureSettings();
         CacheEffectTemplate();
+        CacheTimingFeedbackTargets();
     }
 
     private void EnsureSettings()
@@ -86,6 +112,8 @@ public class BasicJudgementFeedback : MonoBehaviour
     void Update()
     {
         float deltaTime = Time.unscaledDeltaTime;
+        UpdateEarlyFlash(deltaTime);
+        UpdateTimingGhost(deltaTime);
 
         for (int i = activeEffects.Count - 1; i >= 0; i--)
         {
@@ -116,6 +144,30 @@ public class BasicJudgementFeedback : MonoBehaviour
         }
     }
 
+    void OnDisable()
+    {
+        StopEarlyFlash();
+        StopTimingGhost();
+    }
+
+    /// <summary>
+    /// 使用判定结果已有的 TimeDelta 驱动成功反馈：
+    /// 早按额外闪烁到 0；所有成功判定都会留下虚影。
+    /// </summary>
+    public void ShowTimingSuccess(JudgementResult result)
+    {
+        if (!result.IsSuccessfulHit)
+            return;
+
+        Color gradeColor = GetColor(result.Grade);
+        if (result.TimeDelta < 0d)
+            BeginEarlyFlash((float)-result.TimeDelta, gradeColor);
+        else
+            StopEarlyFlash();
+
+        ShowTimingGhost(gradeColor);
+    }
+
     public void ShowJudgement(JudgementGrade grade, Vector3 worldPosition)
     {
         Color color = GetColor(grade);
@@ -144,14 +196,16 @@ public class BasicJudgementFeedback : MonoBehaviour
 
     private void CacheEffectTemplate()
     {
-        SpriteRenderer sourceRenderer =
-            GetComponentInParent<SpriteRenderer>();
-        if (sourceRenderer != null)
+        Transform parent = transform.parent;
+        playerRenderer = parent != null
+            ? parent.GetComponentInParent<SpriteRenderer>()
+            : null;
+        if (playerRenderer != null)
         {
-            effectSprite = sourceRenderer.sprite;
-            effectMaterial = sourceRenderer.sharedMaterial;
-            effectSortingLayerId = sourceRenderer.sortingLayerID;
-            effectSortingOrder = sourceRenderer.sortingOrder + 100;
+            effectSprite = playerRenderer.sprite;
+            effectMaterial = playerRenderer.sharedMaterial;
+            effectSortingLayerId = playerRenderer.sortingLayerID;
+            effectSortingOrder = playerRenderer.sortingOrder + 100;
         }
 
         if (effectSprite == null)
@@ -162,6 +216,165 @@ public class BasicJudgementFeedback : MonoBehaviour
                 new Vector2(0.5f, 0.5f),
                 1f);
         }
+    }
+
+    private void CacheTimingFeedbackTargets()
+    {
+        TryGetComponent(out timingGhostRenderer);
+        if (timingGhostRenderer != null)
+            timingGhostRenderer.enabled = false;
+
+        feedbackLocalPosition = transform.localPosition;
+        feedbackLocalRotation = transform.localRotation;
+        feedbackLocalScale = transform.localScale;
+    }
+
+    private void BeginEarlyFlash(float duration, Color gradeColor)
+    {
+        if (playerRenderer == null || duration <= 0f)
+            return;
+
+        if (!playerRendererColorCached)
+        {
+            cachedPlayerRendererColor = playerRenderer.color;
+            playerRendererColorCached = true;
+        }
+
+        earlyFlashTint = gradeColor;
+        earlyFlashElapsed = 0f;
+        earlyFlashRemaining = duration;
+        earlyFlashActive = true;
+        ApplyEarlyFlashColor();
+    }
+
+    private void UpdateEarlyFlash(float deltaTime)
+    {
+        if (!earlyFlashActive)
+            return;
+
+        earlyFlashElapsed += deltaTime;
+        earlyFlashRemaining -= deltaTime;
+        if (earlyFlashRemaining <= 0f)
+        {
+            StopEarlyFlash();
+            return;
+        }
+
+        ApplyEarlyFlashColor();
+    }
+
+    private void ApplyEarlyFlashColor()
+    {
+        if (playerRenderer == null)
+            return;
+
+        bool bright = Mathf.Repeat(
+            earlyFlashElapsed /
+            Mathf.Max(0.005f, earlyFlashHalfPeriod),
+            2f) < 1f;
+        Color color = Color.Lerp(
+            cachedPlayerRendererColor,
+            earlyFlashTint,
+            earlyFlashTintStrength);
+        color.a = cachedPlayerRendererColor.a *
+            (bright ? 1f : earlyFlashDimAlpha);
+        playerRenderer.color = color;
+    }
+
+    private void StopEarlyFlash()
+    {
+        earlyFlashActive = false;
+        earlyFlashElapsed = 0f;
+        earlyFlashRemaining = 0f;
+
+        if (playerRenderer != null && playerRendererColorCached)
+            playerRenderer.color = cachedPlayerRendererColor;
+
+        playerRendererColorCached = false;
+    }
+
+    private void ShowTimingGhost(Color gradeColor)
+    {
+        if (timingGhostRenderer == null)
+        {
+            if (!missingGhostRendererReported)
+            {
+                Debug.LogWarning(
+                    "晚按回轨虚影需要 JudgementFeedback 上的 SpriteRenderer。",
+                    this);
+                missingGhostRendererReported = true;
+            }
+            return;
+        }
+
+        if (playerRenderer == null)
+            return;
+
+        Transform source = playerRenderer.transform;
+        ghostPosition = source.position;
+        ghostRotation = source.rotation;
+        ghostScale = source.localScale;
+        ghostColor = Color.Lerp(
+            playerRenderer.color,
+            gradeColor,
+            earlyFlashTintStrength);
+        ghostColor.a = ghostStartAlpha;
+        ghostElapsed = 0f;
+
+        timingGhostRenderer.sprite = playerRenderer.sprite;
+        timingGhostRenderer.sharedMaterial = playerRenderer.sharedMaterial;
+        timingGhostRenderer.flipX = playerRenderer.flipX;
+        timingGhostRenderer.flipY = playerRenderer.flipY;
+        timingGhostRenderer.sortingLayerID =
+            playerRenderer.sortingLayerID;
+        timingGhostRenderer.sortingOrder =
+            playerRenderer.sortingOrder;
+        timingGhostRenderer.color = ghostColor;
+        timingGhostRenderer.transform.SetPositionAndRotation(
+            ghostPosition,
+            ghostRotation);
+        timingGhostRenderer.transform.localScale = ghostScale;
+        timingGhostRenderer.enabled = true;
+    }
+
+    private void UpdateTimingGhost(float deltaTime)
+    {
+        if (timingGhostRenderer == null ||
+            !timingGhostRenderer.enabled)
+            return;
+
+        if (ghostLifetime <= 0f)
+        {
+            StopTimingGhost();
+            return;
+        }
+
+        ghostElapsed += deltaTime;
+        float progress = Mathf.Clamp01(
+            ghostElapsed / ghostLifetime);
+        timingGhostRenderer.transform.SetPositionAndRotation(
+            ghostPosition,
+            ghostRotation);
+        timingGhostRenderer.transform.localScale =
+            ghostScale * Mathf.Lerp(1f, ghostEndScale, progress);
+
+        Color color = ghostColor;
+        color.a = ghostColor.a * (1f - progress);
+        timingGhostRenderer.color = color;
+
+        if (progress >= 1f)
+            StopTimingGhost();
+    }
+
+    private void StopTimingGhost()
+    {
+        ghostElapsed = 0f;
+        if (timingGhostRenderer != null)
+            timingGhostRenderer.enabled = false;
+
+        transform.localPosition = feedbackLocalPosition;
+        transform.localRotation = feedbackLocalRotation;
+        transform.localScale = feedbackLocalScale;
     }
 
     private void SpawnDiamond(

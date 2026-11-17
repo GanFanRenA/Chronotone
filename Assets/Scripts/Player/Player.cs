@@ -37,6 +37,7 @@ public class Player : MonoBehaviour
     private IReadOnlyList<NodeData> nodes;
     private AudioSource audioSource;
     private BasicJudgement basicJudgement;
+    private BasicJudgementFeedback basicJudgementFeedback;
     private SpriteRenderer playerRenderer;
     private Color playerRendererColor;
     private readonly SongClock songClock = new SongClock();
@@ -144,6 +145,8 @@ public class Player : MonoBehaviour
         GameSettings.Validate();
 
         basicJudgement.JudgementResolved += HandleJudgement;
+        basicJudgementFeedback =
+            GetComponentInChildren<BasicJudgementFeedback>(true);
         playerRenderer = GetComponent<SpriteRenderer>();
         if (playerRenderer != null)
             playerRendererColor = playerRenderer.color;
@@ -424,6 +427,7 @@ public class Player : MonoBehaviour
 
         if (result.IsSuccessfulHit)
         {
+            basicJudgementFeedback?.ShowTimingSuccess(result);
             trackEnabled = true;
             trackReleaseNodeIndex = -1;
             return;
@@ -452,7 +456,6 @@ public class Player : MonoBehaviour
     private void ReleaseTrackForUnconsumedDueNode(double songTime)
     {
         if (!trackEnabled ||
-            AutoModeEnabled ||
             !basicJudgement.TryGetUnresolvedPendingNoteAtOrBefore(
                 songTime,
                 out int nodeIndex,

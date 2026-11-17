@@ -814,6 +814,7 @@ GameObject:
   m_Component:
   - component: {fileID: 74678254}
   - component: {fileID: 74678255}
+  - component: {fileID: 74678256}
   m_Layer: 0
   m_Name: JudgementFeedback
   m_TagString: Untagged
@@ -848,14 +849,71 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd9eb2728e072f3429b1d3df7cd58ce6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BasicJudgementFeedback
-  sizeMultiplier: 2
-  worldUnitsPerReferencePixel: 0.01
-  perfectDiamondSize: 42
-  greatDiamondSize: 36
-  missDiamondSize: 30
-  shardSize: 13
-  shardDistance: 74
-  crossSize: {x: 64, y: 10}
+  earlyFlashHalfPeriod: 0.035
+  earlyFlashDimAlpha: 0.18
+  earlyFlashTintStrength: 0.85
+  ghostLifetime: 0.65
+  ghostStartAlpha: 0.65
+  ghostEndScale: 1.12
+--- !u!212 &74678256
+SpriteRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 74678253}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 0
+  m_SpriteSortPoint: 0
 --- !u!1001 &75169933
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12932,15 +12990,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   chartPlayer: {fileID: 1889684736}
-  autoModeEnabled: 0
-  autoPlayOffsetMilliseconds: 120
-  scheduleLead: 0.15
-  respawnDelaySeconds: 0.35
-  rewindDurationSeconds: 0.65
-  motionSamplesPerSecond: 30
-  motionHistorySeconds: 30
-  rewindTint: {r: 0.35, g: 0.85, b: 1, a: 1}
-  rewindPulseFrequency: 18
   defaultActionMode: {fileID: 1471041943}
 --- !u!82 &1471041939
 AudioSource:
@@ -13124,9 +13173,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f9ef5e11f99eee40be2029d4ab413af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BasicJudgement
-  perfectWindowSeconds: 0.045
-  greatWindowSeconds: 0.12
-  badWindowSeconds: 0.24
 --- !u!114 &1471041943
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13139,21 +13185,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7723b693990e31045ae7de2fd13a216b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PhysicsActionMode
-  jumpVelocity: 20
-  gravityScale: 8.5
-  angularSpeed: -240
-  fastFallGravityMultiplier: 2.5
-  fallDeathDistance: 7
-  groundLayers:
-    serializedVersion: 2
-    m_Bits: 64
-  blockingLayers:
-    serializedVersion: 2
-    m_Bits: 64
-  blockedCheckWindow: 0.12
-  minMoveDistance: 0.001
-  collisionSkin: 0.002
-  groundProbeDistance: 0.03
 --- !u!1001 &1480351570
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -14315,7 +14346,6 @@ GameObject:
   - component: {fileID: 1616485065}
   - component: {fileID: 1616485064}
   - component: {fileID: 1616485063}
-  - component: {fileID: 1616485066}
   m_Layer: 0
   m_Name: CinemachineCamera
   m_TagString: Untagged
@@ -14341,10 +14371,10 @@ MonoBehaviour:
     ScreenPosition: {x: -0.2, y: 0}
     DeadZone:
       Enabled: 1
-      Size: {x: 0.05, y: 0.3}
+      Size: {x: 0, y: 0.3}
     HardLimits:
       Enabled: 1
-      Size: {x: 0.1, y: 0.5}
+      Size: {x: 0, y: 0.5}
       Offset: {x: 0, y: 0}
   CenterOnActivate: 1
   TargetOffset: {x: 0, y: 0, z: 0}
@@ -14412,58 +14442,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!60 &1616485066
-PolygonCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1616485062}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0, y: 0}
-    oldSize: {x: 0, y: 0}
-    newSize: {x: 0, y: 0}
-    adaptiveTilingThreshold: 0
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Points:
-    m_Paths:
-    - - {x: 0, y: 1}
-      - {x: -0.95105654, y: 0.30901697}
-      - {x: -0.5877852, y: -0.80901706}
-      - {x: 0.58778536, y: -0.80901694}
-      - {x: 0.9510565, y: 0.30901712}
-  m_UseDelaunayMesh: 1
 --- !u!1 &1617038195
 GameObject:
   m_ObjectHideFlags: 0
@@ -27336,7 +27314,6 @@ MonoBehaviour:
   nodeAppearanceSet: {fileID: 0}
   autoBake: 0
   timelineNodeClickClip: {fileID: 8300000, guid: c9a4112dfd4c7e2458102d231fa4adf2, type: 3}
-  timelineNodeClickVolume: 1
   timelineNodeClickSources: []
 --- !u!82 &1889684737
 AudioSource:
