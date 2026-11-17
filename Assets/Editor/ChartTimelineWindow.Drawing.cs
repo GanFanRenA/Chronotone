@@ -269,8 +269,8 @@ public partial class ChartTimelineWindow
             if (x < -10 || x > rect.width + 10) continue;
 
             Color color = appearanceSet != null &&
-                          appearanceSet.TryGetTimelineColor(m.mode, out Color modeColor)
-                ? modeColor
+                          appearanceSet.TryGetTimelineColor(m.type, out Color typeColor)
+                ? typeColor
                 : Color.white;
             Rect markerRect = new Rect(x - 3, rect.y + 4, 6, rect.height - 8);
             EditorGUI.DrawRect(markerRect, color);

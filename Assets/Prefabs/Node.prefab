@@ -106,3 +106,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NodeMarker
   beat: 0
   order: 0
+  type: 0
+  trigger: 0

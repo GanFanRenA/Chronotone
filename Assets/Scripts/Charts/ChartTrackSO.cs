@@ -7,15 +7,20 @@ using UnityEngine;
 [PreferBinarySerialization]
 public sealed class ChartTrackSO : ScriptableObject
 {
+    private const int CurrentRouteVersion = 2;
+
     [SerializeField] private List<PerfectRouteSample> samples =
         new List<PerfectRouteSample>();
     [SerializeField] private bool blocked;
     [SerializeField] private bool complete;
+    [SerializeField, HideInInspector] private int routeVersion;
 
     public IReadOnlyList<PerfectRouteSample> Samples => samples;
     public bool Blocked => blocked;
     public bool IsComplete => complete;
     public bool HasSamples => samples != null && samples.Count > 0;
+    public bool HasCurrentRouteVersion =>
+        routeVersion >= CurrentRouteVersion;
 
     internal void Set(PerfectRoute route)
     {
@@ -27,12 +32,14 @@ public sealed class ChartTrackSO : ScriptableObject
         {
             blocked = false;
             complete = false;
+            routeVersion = 0;
             return;
         }
 
         samples.AddRange(route.Samples);
         blocked = route.Blocked;
         complete = route.IsComplete;
+        routeVersion = CurrentRouteVersion;
     }
 
     public PerfectRoute CreateRoute()

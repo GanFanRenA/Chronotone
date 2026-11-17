@@ -9,7 +9,7 @@ public sealed class PhysicsActionMode : PlayerActionMode
     [System.NonSerialized] private float jumpVelocity;
     [System.NonSerialized] private float gravityScale;
     [System.NonSerialized] private float angularSpeed;
-    [System.NonSerialized] private float fastFallGravityMultiplier;
+    [System.NonSerialized] private float fastFallImpulse;
     [System.NonSerialized] private float fallDeathDistance;
     [System.NonSerialized] private LayerMask groundLayers;
     [System.NonSerialized] private LayerMask blockingLayers;
@@ -26,7 +26,6 @@ public sealed class PhysicsActionMode : PlayerActionMode
     private int blockedDirection;
     private bool grounded;
     private bool gravityInverted;
-    private bool fastFallActive;
     private bool wasTrackEnabled;
     private bool freeFallOriginValid;
     private float freeFallOriginY;
@@ -56,12 +55,12 @@ public sealed class PhysicsActionMode : PlayerActionMode
         }
     }
 
-    public float FastFallGravityMultiplier
+    public float FastFallImpulse
     {
         get
         {
             EnsureSettings();
-            return fastFallGravityMultiplier;
+            return fastFallImpulse;
         }
     }
 
@@ -128,6 +127,9 @@ public sealed class PhysicsActionMode : PlayerActionMode
         }
     }
 
+    public bool IsGrounded => grounded;
+    public float GroundNormalY => SupportNormalY;
+
     public override string DisplayName => "物理移动";
 
     private void Awake()
@@ -167,8 +169,7 @@ public sealed class PhysicsActionMode : PlayerActionMode
         jumpVelocity = settings.JumpVelocity;
         gravityScale = settings.GravityScale;
         angularSpeed = settings.AngularSpeed;
-        fastFallGravityMultiplier =
-            settings.FastFallGravityMultiplier;
+        fastFallImpulse = settings.FastFallImpulse;
         fallDeathDistance = settings.FallDeathDistance;
         groundLayers = settings.GroundLayers;
         blockingLayers = settings.BlockingLayers;
@@ -384,7 +385,6 @@ public sealed class PhysicsActionMode : PlayerActionMode
         if (grounded)
         {
             verticalSpeed = 0f;
-            fastFallActive = false;
             spinAngle = NormalizeAngle(
                 Player.OriginalRotation.eulerAngles.z);
         }
@@ -392,10 +392,8 @@ public sealed class PhysicsActionMode : PlayerActionMode
         {
             spinAngle = NormalizeAngle(
                 spinAngle + angularSpeed * deltaTime);
-            float gravityMultiplier =
-                fastFallActive ? fastFallGravityMultiplier : 1f;
             verticalSpeed +=
-                GravityAccelerationY * gravityMultiplier * deltaTime;
+                GravityAccelerationY * deltaTime;
 
             ResolveVerticalMotion(
                 ref nextPosition,
@@ -433,7 +431,6 @@ public sealed class PhysicsActionMode : PlayerActionMode
         verticalSpeed = sample.VerticalSpeed;
         grounded = sample.Grounded;
         gravityInverted = sample.GravityInverted;
-        fastFallActive = sample.FastFallActive;
 
         if (updateBody && body != null)
             SetBodyPose(sample.Position, sample.Angle);
@@ -486,7 +483,6 @@ public sealed class PhysicsActionMode : PlayerActionMode
         verticalSpeed = 0f;
         grounded = false;
         gravityInverted = false;
-        fastFallActive = false;
         freeFallOriginValid = false;
         spinAngle = NormalizeAngle(
             Player.OriginalRotation.eulerAngles.z);
@@ -649,7 +645,6 @@ public sealed class PhysicsActionMode : PlayerActionMode
         {
             grounded = true;
             verticalSpeed = 0f;
-            fastFallActive = false;
             LandOnSupport(
                 ref position,
                 ref angle,
@@ -778,6 +773,14 @@ public sealed class PhysicsActionMode : PlayerActionMode
         {
             Debug.LogError(
                 "Player 的 Stage 没有绑定 ChartTrack，角色无法移动",
+                this);
+            return;
+        }
+
+        if (!track.HasCurrentRouteVersion)
+        {
+            Debug.LogError(
+                "ChartTrack 使用了旧节点规则，请重新烘焙 Chart + Track",
                 this);
             return;
         }

@@ -231,7 +231,7 @@ public partial class ChartTimelineWindow
         CreateNodeAtBeat(beat, GetMarkers(), true);
     }
 
-    private void CreateNodeAtBeat(float beat, NodeMarker[] markers, bool inheritPreviousMode)
+    private void CreateNodeAtBeat(float beat, NodeMarker[] markers, bool inheritPreviousType)
     {
         NodeMarker occupiedMarker = FindMarkerAtBeat(beat, markers, false);
         if (occupiedMarker != null)
@@ -263,9 +263,13 @@ public partial class ChartTimelineWindow
         var marker = go.GetComponent<NodeMarker>();
         marker.beat = beat;
         marker.order = 0;
-        marker.mode = inheritPreviousMode && previous != null
-            ? previous.mode
-            : nodePrefab.mode;
+        marker.type = inheritPreviousType && previous != null
+            ? previous.type
+            : nodePrefab.type;
+        marker.trigger = inheritPreviousType && previous != null
+            ? previous.EffectiveTrigger
+            : nodePrefab.EffectiveTrigger;
+        marker.NormalizeTriggerForType();
         marker.ApplyAppearance(targetPlayer.ResolveNodeAppearanceSet());
 
         Vector3 position = previous != null ? previous.transform.position : root.position;

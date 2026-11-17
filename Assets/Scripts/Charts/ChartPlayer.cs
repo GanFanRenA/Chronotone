@@ -13,7 +13,7 @@ public class ChartPlayer : MonoBehaviour
     public Transform scanRoot;
     [Tooltip("留空时使用 Assets/Prefabs/Node.prefab。")]
     public NodeMarker nodePrefab;
-    [Tooltip("按 NodeMode 配置节点与时间轴颜色；留空时使用 Resources/NodeAppearance/NodeAppearanceSet。")]
+    [Tooltip("按 NodeType 配置节点与时间轴颜色；留空时使用 Resources/NodeAppearance/NodeAppearanceSet。")]
     public NodeAppearanceSet nodeAppearanceSet;
     public bool autoBake = false;   // 想要旧行为就勾上
 
@@ -252,6 +252,7 @@ public class ChartPlayer : MonoBehaviour
             track == null ||
             !track.HasSamples ||
             !track.IsComplete ||
+            !track.HasCurrentRouteVersion ||
             player == null)
         {
             return true;
@@ -396,7 +397,9 @@ public class ChartPlayer : MonoBehaviour
             NodeMarker marker = go.GetComponent<NodeMarker>();
             marker.beat = data.beat;
             marker.order = data.order;
-            marker.mode = data.mode;
+            marker.type = data.type;
+            marker.trigger = data.EffectiveTrigger;
+            marker.NormalizeTriggerForType();
             marker.index = i;
             marker.name = $"Node_{i}:{data.beat:0.##}_{data.order}";
             marker.transform.position = new Vector3(
@@ -455,7 +458,8 @@ public class ChartPlayer : MonoBehaviour
             {
                 beat = m.beat,
                 order = m.order,
-                mode = m.mode,
+                type = m.type,
+                trigger = m.EffectiveTrigger,
                 position = m.transform.position,
                 deltaX = m.deltaX
             });
@@ -678,7 +682,8 @@ public class ChartPlayer : MonoBehaviour
         NodeData node = nodes[index];
         return
             $"Node_{index}（Beat {node.beat:0.###}，" +
-            $"模式 {node.mode}，" +
+            $"类型 {node.type}，" +
+            $"触发 {node.EffectiveTrigger}，" +
             $"位置 {node.position}）";
     }
 

@@ -1,17 +1,19 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [Serializable]
-public sealed class NodeModeAppearance
+public sealed class NodeTypeAppearance
 {
-    public NodeMode mode;
+    [FormerlySerializedAs("mode")]
+    public NodeType type;
 
     [Tooltip("场景中 Node 使用的颜色。只修改 SpriteRenderer 的颜色，不修改精灵。")]
     [ColorUsage(false, false)]
     public Color nodeColor = Color.white;
 
-    [Tooltip("Chart Timeline 中该模式使用的颜色。")]
+    [Tooltip("Chart Timeline 中该类型使用的颜色。")]
     [ColorUsage(false, false)]
     public Color timelineColor = Color.white;
 }
@@ -25,12 +27,12 @@ public sealed class NodeAppearanceSet : ScriptableObject
         "NodeAppearance/NodeAppearanceSet";
 
     [SerializeField]
-    private List<NodeModeAppearance> appearances =
-        new List<NodeModeAppearance>();
+    private List<NodeTypeAppearance> appearances =
+        new List<NodeTypeAppearance>();
 
     private static NodeAppearanceSet defaultAppearanceSet;
 
-    public IReadOnlyList<NodeModeAppearance> Appearances => appearances;
+    public IReadOnlyList<NodeTypeAppearance> Appearances => appearances;
 
     public static NodeAppearanceSet LoadDefault()
     {
@@ -44,14 +46,14 @@ public sealed class NodeAppearanceSet : ScriptableObject
     }
 
     public bool TryGetAppearance(
-        NodeMode mode,
-        out NodeModeAppearance appearance)
+        NodeType type,
+        out NodeTypeAppearance appearance)
     {
         if (appearances != null)
         {
-            foreach (NodeModeAppearance candidate in appearances)
+            foreach (NodeTypeAppearance candidate in appearances)
             {
-                if (candidate == null || candidate.mode != mode)
+                if (candidate == null || candidate.type != type)
                     continue;
 
                 appearance = candidate;
@@ -63,9 +65,9 @@ public sealed class NodeAppearanceSet : ScriptableObject
         return false;
     }
 
-    public bool TryGetNodeColor(NodeMode mode, out Color color)
+    public bool TryGetNodeColor(NodeType type, out Color color)
     {
-        if (TryGetAppearance(mode, out NodeModeAppearance appearance))
+        if (TryGetAppearance(type, out NodeTypeAppearance appearance))
         {
             color = appearance.nodeColor;
             return true;
@@ -75,9 +77,9 @@ public sealed class NodeAppearanceSet : ScriptableObject
         return false;
     }
 
-    public bool TryGetTimelineColor(NodeMode mode, out Color color)
+    public bool TryGetTimelineColor(NodeType type, out Color color)
     {
-        if (TryGetAppearance(mode, out NodeModeAppearance appearance))
+        if (TryGetAppearance(type, out NodeTypeAppearance appearance))
         {
             color = appearance.timelineColor;
             return true;
@@ -94,7 +96,7 @@ public sealed class NodeAppearanceSet : ScriptableObject
 
     private void OnValidate()
     {
-        EnsureEveryModeHasAnEntry();
+        EnsureEveryTypeHasAnEntry();
 
         if (refreshQueued)
             return;
@@ -125,17 +127,17 @@ public sealed class NodeAppearanceSet : ScriptableObject
         UnityEditor.SceneView.RepaintAll();
     }
 
-    private void EnsureEveryModeHasAnEntry()
+    private void EnsureEveryTypeHasAnEntry()
     {
         if (appearances == null)
-            appearances = new List<NodeModeAppearance>();
+            appearances = new List<NodeTypeAppearance>();
 
-        foreach (NodeMode mode in Enum.GetValues(typeof(NodeMode)))
+        foreach (NodeType type in Enum.GetValues(typeof(NodeType)))
         {
-            if (TryGetAppearance(mode, out _))
+            if (TryGetAppearance(type, out _))
                 continue;
 
-            appearances.Add(new NodeModeAppearance { mode = mode });
+            appearances.Add(new NodeTypeAppearance { type = type });
         }
     }
 #endif

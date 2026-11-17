@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -7,11 +8,25 @@ public class NodeMarker : MonoBehaviour
 {
     public float beat;
     public int order;
-    public NodeMode mode = NodeMode.JumpNode;
+    [Tooltip("节点的运动类型。")]
+    [FormerlySerializedAs("mode")]
+    public NodeType type = NodeType.Jump;
+    [Tooltip("Manual 需要点击并判定；Auto 自动触发且不判定；None 不触发。Respawn 固定为 None。")]
+    public NodeTrigger trigger = NodeTrigger.Manual;
     [HideInInspector] public int index;   // 派生结果，由 ChartPlayer 写回
     [HideInInspector, System.NonSerialized] public float deltaX;
 
     [System.NonSerialized] private SpriteRenderer nodeRenderer;
+
+    public NodeTrigger EffectiveTrigger =>
+        NodeData.NormalizeTrigger(type, trigger);
+    public bool IsManuallyTriggered =>
+        EffectiveTrigger == NodeTrigger.Manual;
+
+    public void NormalizeTriggerForType()
+    {
+        trigger = NodeData.NormalizeTrigger(type, trigger);
+    }
 
     public bool UpdatePos(float x, float deltaX)
     {
@@ -27,7 +42,7 @@ public class NodeMarker : MonoBehaviour
     public void ApplyAppearance(NodeAppearanceSet appearanceSet)
     {
         if (appearanceSet == null ||
-            !appearanceSet.TryGetNodeColor(mode, out Color color))
+            !appearanceSet.TryGetNodeColor(type, out Color color))
         {
             return;
         }
@@ -62,6 +77,7 @@ public class NodeMarker : MonoBehaviour
 
     private void Awake()
     {
+        NormalizeTriggerForType();
         ApplyOwnedAppearance();
     }
 
@@ -70,6 +86,7 @@ public class NodeMarker : MonoBehaviour
 
     private void OnValidate()
     {
+        NormalizeTriggerForType();
         ApplyOwnedAppearance();
 
         ChartPlayer player = GetComponentInParent<ChartPlayer>();

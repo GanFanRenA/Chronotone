@@ -261,7 +261,13 @@ public partial class ChartTimelineWindow
             nextOrderByBeat.TryGetValue(beat, out int order);
             marker.order = order;
             nextOrderByBeat[beat] = order + 1;
-            marker.mode = previous != null ? previous.mode : prefab.mode;
+            marker.type = previous != null
+                ? previous.type
+                : prefab.type;
+            marker.trigger = previous != null
+                ? previous.EffectiveTrigger
+                : prefab.EffectiveTrigger;
+            marker.NormalizeTriggerForType();
             marker.ApplyAppearance(targetPlayer.ResolveNodeAppearanceSet());
 
             Vector3 position = previous != null ? previous.transform.position : root.position;

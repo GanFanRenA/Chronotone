@@ -17,7 +17,7 @@ public partial class ChartTimelineWindow
     private PhysicsActionMode cachedRoutePhysicsMode;
     private float cachedRouteJumpVelocity;
     private float cachedRouteGravityScale;
-    private float cachedRouteFastFallMultiplier;
+    private float cachedRouteFastFallImpulse;
     private float cachedRouteAngularSpeed;
     private float cachedRouteUprightAngle;
     private int cachedRouteGroundLayers;
@@ -256,8 +256,8 @@ public partial class ChartTimelineWindow
                 cachedRouteGravityScale,
                 physicsMode.GravityScale) &&
             Mathf.Approximately(
-                cachedRouteFastFallMultiplier,
-                physicsMode.FastFallGravityMultiplier) &&
+                cachedRouteFastFallImpulse,
+                physicsMode.FastFallImpulse) &&
             Mathf.Approximately(
                 cachedRouteAngularSpeed,
                 physicsMode.AngularSpeed) &&
@@ -300,7 +300,8 @@ public partial class ChartTimelineWindow
             {
                 beat = marker.beat,
                 order = marker.order,
-                mode = marker.mode,
+                type = marker.type,
+                trigger = marker.EffectiveTrigger,
                 position = marker.transform.position,
                 deltaX = marker.deltaX
             });
@@ -328,8 +329,8 @@ public partial class ChartTimelineWindow
         cachedRoutePhysicsMode = physicsMode;
         cachedRouteJumpVelocity = physicsMode.JumpVelocity;
         cachedRouteGravityScale = physicsMode.GravityScale;
-        cachedRouteFastFallMultiplier =
-            physicsMode.FastFallGravityMultiplier;
+        cachedRouteFastFallImpulse =
+            physicsMode.FastFallImpulse;
         cachedRouteAngularSpeed = physicsMode.AngularSpeed;
         cachedRouteUprightAngle = uprightAngle;
         cachedRouteGroundLayers = physicsMode.GroundLayers.value;

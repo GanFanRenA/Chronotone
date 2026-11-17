@@ -8,7 +8,7 @@ public readonly struct PerfectRouteConfig
     {
         JumpVelocity = mode.JumpVelocity;
         GravityScale = mode.GravityScale;
-        FastFallGravityMultiplier = mode.FastFallGravityMultiplier;
+        FastFallImpulse = mode.FastFallImpulse;
         AngularSpeed = mode.AngularSpeed;
         GroundLayers = mode.GroundLayers;
         BlockingLayers = mode.BlockingLayers;
@@ -21,7 +21,7 @@ public readonly struct PerfectRouteConfig
 
     public float JumpVelocity { get; }
     public float GravityScale { get; }
-    public float FastFallGravityMultiplier { get; }
+    public float FastFallImpulse { get; }
     public float AngularSpeed { get; }
     public LayerMask GroundLayers { get; }
     public LayerMask BlockingLayers { get; }
@@ -101,7 +101,6 @@ public struct PerfectRouteSample
     [SerializeField] private float angle;
     [SerializeField] private bool grounded;
     [SerializeField] private bool gravityInverted;
-    [SerializeField] private bool fastFallActive;
     [SerializeField] private float gravityAccelerationY;
 
     public PerfectRouteSample(
@@ -111,7 +110,6 @@ public struct PerfectRouteSample
         float angle,
         bool grounded,
         bool gravityInverted,
-        bool fastFallActive,
         float gravityAccelerationY)
     {
         this.time = time;
@@ -120,7 +118,6 @@ public struct PerfectRouteSample
         this.angle = angle;
         this.grounded = grounded;
         this.gravityInverted = gravityInverted;
-        this.fastFallActive = fastFallActive;
         this.gravityAccelerationY = gravityAccelerationY;
     }
 
@@ -130,7 +127,6 @@ public struct PerfectRouteSample
     public float Angle => angle;
     public bool Grounded => grounded;
     public bool GravityInverted => gravityInverted;
-    public bool FastFallActive => fastFallActive;
     public float GravityAccelerationY => gravityAccelerationY;
 }
 
@@ -192,7 +188,6 @@ public sealed class PerfectRoute
             Mathf.LerpAngle(from.Angle, to.Angle, progress),
             from.Grounded,
             from.GravityInverted,
-            from.FastFallActive,
             from.GravityAccelerationY);
         return true;
     }
@@ -293,11 +288,14 @@ public static class PerfectRouteBuilder
                 double noteTime = bpmTimeline.BeatToSeconds(node.beat);
                 if (noteTime < startSongTime - TimeEpsilon)
                 {
-                    ToggleGravity(ref gravityInverted, node.mode);
+                    ApplyPastNodeAction(
+                        ref gravityInverted,
+                        node);
                     continue;
                 }
 
-                actions.Add(new RouteAction(noteTime, node.mode));
+                if (node.IsTriggered)
+                    actions.Add(new RouteAction(noteTime, node.type));
             }
         }
 
@@ -329,7 +327,7 @@ public static class PerfectRouteBuilder
             ApplyNodeAction(
                 state,
                 config,
-                actions[nextActionIndex].Mode);
+                actions[nextActionIndex].Type);
             nextActionIndex++;
         }
 
@@ -375,7 +373,7 @@ public static class PerfectRouteBuilder
                 ApplyNodeAction(
                     state,
                     config,
-                    actions[nextActionIndex].Mode);
+                    actions[nextActionIndex].Type);
                 nextActionIndex++;
             }
 
@@ -513,15 +511,10 @@ public static class PerfectRouteBuilder
         RouteState state,
         PerfectRouteConfig config)
     {
-        float multiplier =
-            state.FastFallActive
-                ? config.FastFallGravityMultiplier
-                : 1f;
         float gravityAcceleration =
             Physics2D.gravity.y *
             config.GravityScale *
-            (state.GravityInverted ? -1f : 1f) *
-            multiplier;
+            (state.GravityInverted ? -1f : 1f);
 
         return new PerfectRouteSample(
             time,
@@ -530,35 +523,35 @@ public static class PerfectRouteBuilder
             state.Angle,
             state.Grounded,
             state.GravityInverted,
-            state.FastFallActive,
             gravityAcceleration);
     }
 
     private static void ApplyNodeAction(
         RouteState state,
         PerfectRouteConfig config,
-        NodeMode mode)
+        NodeType type)
     {
         float supportNormalY = state.GravityInverted ? -1f : 1f;
-        switch (mode)
+        switch (type)
         {
-            case NodeMode.JumpNode:
+            case NodeType.Jump:
                 BeginJump(state, config, supportNormalY);
                 break;
-            case NodeMode.GravityNode:
-            case NodeMode.GravityFastFallNode:
+            case NodeType.Gravity:
                 state.GravityInverted = !state.GravityInverted;
-                BeginFastFall(state);
                 break;
-            case NodeMode.FastFallNode:
-                BeginFastFall(state);
+            case NodeType.FastFall:
+                ApplyFastFallImpulse(state, config);
                 break;
-            case NodeMode.WeakGravityNode:
+            case NodeType.GravityFastFall:
+                state.GravityInverted = !state.GravityInverted;
+                ApplyFastFallImpulse(state, config);
+                break;
+            case NodeType.WeakGravity:
                 state.GravityInverted = !state.GravityInverted;
                 state.Grounded = false;
-                state.FastFallActive = false;
                 break;
-            case NodeMode.GravityJumpNode:
+            case NodeType.GravityJump:
                 state.GravityInverted = !state.GravityInverted;
                 supportNormalY = state.GravityInverted ? -1f : 1f;
                 BeginJump(state, config, supportNormalY);
@@ -572,25 +565,28 @@ public static class PerfectRouteBuilder
         float supportNormalY)
     {
         state.Grounded = false;
-        state.FastFallActive = false;
         state.VerticalSpeed = supportNormalY * config.JumpVelocity;
     }
 
-    private static void BeginFastFall(RouteState state)
+    private static void ApplyFastFallImpulse(
+        RouteState state,
+        PerfectRouteConfig config)
     {
         state.Grounded = false;
-        state.VerticalSpeed = 0f;
-        state.FastFallActive = true;
+        state.VerticalSpeed -= config.FastFallImpulse;
     }
 
-    private static void ToggleGravity(
+    private static void ApplyPastNodeAction(
         ref bool gravityInverted,
-        NodeMode mode)
+        NodeData node)
     {
-        if (mode == NodeMode.GravityNode ||
-            mode == NodeMode.GravityFastFallNode ||
-            mode == NodeMode.WeakGravityNode ||
-            mode == NodeMode.GravityJumpNode)
+        if (node == null || !node.IsTriggered)
+            return;
+
+        if (node.type == NodeType.Gravity ||
+            node.type == NodeType.GravityFastFall ||
+            node.type == NodeType.WeakGravity ||
+            node.type == NodeType.GravityJump)
         {
             gravityInverted = !gravityInverted;
         }
@@ -598,14 +594,14 @@ public static class PerfectRouteBuilder
 
     private readonly struct RouteAction
     {
-        public RouteAction(double time, NodeMode mode)
+        public RouteAction(double time, NodeType type)
         {
             Time = time;
-            Mode = mode;
+            Type = type;
         }
 
         public double Time { get; }
-        public NodeMode Mode { get; }
+        public NodeType Type { get; }
     }
 
     private sealed class RouteState
@@ -615,7 +611,6 @@ public static class PerfectRouteBuilder
         public float Angle;
         public bool Grounded;
         public bool GravityInverted;
-        public bool FastFallActive;
         public float BlockedElapsed;
         public int BlockedDirection;
     }
@@ -782,7 +777,6 @@ public static class PerfectRouteBuilder
             if (state.Grounded)
             {
                 state.VerticalSpeed = 0f;
-                state.FastFallActive = false;
                 state.Angle = config.UprightAngle;
             }
             else
@@ -791,13 +785,8 @@ public static class PerfectRouteBuilder
                     0f,
                     state.Angle +
                     config.AngularSpeed * safeDeltaTime);
-                float multiplier =
-                    state.FastFallActive
-                        ? config.FastFallGravityMultiplier
-                        : 1f;
                 state.VerticalSpeed +=
                     GravityAccelerationY *
-                    multiplier *
                     safeDeltaTime;
 
                 ResolveVerticalMotion(
@@ -987,7 +976,6 @@ public static class PerfectRouteBuilder
             if (movingTowardSupport && hitSupport)
             {
                 state.Grounded = true;
-                state.FastFallActive = false;
                 state.VerticalSpeed = 0f;
                 LandOnSupport(
                     ref position,

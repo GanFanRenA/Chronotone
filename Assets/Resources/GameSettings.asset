@@ -16,7 +16,7 @@ MonoBehaviour:
   greatWindowSeconds: 0.12
   badWindowSeconds: 0.24
   autoModeEnabled: 0
-  autoPlayOffsetMilliseconds: -120
+  autoPlayOffsetMilliseconds: 0
   scheduleLeadSeconds: 0.15
   timelineNodeClickVolume: 1
   respawnDelaySeconds: 0.35
@@ -28,7 +28,7 @@ MonoBehaviour:
   jumpVelocity: 20
   gravityScale: 8.5
   angularSpeed: -240
-  fastFallGravityMultiplier: 2.5
+  fastFallImpulse: 60
   fallDeathDistance: 7
   groundLayers:
     serializedVersion: 2

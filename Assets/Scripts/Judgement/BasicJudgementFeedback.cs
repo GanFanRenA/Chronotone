@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class BasicJudgementFeedback : MonoBehaviour
 {
     private sealed class AnimatedSprite
     {
+        public GameObject GameObject;
         public Transform Transform;
         public SpriteRenderer Renderer;
         public Vector3 StartPosition;
@@ -17,6 +19,7 @@ public class BasicJudgementFeedback : MonoBehaviour
         public Color Color;
         public float Duration;
         public float Age;
+        public bool InUse;
     }
 
     private static readonly Color PerfectColor = new Color(1f, 0.72f, 0.12f, 1f);
@@ -24,12 +27,16 @@ public class BasicJudgementFeedback : MonoBehaviour
     private static readonly Color BadColor = new Color(1f, 0.18f, 0.16f, 1f);
 
     [Header("Successful Timing Feedback")]
-    [SerializeField, Min(0.005f)] private float earlyFlashHalfPeriod = 0.035f;
-    [SerializeField, Range(0f, 1f)] private float earlyFlashDimAlpha = 0.18f;
-    [SerializeField, Range(0f, 1f)] private float earlyFlashTintStrength = 0.85f;
+    [FormerlySerializedAs("earlyFlashTintStrength")]
+    [SerializeField, Range(0f, 1f)] private float timingTintStrength = 0.85f;
     [SerializeField, Min(0f)] private float ghostLifetime = 1f;
     [SerializeField, Range(0f, 1f)] private float ghostStartAlpha = 0.65f;
-    [SerializeField, Min(0f)] private float ghostEndScale = 1.12f;
+    [SerializeField, Min(0f)] private float ghostEndScale = 0.96f;
+    [SerializeField, Min(0f)] private float timingEchoDistancePerSecond = 1.1f;
+    [SerializeField, Min(0f)] private float timingEchoMinDistance = 0.035f;
+    [SerializeField, Min(0f)] private float timingEchoMaxDistance = 0.12f;
+    [SerializeField] private Vector3 timingEchoForward = Vector3.right;
+    [SerializeField, Min(1)] private int effectPoolSize = 20;
 
     [System.NonSerialized] private float sizeMultiplier;
     [System.NonSerialized] private float worldUnitsPerReferencePixel;
@@ -49,14 +56,9 @@ public class BasicJudgementFeedback : MonoBehaviour
     private int effectSortingOrder = 100;
     private SpriteRenderer playerRenderer;
     private SpriteRenderer timingGhostRenderer;
-    private bool earlyFlashActive;
-    private bool playerRendererColorCached;
-    private float earlyFlashElapsed;
-    private float earlyFlashRemaining;
     private float ghostElapsed;
+    private float ghostDuration;
     private bool missingGhostRendererReported;
-    private Color cachedPlayerRendererColor;
-    private Color earlyFlashTint;
     private Color ghostColor;
     private Vector3 ghostPosition;
     private Quaternion ghostRotation;
@@ -86,6 +88,7 @@ public class BasicJudgementFeedback : MonoBehaviour
         EnsureSettings();
         CacheEffectTemplate();
         CacheTimingFeedbackTargets();
+        BuildEffectPool();
     }
 
     private void EnsureSettings()
@@ -112,12 +115,14 @@ public class BasicJudgementFeedback : MonoBehaviour
     void Update()
     {
         float deltaTime = Time.unscaledDeltaTime;
-        UpdateEarlyFlash(deltaTime);
         UpdateTimingGhost(deltaTime);
 
         for (int i = activeEffects.Count - 1; i >= 0; i--)
         {
             AnimatedSprite effect = activeEffects[i];
+            if (!effect.InUse)
+                continue;
+
             effect.Age += deltaTime;
 
             float progress = Mathf.Clamp01(effect.Age / effect.Duration);
@@ -138,34 +143,35 @@ public class BasicJudgementFeedback : MonoBehaviour
 
             if (progress >= 1f)
             {
-                Destroy(effect.Renderer.gameObject);
-                activeEffects.RemoveAt(i);
+                ReleaseEffect(effect);
             }
         }
     }
 
     void OnDisable()
     {
-        StopEarlyFlash();
         StopTimingGhost();
+        foreach (AnimatedSprite effect in activeEffects)
+            ReleaseEffect(effect);
     }
 
     /// <summary>
-    /// 使用判定结果已有的 TimeDelta 驱动成功反馈：
-    /// 早按额外闪烁到 0；所有成功判定都会留下虚影。
+    /// 使用判定结果已有的 TimeDelta 驱动成功反馈。
+    /// 正拍交给 PlayerVisualFeedback；只有早晚偏差留下有方向的短回声。
     /// </summary>
     public void ShowTimingSuccess(JudgementResult result)
     {
         if (!result.IsSuccessfulHit)
             return;
 
-        Color gradeColor = GetColor(result.Grade);
-        if (result.TimeDelta < 0d)
-            BeginEarlyFlash((float)-result.TimeDelta, gradeColor);
-        else
-            StopEarlyFlash();
+        float absoluteDelta = Mathf.Abs((float)result.TimeDelta);
+        if (absoluteDelta <= 0.006f)
+        {
+            StopTimingGhost();
+            return;
+        }
 
-        ShowTimingGhost(gradeColor);
+        ShowTimingGhost(GetColor(result.Grade), result.TimeDelta);
     }
 
     public void ShowJudgement(JudgementGrade grade, Vector3 worldPosition)
@@ -197,9 +203,15 @@ public class BasicJudgementFeedback : MonoBehaviour
     private void CacheEffectTemplate()
     {
         Transform parent = transform.parent;
-        playerRenderer = parent != null
-            ? parent.GetComponentInParent<SpriteRenderer>()
+        Transform visualRoot = parent != null
+            ? parent.Find("VisualRoot")
             : null;
+        playerRenderer = visualRoot != null
+            ? visualRoot.GetComponent<SpriteRenderer>()
+            : null;
+        if (playerRenderer == null && parent != null)
+            playerRenderer = parent.GetComponentInParent<SpriteRenderer>();
+
         if (playerRenderer != null)
         {
             effectSprite = playerRenderer.sprite;
@@ -229,78 +241,14 @@ public class BasicJudgementFeedback : MonoBehaviour
         feedbackLocalScale = transform.localScale;
     }
 
-    private void BeginEarlyFlash(float duration, Color gradeColor)
-    {
-        if (playerRenderer == null || duration <= 0f)
-            return;
-
-        if (!playerRendererColorCached)
-        {
-            cachedPlayerRendererColor = playerRenderer.color;
-            playerRendererColorCached = true;
-        }
-
-        earlyFlashTint = gradeColor;
-        earlyFlashElapsed = 0f;
-        earlyFlashRemaining = duration;
-        earlyFlashActive = true;
-        ApplyEarlyFlashColor();
-    }
-
-    private void UpdateEarlyFlash(float deltaTime)
-    {
-        if (!earlyFlashActive)
-            return;
-
-        earlyFlashElapsed += deltaTime;
-        earlyFlashRemaining -= deltaTime;
-        if (earlyFlashRemaining <= 0f)
-        {
-            StopEarlyFlash();
-            return;
-        }
-
-        ApplyEarlyFlashColor();
-    }
-
-    private void ApplyEarlyFlashColor()
-    {
-        if (playerRenderer == null)
-            return;
-
-        bool bright = Mathf.Repeat(
-            earlyFlashElapsed /
-            Mathf.Max(0.005f, earlyFlashHalfPeriod),
-            2f) < 1f;
-        Color color = Color.Lerp(
-            cachedPlayerRendererColor,
-            earlyFlashTint,
-            earlyFlashTintStrength);
-        color.a = cachedPlayerRendererColor.a *
-            (bright ? 1f : earlyFlashDimAlpha);
-        playerRenderer.color = color;
-    }
-
-    private void StopEarlyFlash()
-    {
-        earlyFlashActive = false;
-        earlyFlashElapsed = 0f;
-        earlyFlashRemaining = 0f;
-
-        if (playerRenderer != null && playerRendererColorCached)
-            playerRenderer.color = cachedPlayerRendererColor;
-
-        playerRendererColorCached = false;
-    }
-
-    private void ShowTimingGhost(Color gradeColor)
+    private void ShowTimingGhost(Color gradeColor, double timeDelta)
     {
         if (timingGhostRenderer == null)
         {
             if (!missingGhostRendererReported)
             {
                 Debug.LogWarning(
-                    "晚按回轨虚影需要 JudgementFeedback 上的 SpriteRenderer。",
+                    "早晚方向回声需要 JudgementFeedback 上的 SpriteRenderer。",
                     this);
                 missingGhostRendererReported = true;
             }
@@ -311,15 +259,27 @@ public class BasicJudgementFeedback : MonoBehaviour
             return;
 
         Transform source = playerRenderer.transform;
-        ghostPosition = source.position;
+        float absoluteDelta = Mathf.Abs((float)timeDelta);
+        float echoDistance = Mathf.Clamp(
+            absoluteDelta * timingEchoDistancePerSecond,
+            timingEchoMinDistance,
+            timingEchoMaxDistance);
+        Vector3 echoDirection = timeDelta < 0d
+            ? timingEchoForward.normalized
+            : -timingEchoForward.normalized;
+        ghostPosition = source.position + echoDirection * echoDistance;
         ghostRotation = source.rotation;
         ghostScale = source.localScale;
         ghostColor = Color.Lerp(
             playerRenderer.color,
             gradeColor,
-            earlyFlashTintStrength);
+            timingTintStrength);
         ghostColor.a = ghostStartAlpha;
         ghostElapsed = 0f;
+        ghostDuration = Mathf.Clamp(
+            0.08f + absoluteDelta * 0.45f,
+            0.08f,
+            Mathf.Max(0.08f, ghostLifetime));
 
         timingGhostRenderer.sprite = playerRenderer.sprite;
         timingGhostRenderer.sharedMaterial = playerRenderer.sharedMaterial;
@@ -343,7 +303,7 @@ public class BasicJudgementFeedback : MonoBehaviour
             !timingGhostRenderer.enabled)
             return;
 
-        if (ghostLifetime <= 0f)
+        if (ghostDuration <= 0f)
         {
             StopTimingGhost();
             return;
@@ -351,7 +311,7 @@ public class BasicJudgementFeedback : MonoBehaviour
 
         ghostElapsed += deltaTime;
         float progress = Mathf.Clamp01(
-            ghostElapsed / ghostLifetime);
+            ghostElapsed / ghostDuration);
         timingGhostRenderer.transform.SetPositionAndRotation(
             ghostPosition,
             ghostRotation);
@@ -459,16 +419,21 @@ public class BasicJudgementFeedback : MonoBehaviour
         if (effectSprite == null)
             return;
 
-        var effectObject = new GameObject(effectName);
-        var spriteRenderer = effectObject.AddComponent<SpriteRenderer>();
-        spriteRenderer.sprite = effectSprite;
-        if (effectMaterial != null)
-            spriteRenderer.sharedMaterial = effectMaterial;
+        AnimatedSprite effect = GetAvailableEffect();
+        if (effect == null)
+            return;
+
+        effect.GameObject.name = effectName;
+        effect.GameObject.SetActive(true);
+        effect.InUse = true;
+        effect.Age = 0f;
+        SpriteRenderer spriteRenderer = effect.Renderer;
+        spriteRenderer.enabled = true;
         spriteRenderer.color = color;
         spriteRenderer.sortingLayerID = effectSortingLayerId;
         spriteRenderer.sortingOrder = effectSortingOrder;
 
-        Transform effectTransform = effectObject.transform;
+        Transform effectTransform = effect.Transform;
         effectTransform.position = startPosition;
         effectTransform.localRotation =
             Quaternion.Euler(0f, 0f, startRotation);
@@ -477,20 +442,70 @@ public class BasicJudgementFeedback : MonoBehaviour
         effectTransform.localScale =
             Vector3.Scale(baseScale, startScale);
 
-        activeEffects.Add(new AnimatedSprite
+        effect.StartPosition = startPosition;
+        effect.EndPosition = endPosition;
+        effect.BaseScale = baseScale;
+        effect.StartScale = startScale;
+        effect.EndScale = endScale;
+        effect.StartRotation = startRotation;
+        effect.EndRotation = endRotation;
+        effect.Color = color;
+        effect.Duration = Mathf.Max(0.001f, duration);
+    }
+
+    private void BuildEffectPool()
+    {
+        activeEffects.Capacity = Mathf.Max(
+            activeEffects.Capacity,
+            effectPoolSize);
+        for (int i = 0; i < effectPoolSize; i++)
         {
-            Transform = effectTransform,
-            Renderer = spriteRenderer,
-            StartPosition = startPosition,
-            EndPosition = endPosition,
-            BaseScale = baseScale,
-            StartScale = startScale,
-            EndScale = endScale,
-            StartRotation = startRotation,
-            EndRotation = endRotation,
-            Color = color,
-            Duration = duration
-        });
+            var effectObject = new GameObject($"TimingEffect_{i:00}");
+            effectObject.transform.SetParent(transform, false);
+            var spriteRenderer =
+                effectObject.AddComponent<SpriteRenderer>();
+            spriteRenderer.sprite = effectSprite;
+            if (effectMaterial != null)
+                spriteRenderer.sharedMaterial = effectMaterial;
+            spriteRenderer.sortingLayerID = effectSortingLayerId;
+            spriteRenderer.sortingOrder = effectSortingOrder;
+            spriteRenderer.enabled = false;
+            effectObject.SetActive(false);
+
+            activeEffects.Add(new AnimatedSprite
+            {
+                GameObject = effectObject,
+                Transform = effectObject.transform,
+                Renderer = spriteRenderer,
+                BaseScale = Vector3.one,
+                Duration = 0.001f
+            });
+        }
+    }
+
+    private AnimatedSprite GetAvailableEffect()
+    {
+        AnimatedSprite oldest = null;
+        foreach (AnimatedSprite effect in activeEffects)
+        {
+            if (!effect.InUse)
+                return effect;
+            if (oldest == null || effect.Age > oldest.Age)
+                oldest = effect;
+        }
+
+        return oldest;
+    }
+
+    private static void ReleaseEffect(AnimatedSprite effect)
+    {
+        if (effect == null || !effect.InUse)
+            return;
+
+        effect.InUse = false;
+        effect.Age = 0f;
+        effect.Renderer.enabled = false;
+        effect.GameObject.SetActive(false);
     }
 
     private Vector3 GetBaseScaleForSize(Vector2 size)

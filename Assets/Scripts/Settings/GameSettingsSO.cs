@@ -45,8 +45,9 @@ public sealed class GameSettingsSO : ScriptableObject
     [SerializeField, Min(0f)] private float gravityScale = 3f;
     [Tooltip("空中旋转角速度，单位为度/秒。")]
     [SerializeField] private float angularSpeed = 220f;
-    [SerializeField, Range(2f, 3f)]
-    private float fastFallGravityMultiplier = 2.5f;
+    [Tooltip("FastFall 拍点施加的一次性世界坐标向下速度脉冲。")]
+    [SerializeField, Min(0f)]
+    private float fastFallImpulse = 60f;
     [SerializeField, Min(1f)] private float fallDeathDistance = 12f;
     [SerializeField] private LayerMask groundLayers = ~0;
     [SerializeField] private LayerMask blockingLayers = 1 << 6;
@@ -100,7 +101,7 @@ public sealed class GameSettingsSO : ScriptableObject
     public float JumpVelocity => jumpVelocity;
     public float GravityScale => gravityScale;
     public float AngularSpeed => angularSpeed;
-    public float FastFallGravityMultiplier => fastFallGravityMultiplier;
+    public float FastFallImpulse => fastFallImpulse;
     public float FallDeathDistance => fallDeathDistance;
     public LayerMask GroundLayers => groundLayers;
     public LayerMask BlockingLayers => blockingLayers;
@@ -183,10 +184,7 @@ public sealed class GameSettingsSO : ScriptableObject
 
         jumpVelocity = Mathf.Max(0.1f, jumpVelocity);
         gravityScale = Mathf.Max(0f, gravityScale);
-        fastFallGravityMultiplier = Mathf.Clamp(
-            fastFallGravityMultiplier,
-            2f,
-            3f);
+        fastFallImpulse = Mathf.Max(0f, fastFallImpulse);
         fallDeathDistance = Mathf.Max(1f, fallDeathDistance);
         blockedCheckWindow = Mathf.Max(0.01f, blockedCheckWindow);
         minMoveDistance = Mathf.Max(0.0001f, minMoveDistance);

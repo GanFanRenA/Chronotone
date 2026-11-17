@@ -28,6 +28,7 @@ public class BasicJudgement : MonoBehaviour
     }
 
     public event Action<JudgementResult> JudgementResolved;
+    public event Action InputPressed;
 
     void Awake()
     {
@@ -113,6 +114,8 @@ public class BasicJudgement : MonoBehaviour
         {
             manualInputQueued = true;
             manualInputSongTime = player.SongTime;
+            InputPressed?.Invoke();
+            return;
         }
 
         Touchscreen touchscreen = Touchscreen.current;
@@ -127,6 +130,7 @@ public class BasicJudgement : MonoBehaviour
             {
                 manualInputQueued = true;
                 manualInputSongTime = player.SongTime;
+                InputPressed?.Invoke();
                 return;
             }
         }
@@ -316,13 +320,7 @@ public class BasicJudgement : MonoBehaviour
         if (nodes[nodeIndex] == null)
             return false;
 
-        NodeMode mode = nodes[nodeIndex].mode;
-        return mode == NodeMode.JumpNode ||
-            mode == NodeMode.GravityNode ||
-            mode == NodeMode.FastFallNode ||
-            mode == NodeMode.GravityFastFallNode ||
-            mode == NodeMode.WeakGravityNode ||
-            mode == NodeMode.GravityJumpNode;
+        return nodes[nodeIndex].IsManuallyTriggered;
     }
 
     private void AdvanceToNextPendingNode()

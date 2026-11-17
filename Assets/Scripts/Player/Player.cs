@@ -125,6 +125,18 @@ public class Player : MonoBehaviour
 
     public event Action<PlayerActionMode, PlayerActionMode> ActionModeChanged;
 
+    private SpriteRenderer ResolveVisualRenderer()
+    {
+        Transform visualRoot = transform.Find("VisualRoot");
+        if (visualRoot != null &&
+            visualRoot.TryGetComponent(out SpriteRenderer visualRenderer))
+        {
+            return visualRenderer;
+        }
+
+        return GetComponent<SpriteRenderer>();
+    }
+
     private void OnValidate()
     {
         GameSettings.Validate();
@@ -147,7 +159,7 @@ public class Player : MonoBehaviour
         basicJudgement.JudgementResolved += HandleJudgement;
         basicJudgementFeedback =
             GetComponentInChildren<BasicJudgementFeedback>(true);
-        playerRenderer = GetComponent<SpriteRenderer>();
+        playerRenderer = ResolveVisualRenderer();
         if (playerRenderer != null)
             playerRendererColor = playerRenderer.color;
 
@@ -731,7 +743,7 @@ public class Player : MonoBehaviour
         for (int i = 0; i < nextDueNodeIndex; i++)
         {
             if (nodes[i] != null &&
-                nodes[i].mode == NodeMode.RespawnNode)
+                nodes[i].type == NodeType.Respawn)
                 latestRespawnNodeIndex = i;
         }
     }
@@ -782,7 +794,7 @@ public class Player : MonoBehaviour
 
             int nodeIndex = nextDueNodeIndex;
 
-            if (node.mode == NodeMode.RespawnNode)
+            if (node.type == NodeType.Respawn)
                 latestRespawnNodeIndex = nodeIndex;
 
             nextDueNodeIndex++;
