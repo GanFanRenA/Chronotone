@@ -5,7 +5,7 @@ public class CameraController : MonoBehaviour
     public Transform target;
     void Start()
     {
-
+        
     }
 
     // Update is called once per frame

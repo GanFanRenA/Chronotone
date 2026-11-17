@@ -5,11 +5,11 @@ using UnityEngine;
 public class ChartPlayerEditor : Editor
 {
     private SerializedProperty stageProperty;
+    private SerializedProperty surfaceTilemapProperty;
     private SerializedProperty scanRootProperty;
     private SerializedProperty nodePrefabProperty;
     private SerializedProperty autoBakeProperty;
     private SerializedProperty timelineNodeClickClipProperty;
-    private SerializedProperty timelineNodeClickVolumeProperty;
     private SerializedProperty timelineNodeClickSourcesProperty;
 
     private ChartPlayer pendingAutoLoadPlayer;
@@ -19,13 +19,13 @@ public class ChartPlayerEditor : Editor
     private void OnEnable()
     {
         stageProperty = serializedObject.FindProperty("stage");
+        surfaceTilemapProperty =
+            serializedObject.FindProperty("surfaceTilemap");
         scanRootProperty = serializedObject.FindProperty("scanRoot");
         nodePrefabProperty = serializedObject.FindProperty("nodePrefab");
         autoBakeProperty = serializedObject.FindProperty("autoBake");
         timelineNodeClickClipProperty =
             serializedObject.FindProperty("timelineNodeClickClip");
-        timelineNodeClickVolumeProperty =
-            serializedObject.FindProperty("timelineNodeClickVolume");
         timelineNodeClickSourcesProperty =
             serializedObject.FindProperty("timelineNodeClickSources");
     }
@@ -41,6 +41,7 @@ public class ChartPlayerEditor : Editor
             (StageDefinitionSO)stageProperty.objectReferenceValue;
         EditorGUI.BeginChangeCheck();
         EditorGUILayout.PropertyField(stageProperty);
+        EditorGUILayout.PropertyField(surfaceTilemapProperty);
         EditorGUILayout.PropertyField(scanRootProperty);
         EditorGUILayout.PropertyField(nodePrefabProperty);
         EditorGUILayout.PropertyField(autoBakeProperty);
@@ -49,7 +50,6 @@ public class ChartPlayerEditor : Editor
             "Chart Timeline Preview",
             EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(timelineNodeClickClipProperty);
-        EditorGUILayout.PropertyField(timelineNodeClickVolumeProperty);
         EditorGUILayout.PropertyField(
             timelineNodeClickSourcesProperty,
             new GUIContent(
@@ -89,10 +89,22 @@ public class ChartPlayerEditor : Editor
         if (selectedStage != previousStage && selectedStage != null)
             QueueAutoLoad(p, selectedStage);
 
-        if (p.Stage != null && !p.Stage.IsComplete)
+        if (p.Stage == null)
         {
             EditorGUILayout.HelpBox(
-                "当前 Stage 缺少 Scene、Chart 或 Track。",
+                "ChartPlayer 尚未绑定 StageDefinition。",
+                MessageType.Error);
+        }
+        else if (!p.Stage.IsComplete)
+        {
+            EditorGUILayout.HelpBox(
+                "当前 Stage 缺少 Chart 或 Track。",
+                MessageType.Error);
+        }
+        else if (p.SurfaceTilemap == null)
+        {
+            EditorGUILayout.HelpBox(
+                "ChartPlayer 尚未绑定铺面 Tilemap。",
                 MessageType.Error);
         }
         else if (p.Track == null ||

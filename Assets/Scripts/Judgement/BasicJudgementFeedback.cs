@@ -23,25 +23,15 @@ public class BasicJudgementFeedback : MonoBehaviour
     private static readonly Color GreatColor = new Color(0.22f, 0.62f, 1f, 1f);
     private static readonly Color BadColor = new Color(1f, 0.18f, 0.16f, 1f);
 
-    [Header("整体缩放")]
-    [Tooltip("所有特效的尺寸与位移都会乘以该系数")]
-    [SerializeField, Range(0.1f, 5f)] private float sizeMultiplier = 1f;
-
-    [Header("世界尺寸")]
-    [Tooltip("将上述尺寸参数换算为世界单位；0.01 约等于 1080p 下每参考像素的世界距离")]
-    [SerializeField, Min(0.0001f)] private float worldUnitsPerReferencePixel = 0.01f;
-
-    [Header("Diamond (菱形闪光)")]
-    [SerializeField, Min(0f)] private float perfectDiamondSize = 42f;
-    [SerializeField, Min(0f)] private float greatDiamondSize = 36f;
-    [SerializeField, Min(0f)] private float missDiamondSize = 30f;
-
-    [Header("Perfect 碎片")]
-    [SerializeField, Min(0f)] private float shardSize = 13f;
-    [SerializeField, Min(0f)] private float shardDistance = 74f;
-
-    [Header("Bad / Miss 叉号")]
-    [SerializeField] private Vector2 crossSize = new Vector2(64f, 10f);
+    [System.NonSerialized] private float sizeMultiplier;
+    [System.NonSerialized] private float worldUnitsPerReferencePixel;
+    [System.NonSerialized] private float perfectDiamondSize;
+    [System.NonSerialized] private float greatDiamondSize;
+    [System.NonSerialized] private float missDiamondSize;
+    [System.NonSerialized] private float shardSize;
+    [System.NonSerialized] private float shardDistance;
+    [System.NonSerialized] private Vector2 crossSize;
+    [System.NonSerialized] private bool settingsApplied;
 
     private readonly List<AnimatedSprite> activeEffects = new List<AnimatedSprite>();
 
@@ -53,13 +43,44 @@ public class BasicJudgementFeedback : MonoBehaviour
     /// <summary>运行时也可以直接修改这个值。</summary>
     public float SizeMultiplier
     {
-        get => sizeMultiplier;
-        set => sizeMultiplier = Mathf.Max(0.01f, value);
+        get
+        {
+            EnsureSettings();
+            return sizeMultiplier;
+        }
+        set
+        {
+            sizeMultiplier = Mathf.Clamp(value, 0.1f, 5f);
+            GameSettingsSO.LoadDefault().SizeMultiplier =
+                sizeMultiplier;
+        }
     }
 
     void Awake()
     {
+        EnsureSettings();
         CacheEffectTemplate();
+    }
+
+    private void EnsureSettings()
+    {
+        if (settingsApplied)
+            return;
+
+        Player owner = GetComponentInParent<Player>();
+        GameSettingsSO settings = owner != null
+            ? owner.GameSettings
+            : GameSettingsSO.LoadDefault();
+        sizeMultiplier = settings.SizeMultiplier;
+        worldUnitsPerReferencePixel =
+            settings.WorldUnitsPerReferencePixel;
+        perfectDiamondSize = settings.PerfectDiamondSize;
+        greatDiamondSize = settings.GreatDiamondSize;
+        missDiamondSize = settings.MissDiamondSize;
+        shardSize = settings.ShardSize;
+        shardDistance = settings.ShardDistance;
+        crossSize = settings.CrossSize;
+        settingsApplied = true;
     }
 
     void Update()

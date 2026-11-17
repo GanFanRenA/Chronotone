@@ -6,29 +6,18 @@ using UnityEngine;
 /// </summary>
 public sealed class PhysicsActionMode : PlayerActionMode
 {
-    [Header("自由物理")]
-    [Tooltip("完美轨道中的起跳速度，同时决定脱轨瞬间的竖直速度。")]
-    [SerializeField, Min(0.1f)] private float jumpVelocity = 8f;
-    [SerializeField, Min(0f)] private float gravityScale = 3f;
-    [Tooltip("空中旋转角速度，单位为度/秒。")]
-    [SerializeField] private float angularSpeed = 220f;
-    [Tooltip("速坠期间的重力倍率，范围为普通重力的 2 至 3 倍。")]
-    [SerializeField, Range(2f, 3f)] private float fastFallGravityMultiplier = 2.5f;
-    [Tooltip("脱轨后沿反重力方向离开交接点多远时死亡。")]
-    [SerializeField, Min(1f)] private float fallDeathDistance = 12f;
-
-    [Header("地面")]
-    [SerializeField] private LayerMask groundLayers = ~0;
-
-    [Header("阻挡检测")]
-    [Tooltip("用于检测横向撞墙的层。地面正下方接触不会触发阻挡。")]
-    [SerializeField] private LayerMask blockingLayers = 1 << 6;
-    [SerializeField, Min(0.01f)] private float blockedCheckWindow = 0.12f;
-    [SerializeField, Min(0.0001f)] private float minMoveDistance = 0.001f;
-    [SerializeField, Min(0f)] private float collisionSkin = 0.002f;
-
-    [Header("落地检测")]
-    [SerializeField, Min(0.001f)] private float groundProbeDistance = 0.03f;
+    [System.NonSerialized] private float jumpVelocity;
+    [System.NonSerialized] private float gravityScale;
+    [System.NonSerialized] private float angularSpeed;
+    [System.NonSerialized] private float fastFallGravityMultiplier;
+    [System.NonSerialized] private float fallDeathDistance;
+    [System.NonSerialized] private LayerMask groundLayers;
+    [System.NonSerialized] private LayerMask blockingLayers;
+    [System.NonSerialized] private float blockedCheckWindow;
+    [System.NonSerialized] private float minMoveDistance;
+    [System.NonSerialized] private float collisionSkin;
+    [System.NonSerialized] private float groundProbeDistance;
+    [System.NonSerialized] private bool settingsApplied;
 
     private Rigidbody2D body;
     private BoxCollider2D bodyCollider;
@@ -49,21 +38,101 @@ public sealed class PhysicsActionMode : PlayerActionMode
     private ContactFilter2D solidFilter;
     private readonly RaycastHit2D[] castHits = new RaycastHit2D[16];
 
-    public float JumpVelocity => jumpVelocity;
-    public float GravityScale => gravityScale;
-    public float FastFallGravityMultiplier => fastFallGravityMultiplier;
-    public float AngularSpeed => angularSpeed;
-    public LayerMask GroundLayers => groundLayers;
-    public LayerMask BlockingLayers => blockingLayers;
-    public float BlockedCheckWindow => blockedCheckWindow;
-    public float MinMoveDistance => minMoveDistance;
-    public float CollisionSkin => collisionSkin;
-    public float GroundProbeDistance => groundProbeDistance;
+    public float JumpVelocity
+    {
+        get
+        {
+            EnsureSettings();
+            return jumpVelocity;
+        }
+    }
+
+    public float GravityScale
+    {
+        get
+        {
+            EnsureSettings();
+            return gravityScale;
+        }
+    }
+
+    public float FastFallGravityMultiplier
+    {
+        get
+        {
+            EnsureSettings();
+            return fastFallGravityMultiplier;
+        }
+    }
+
+    public float AngularSpeed
+    {
+        get
+        {
+            EnsureSettings();
+            return angularSpeed;
+        }
+    }
+
+    public LayerMask GroundLayers
+    {
+        get
+        {
+            EnsureSettings();
+            return groundLayers;
+        }
+    }
+
+    public LayerMask BlockingLayers
+    {
+        get
+        {
+            EnsureSettings();
+            return blockingLayers;
+        }
+    }
+
+    public float BlockedCheckWindow
+    {
+        get
+        {
+            EnsureSettings();
+            return blockedCheckWindow;
+        }
+    }
+
+    public float MinMoveDistance
+    {
+        get
+        {
+            EnsureSettings();
+            return minMoveDistance;
+        }
+    }
+
+    public float CollisionSkin
+    {
+        get
+        {
+            EnsureSettings();
+            return collisionSkin;
+        }
+    }
+
+    public float GroundProbeDistance
+    {
+        get
+        {
+            EnsureSettings();
+            return groundProbeDistance;
+        }
+    }
 
     public override string DisplayName => "物理移动";
 
     private void Awake()
     {
+        EnsureSettings();
         body = GetComponent<Rigidbody2D>();
         bodyCollider = GetComponent<BoxCollider2D>();
 
@@ -84,6 +153,30 @@ public sealed class PhysicsActionMode : PlayerActionMode
         }
 
         ConfigureCollisionFilters();
+    }
+
+    private void EnsureSettings()
+    {
+        if (settingsApplied)
+            return;
+
+        Player owner = GetComponent<Player>();
+        GameSettingsSO settings = owner != null
+            ? owner.GameSettings
+            : GameSettingsSO.LoadDefault();
+        jumpVelocity = settings.JumpVelocity;
+        gravityScale = settings.GravityScale;
+        angularSpeed = settings.AngularSpeed;
+        fastFallGravityMultiplier =
+            settings.FastFallGravityMultiplier;
+        fallDeathDistance = settings.FallDeathDistance;
+        groundLayers = settings.GroundLayers;
+        blockingLayers = settings.BlockingLayers;
+        blockedCheckWindow = settings.BlockedCheckWindow;
+        minMoveDistance = settings.MinMoveDistance;
+        collisionSkin = settings.CollisionSkin;
+        groundProbeDistance = settings.GroundProbeDistance;
+        settingsApplied = true;
     }
 
     protected override void OnModeEnter()

@@ -279,7 +279,7 @@ public partial class ChartTimelineWindow
             source.Stop();
             source.clip = clip;
             source.timeSamples = 0;
-            source.volume = targetPlayer.timelineNodeClickVolume;
+            source.volume = targetPlayer.TimelineNodeClickVolume;
             source.pitch = 1f;
             source.priority = 0;
             source.PlayScheduled(eventDspTime);

@@ -4,13 +4,11 @@ using UnityEngine;
 [CustomEditor(typeof(StageDefinitionSO))]
 public sealed class StageDefinitionSOEditor : Editor
 {
-    private SerializedProperty scenePathProperty;
     private SerializedProperty chartProperty;
     private SerializedProperty trackProperty;
 
     private void OnEnable()
     {
-        scenePathProperty = serializedObject.FindProperty("scenePath");
         chartProperty = serializedObject.FindProperty("chart");
         trackProperty = serializedObject.FindProperty("track");
     }
@@ -18,21 +16,6 @@ public sealed class StageDefinitionSOEditor : Editor
     public override void OnInspectorGUI()
     {
         serializedObject.Update();
-
-        SceneAsset scene = AssetDatabase.LoadAssetAtPath<SceneAsset>(
-            scenePathProperty.stringValue);
-        EditorGUI.BeginChangeCheck();
-        scene = (SceneAsset)EditorGUILayout.ObjectField(
-            "Scene",
-            scene,
-            typeof(SceneAsset),
-            false);
-        if (EditorGUI.EndChangeCheck())
-        {
-            scenePathProperty.stringValue = scene != null
-                ? AssetDatabase.GetAssetPath(scene)
-                : string.Empty;
-        }
 
         EditorGUILayout.PropertyField(chartProperty);
         EditorGUILayout.PropertyField(trackProperty);
@@ -42,7 +25,7 @@ public sealed class StageDefinitionSOEditor : Editor
         if (!stage.IsComplete)
         {
             EditorGUILayout.HelpBox(
-                "Stage 必须同时绑定 Scene、Chart 和 Track。",
+                "Stage 必须同时绑定 Chart 和 Track；铺面由场景中的 ChartPlayer 绑定。",
                 MessageType.Warning);
         }
     }

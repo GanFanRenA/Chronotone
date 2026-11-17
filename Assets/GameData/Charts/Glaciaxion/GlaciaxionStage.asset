@@ -12,6 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f1f187fce0d4c0787fb37fe483e5cf2, type: 3}
   m_Name: GlaciaxionStage
   m_EditorClassIdentifier: Assembly-CSharp::StageDefinitionSO
-  scenePath: Assets/Scenes/SampleScene.unity
   chart: {fileID: 11400000, guid: 30d0d58990669e54997f193d42a8b994, type: 2}
   track: {fileID: 11400000, guid: 7a2b50f63d3a409e8d344c0771e20dc9, type: 2}

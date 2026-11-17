@@ -4967,7 +4967,7 @@ Transform:
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 4.845425, y: 3, z: -10}
+  m_LocalPosition: {x: 4.7645044, y: 3, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -14341,10 +14341,10 @@ MonoBehaviour:
     ScreenPosition: {x: -0.2, y: 0}
     DeadZone:
       Enabled: 1
-      Size: {x: 0, y: 0.3}
+      Size: {x: 0.05, y: 0.3}
     HardLimits:
       Enabled: 1
-      Size: {x: 0.5, y: 0.5}
+      Size: {x: 0.1, y: 0.5}
       Offset: {x: 0, y: 0}
   CenterOnActivate: 1
   TargetOffset: {x: 0, y: 0, z: 0}
@@ -14406,7 +14406,7 @@ Transform:
   m_GameObject: {fileID: 1616485062}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4.845425, y: 3, z: -10}
+  m_LocalPosition: {x: 4.7645044, y: 3, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -27330,6 +27330,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChartPlayer
   stage: {fileID: 11400000, guid: 20c6f9af48d841f29b61d6bb2f5f45e3, type: 2}
+  surfaceTilemap: {fileID: 1644620165}
   scanRoot: {fileID: 1889684735}
   nodePrefab: {fileID: 1877488169105237420, guid: 6db7ef31738b4754aa83230eb4767760, type: 3}
   nodeAppearanceSet: {fileID: 0}

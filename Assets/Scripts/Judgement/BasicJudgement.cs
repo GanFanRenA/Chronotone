@@ -5,15 +5,10 @@ using UnityEngine.InputSystem;
 
 public class BasicJudgement : MonoBehaviour
 {
-    [SerializeField, Range(0.02f, 0.2f)]
-    private float perfectWindowSeconds = 0.06f;
-
-    [SerializeField, Range(0.04f, 0.3f)]
-    private float greatWindowSeconds = 0.14f;
-
-    [SerializeField, Range(0.16f, 0.4f)]
-    private float badWindowSeconds = 0.24f;
-
+    [System.NonSerialized] private float perfectWindowSeconds;
+    [System.NonSerialized] private float greatWindowSeconds;
+    [System.NonSerialized] private float badWindowSeconds;
+    [System.NonSerialized] private bool settingsApplied;
     private Player player;
     private BasicJudgementFeedback feedback;
     private IReadOnlyList<NodeData> nodes;
@@ -23,19 +18,21 @@ public class BasicJudgement : MonoBehaviour
     private bool blocked;
     private bool manualInputQueued;
     private double manualInputSongTime;
-    public float GreatWindowSeconds => greatWindowSeconds;
+    public float GreatWindowSeconds
+    {
+        get
+        {
+            EnsureSettings();
+            return greatWindowSeconds;
+        }
+    }
 
     public event Action<JudgementResult> JudgementResolved;
-
-    void OnValidate()
-    {
-        greatWindowSeconds = Mathf.Max(perfectWindowSeconds, greatWindowSeconds);
-        badWindowSeconds = Mathf.Max(greatWindowSeconds, badWindowSeconds);
-    }
 
     void Awake()
     {
         player = GetComponent<Player>();
+        EnsureSettings();
         feedback = GetComponentInChildren<BasicJudgementFeedback>(true);
 
         if (feedback == null)
@@ -43,6 +40,20 @@ public class BasicJudgement : MonoBehaviour
             Debug.LogError("BasicJudgement 缺少 BasicJudgementFeedback 子对象", this);
             enabled = false;
         }
+    }
+
+    private void EnsureSettings()
+    {
+        if (settingsApplied)
+            return;
+
+        GameSettingsSO settings = player != null
+            ? player.GameSettings
+            : GameSettingsSO.LoadDefault();
+        perfectWindowSeconds = settings.PerfectWindowSeconds;
+        greatWindowSeconds = settings.GreatWindowSeconds;
+        badWindowSeconds = settings.BadWindowSeconds;
+        settingsApplied = true;
     }
 
     void Start()

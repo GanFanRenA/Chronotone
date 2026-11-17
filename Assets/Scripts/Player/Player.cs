@@ -7,26 +7,6 @@ public class Player : MonoBehaviour
 {
     public ChartPlayer chartPlayer;
 
-    [Header("AutoPlay（自动模式）")]
-    [Tooltip("启用后按谱面节拍自动跳跃并完成判定，手动输入将被忽略。")]
-    [SerializeField] private bool autoModeEnabled = false;
-
-    [Tooltip("AutoPlay 判定时刻。0 为音符正拍；负值提前，正值延后，单位为毫秒。数值会限制在当前 Great 判定窗内。")]
-    [SerializeField, Range(-300, 300)]
-    private int autoPlayOffsetMilliseconds = 0;
-
-    [Tooltip("调度前置时间，给音频混音器准备缓冲")]
-    public double scheduleLead = 0.15;
-
-    [Header("死亡回溯")]
-    [Tooltip("Miss 或格挡判定后的短暂停顿，随后开始倒放回溯。")]
-    [SerializeField, Min(0f)] private float respawnDelaySeconds = 0.35f;
-    [SerializeField, Min(0.01f)] private float rewindDurationSeconds = 0.65f;
-    [SerializeField, Min(1)] private int motionSamplesPerSecond = 30;
-    [SerializeField, Min(1f)] private float motionHistorySeconds = 30f;
-    [SerializeField] private Color rewindTint = new Color(0.35f, 0.85f, 1f, 1f);
-    [SerializeField, Min(0f)] private float rewindPulseFrequency = 18f;
-
     [Header("行动模式")]
     [SerializeField] private PlayerActionMode defaultActionMode = null;
 
@@ -84,6 +64,7 @@ public class Player : MonoBehaviour
     private Quaternion rewindCheckpointRotation;
     private double rewindCheckpointSongTime;
     private double lastRecordedSongTime;
+    [System.NonSerialized] private GameSettingsSO gameSettings;
 
     public bool IsRunning => songClock.IsRunning;
     public bool AudioHasStarted => songClock.AudioHasStarted;
@@ -107,33 +88,45 @@ public class Player : MonoBehaviour
     public double TrackReleaseSongTime => trackReleaseSongTime;
     public bool AutoModeEnabled
     {
-        get => autoModeEnabled;
-        set => autoModeEnabled = value;
+        get => GameSettings.AutoModeEnabled;
+        set => GameSettings.AutoModeEnabled = value;
     }
     public int AutoPlayOffsetMilliseconds
     {
-        get => autoPlayOffsetMilliseconds;
-        set => autoPlayOffsetMilliseconds = value;
+        get => GameSettings.AutoPlayOffsetMilliseconds;
+        set => GameSettings.AutoPlayOffsetMilliseconds = value;
     }
     public double AutoPlayOffsetSeconds =>
-        autoPlayOffsetMilliseconds / 1000d;
+        AutoPlayOffsetMilliseconds / 1000d;
+
+    public GameSettingsSO GameSettings
+    {
+        get
+        {
+            if (gameSettings == null)
+                gameSettings = GameSettingsSO.LoadDefault();
+            return gameSettings;
+        }
+    }
+
+    public double ScheduleLead => GameSettings.ScheduleLeadSeconds;
+    private float RespawnDelaySeconds =>
+        GameSettings.RespawnDelaySeconds;
+    private float RewindDurationSeconds =>
+        GameSettings.RewindDurationSeconds;
+    private int MotionSamplesPerSecond =>
+        GameSettings.MotionSamplesPerSecond;
+    private float MotionHistorySeconds =>
+        GameSettings.MotionHistorySeconds;
+    private Color RewindTint => GameSettings.RewindTint;
+    private float RewindPulseFrequency =>
+        GameSettings.RewindPulseFrequency;
 
     public event Action<PlayerActionMode, PlayerActionMode> ActionModeChanged;
 
     private void OnValidate()
     {
-        BasicJudgement judgement = basicJudgement != null
-            ? basicJudgement
-            : GetComponent<BasicJudgement>();
-        if (judgement == null)
-            return;
-
-        int greatWindowMilliseconds = Mathf.FloorToInt(
-            judgement.GreatWindowSeconds * 1000f);
-        autoPlayOffsetMilliseconds = Mathf.Clamp(
-            autoPlayOffsetMilliseconds,
-            -greatWindowMilliseconds,
-            greatWindowMilliseconds);
+        GameSettings.Validate();
     }
 
     void Awake()
@@ -148,10 +141,7 @@ public class Player : MonoBehaviour
             return;
         }
 
-        AutoPlayOffsetMilliseconds = Mathf.Clamp(
-            autoPlayOffsetMilliseconds,
-            -Mathf.FloorToInt(basicJudgement.GreatWindowSeconds * 1000f),
-            Mathf.FloorToInt(basicJudgement.GreatWindowSeconds * 1000f));
+        GameSettings.Validate();
 
         basicJudgement.JudgementResolved += HandleJudgement;
         playerRenderer = GetComponent<SpriteRenderer>();
@@ -258,15 +248,15 @@ public class Player : MonoBehaviour
 
         }
 
-        // 轨道模拟必须在音频调度前完成，避免同步构建吞掉 scheduleLead。
+        // 轨道模拟必须在音频调度前完成，避免同步构建吞掉调度前置时间。
         currentActionMode?.PrepareForPlayback();
         double scheduledDspTime = playbackStartNodeIndex < 0 &&
             playbackStartBeat <= 0f
                 ? songClock.Schedule(
-                    scheduleLead,
+                    ScheduleLead,
                     chart.GlobalOffsetSeconds)
                 : songClock.Seek(
-                    scheduleLead,
+                    ScheduleLead,
                     playbackStartSongTime);
 
         // dspTime 和 PlayScheduled 共用同一时钟；音频数据必须已加载，
@@ -487,7 +477,7 @@ public class Player : MonoBehaviour
         rewindCheckpointRotation = OriginalRotation;
         rewindCheckpointSongTime = checkpointSongTime;
         rewindStartSongTime = SongTime;
-        respawnDelayRemaining = Mathf.Max(0f, respawnDelaySeconds);
+        respawnDelayRemaining = Mathf.Max(0f, RespawnDelaySeconds);
         rewindElapsed = 0f;
         rewindState = RewindState.Waiting;
         trackEnabled = false;
@@ -508,7 +498,7 @@ public class Player : MonoBehaviour
         rewindElapsed = 0f;
 
         if (rewindPath.Count == 0 ||
-            rewindDurationSeconds <= 0.001f)
+            RewindDurationSeconds <= 0.001f)
         {
             CompleteDeathRewind();
             return;
@@ -522,7 +512,7 @@ public class Player : MonoBehaviour
     {
         rewindElapsed += Mathf.Max(0f, unscaledDeltaTime);
         float progress = Mathf.Clamp01(
-            rewindElapsed / Mathf.Max(0.01f, rewindDurationSeconds));
+            rewindElapsed / Mathf.Max(0.01f, RewindDurationSeconds));
 
         ApplyRewindVisual(progress);
         if (progress >= 1f)
@@ -545,7 +535,7 @@ public class Player : MonoBehaviour
 
     private void RecordMotion(double songTime)
     {
-        double interval = 1d / Mathf.Max(1, motionSamplesPerSecond);
+        double interval = 1d / Mathf.Max(1, MotionSamplesPerSecond);
         if (songTime - lastRecordedSongTime < interval)
             return;
 
@@ -555,7 +545,7 @@ public class Player : MonoBehaviour
             transform.localRotation));
         lastRecordedSongTime = songTime;
 
-        double historyStart = songTime - Mathf.Max(1f, motionHistorySeconds);
+        double historyStart = songTime - Mathf.Max(1f, MotionHistorySeconds);
         int removeCount = 0;
         while (removeCount < recordedMotion.Count &&
                recordedMotion[removeCount].SongTime < historyStart)
@@ -605,9 +595,9 @@ public class Player : MonoBehaviour
             return;
 
         float pulse = Mathf.PingPong(
-            rewindElapsed * Mathf.Max(0f, rewindPulseFrequency),
+            rewindElapsed * Mathf.Max(0f, RewindPulseFrequency),
             1f);
-        Color color = Color.Lerp(playerRendererColor, rewindTint, 0.65f);
+        Color color = Color.Lerp(playerRendererColor, RewindTint, 0.65f);
         color.a = playerRendererColor.a * Mathf.Lerp(0.35f, 1f, pulse);
         playerRenderer.color = color;
     }
@@ -832,7 +822,8 @@ public class Player : MonoBehaviour
         respawnDelayRemaining = 0f;
         recordedMotion.Clear();
         lastRecordedSongTime = double.NegativeInfinity;
-        double scheduledDspTime = songClock.Seek(scheduleLead, checkpointSongTime);
+        double scheduledDspTime =
+            songClock.Seek(ScheduleLead, checkpointSongTime);
         audioSource.PlayScheduled(scheduledDspTime);
     }
 

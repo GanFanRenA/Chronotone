@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -7,6 +8,8 @@ using UnityEditor;
 public class ChartPlayer : MonoBehaviour
 {
     [SerializeField] private StageDefinitionSO stage;
+    [Tooltip("当前关卡使用的铺面；多个铺面可以位于同一场景并按关卡切换。")]
+    [SerializeField] private Tilemap surfaceTilemap;
     public Transform scanRoot;
     [Tooltip("留空时使用 Assets/Prefabs/Node.prefab。")]
     public NodeMarker nodePrefab;
@@ -17,18 +20,30 @@ public class ChartPlayer : MonoBehaviour
     [Header("Chart Timeline Preview")]
     [Tooltip("Chart Timeline 播放经过节点时使用的卡点音效。")]
     public AudioClip timelineNodeClickClip;
-    [Range(0f, 1f)]
-    public float timelineNodeClickVolume = 0.8f;
     [Tooltip("用于预调度卡点音效的 AudioSource 池。留空时自动使用本对象上的所有 AudioSource。")]
     public AudioSource[] timelineNodeClickSources =
         System.Array.Empty<AudioSource>();
 
     [System.NonSerialized] private bool updatingPositions;
+    [System.NonSerialized] private GameSettingsSO gameSettings;
 
     public StageDefinitionSO Stage => stage;
+    public Tilemap SurfaceTilemap => surfaceTilemap;
     public ChartSO Chart => stage != null ? stage.Chart : null;
     public ChartTrackSO Track => stage != null ? stage.Track : null;
     public bool IsUpdatingPositions => updatingPositions;
+    public float TimelineNodeClickVolume =>
+        GameSettings.TimelineNodeClickVolume;
+
+    public GameSettingsSO GameSettings
+    {
+        get
+        {
+            if (gameSettings == null)
+                gameSettings = GameSettingsSO.LoadDefault();
+            return gameSettings;
+        }
+    }
 
     public Player ResolvePlayer()
     {
@@ -48,20 +63,16 @@ public class ChartPlayer : MonoBehaviour
         if (stage == null || !stage.IsComplete)
         {
             Debug.LogError(
-                "ChartPlayer 必须绑定包含 Scene、Chart 和 Track 的 StageDefinition",
+                "ChartPlayer 必须绑定包含 Chart 和 Track 的 StageDefinition",
                 this);
             enabled = false;
             return;
         }
 
-        string ownerScenePath = gameObject.scene.path;
-        if (!string.Equals(
-                ownerScenePath,
-                stage.ScenePath,
-                System.StringComparison.Ordinal))
+        if (surfaceTilemap == null)
         {
             Debug.LogError(
-                $"Stage '{stage.name}' 属于场景 '{stage.ScenePath}'，当前对象位于 '{ownerScenePath}'",
+                $"Stage '{stage.name}' 没有绑定铺面 Tilemap",
                 this);
             enabled = false;
             return;
