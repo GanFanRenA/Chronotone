@@ -29,6 +29,7 @@ public partial class ChartTimelineWindow
     private float cachedRouteFixedDeltaTime;
     private double cachedRouteOffset;
     private int cachedRouteMarkerCount;
+    private int cachedRouteNodeSignature;
     private bool editorPerfectRouteDirty = true;
 
     private sealed class PreviewPath
@@ -244,11 +245,13 @@ public partial class ChartTimelineWindow
             targetPlayer.Chart.GlobalOffsetSeconds;
         float uprightAngle =
             player.transform.localEulerAngles.z;
+        int nodeSignature = ComputeRouteNodeSignature(markers);
         if (!editorPerfectRouteDirty &&
             cachedEditorPerfectRoute != null &&
             cachedRoutePlayer == player &&
             cachedRoutePhysicsMode == physicsMode &&
             cachedRouteMarkerCount == markers.Length &&
+            cachedRouteNodeSignature == nodeSignature &&
             Mathf.Approximately(
                 cachedRouteJumpVelocity,
                 physicsMode.JumpVelocity) &&
@@ -349,8 +352,37 @@ public partial class ChartTimelineWindow
         cachedRouteFixedDeltaTime = Time.fixedDeltaTime;
         cachedRouteOffset = chartOffset;
         cachedRouteMarkerCount = markers.Length;
+        cachedRouteNodeSignature = nodeSignature;
         editorPerfectRouteDirty = false;
         return cachedEditorPerfectRoute;
+    }
+
+    /// <summary>
+    /// 影响完美轨道的节点字段签名。力度、动作、重力、拍点和位置变化时
+    /// 即使没有 Undo 事件也会让预览路线重建。
+    /// </summary>
+    private static int ComputeRouteNodeSignature(NodeMarker[] markers)
+    {
+        unchecked
+        {
+            int hash = 17;
+            foreach (NodeMarker marker in markers)
+            {
+                if (marker == null)
+                    continue;
+
+                hash = hash * 31 + marker.beat.GetHashCode();
+                hash = hash * 31 + marker.order;
+                hash = hash * 31 + (int)marker.action;
+                hash = hash * 31 + (int)marker.gravity;
+                hash = hash * 31 + marker.strength.GetHashCode();
+                Vector3 position = marker.transform.position;
+                hash = hash * 31 + position.x.GetHashCode();
+                hash = hash * 31 + position.y.GetHashCode();
+            }
+
+            return hash;
+        }
     }
 
     private static void DrawRouteSegment(

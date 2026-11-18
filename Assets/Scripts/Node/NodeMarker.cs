@@ -179,6 +179,12 @@ public class NodeMarker : MonoBehaviour
     }
 
 #if UNITY_EDITOR
+    /// <summary>
+    /// 编辑器里任意节点字段（动作、重力、力度、位置等）变化后触发，
+    /// 用于让 Chart Timeline 立即失效预览路线并重绘。
+    /// </summary>
+    public static event System.Action<NodeMarker> EditorChanged;
+
     private float lastValidatedBeat = float.NaN;
 
     private void OnValidate()
@@ -188,6 +194,7 @@ public class NodeMarker : MonoBehaviour
 
         ApplyOwnedAppearance();
         ApplyVisibility();
+        EditorChanged?.Invoke(this);
 
         ChartPlayer player = GetComponentInParent<ChartPlayer>();
         if (player == null || player.IsUpdatingPositions)

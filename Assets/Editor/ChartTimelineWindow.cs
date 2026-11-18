@@ -73,6 +73,8 @@ public partial class ChartTimelineWindow : EditorWindow
         minSize = new Vector2(400, 200);
         NodeAppearanceSet.Changed -= OnNodeAppearanceChanged;
         NodeAppearanceSet.Changed += OnNodeAppearanceChanged;
+        NodeMarker.EditorChanged -= OnNodeMarkerChanged;
+        NodeMarker.EditorChanged += OnNodeMarkerChanged;
         if (nodePrefab == null)
             nodePrefab = AssetDatabase.LoadAssetAtPath<NodeMarker>(NodePrefabPath);
         EditorApplication.hierarchyChanged -= OnHierarchyChanged;
@@ -96,6 +98,7 @@ public partial class ChartTimelineWindow : EditorWindow
     private void OnDisable()
     {
         NodeAppearanceSet.Changed -= OnNodeAppearanceChanged;
+        NodeMarker.EditorChanged -= OnNodeMarkerChanged;
         EditorApplication.hierarchyChanged -= OnHierarchyChanged;
         Undo.undoRedoPerformed -= OnUndoRedoPerformed;
         Undo.postprocessModifications -= OnPostprocessModifications;
@@ -110,6 +113,14 @@ public partial class ChartTimelineWindow : EditorWindow
 
     private void OnNodeAppearanceChanged(NodeAppearanceSet appearanceSet)
     {
+        InvalidateMarkerCache();
+    }
+
+    private void OnNodeMarkerChanged(NodeMarker marker)
+    {
+        if (marker == null)
+            return;
+
         InvalidateMarkerCache();
     }
 
