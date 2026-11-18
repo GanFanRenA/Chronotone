@@ -299,7 +299,8 @@ public static class PerfectRouteBuilder
                     actions.Add(new RouteAction(
                         noteTime,
                         node.action,
-                        node.gravity));
+                        node.gravity,
+                        node.strength));
                 }
             }
         }
@@ -333,7 +334,8 @@ public static class PerfectRouteBuilder
                 state,
                 config,
                 actions[nextActionIndex].Action,
-                actions[nextActionIndex].Gravity);
+                actions[nextActionIndex].Gravity,
+                actions[nextActionIndex].Strength);
             nextActionIndex++;
         }
 
@@ -380,7 +382,8 @@ public static class PerfectRouteBuilder
                     state,
                     config,
                     actions[nextActionIndex].Action,
-                    actions[nextActionIndex].Gravity);
+                    actions[nextActionIndex].Gravity,
+                    actions[nextActionIndex].Strength);
                 nextActionIndex++;
             }
 
@@ -537,7 +540,8 @@ public static class PerfectRouteBuilder
         RouteState state,
         PerfectRouteConfig config,
         NodeAction action,
-        NodeGravity gravity)
+        NodeGravity gravity,
+        float strength)
     {
         ApplyGravity(state, gravity);
 
@@ -545,11 +549,11 @@ public static class PerfectRouteBuilder
         switch (action)
         {
             case NodeAction.Jump:
-                BeginJump(state, config, supportNormalY);
+                BeginJump(state, config, supportNormalY, strength);
                 break;
 
             case NodeAction.FastFall:
-                ApplyFastFallImpulse(state, config);
+                ApplyFastFallImpulse(state, config, strength);
                 break;
         }
     }
@@ -575,18 +579,22 @@ public static class PerfectRouteBuilder
     private static void BeginJump(
         RouteState state,
         PerfectRouteConfig config,
-        float supportNormalY)
+        float supportNormalY,
+        float strength)
     {
         state.Grounded = false;
-        state.VerticalSpeed = supportNormalY * config.JumpVelocity;
+        state.VerticalSpeed = supportNormalY *
+            NodeData.ResolveStrength(strength, config.JumpVelocity);
     }
 
     private static void ApplyFastFallImpulse(
         RouteState state,
-        PerfectRouteConfig config)
+        PerfectRouteConfig config,
+        float strength)
     {
         state.Grounded = false;
-        state.VerticalSpeed -= config.FastFallImpulse;
+        state.VerticalSpeed -=
+            NodeData.ResolveStrength(strength, config.FastFallImpulse);
     }
 
     private static void ApplyPastNodeAction(
@@ -613,16 +621,19 @@ public static class PerfectRouteBuilder
         public RouteAction(
             double time,
             NodeAction action,
-            NodeGravity gravity)
+            NodeGravity gravity,
+            float strength)
         {
             Time = time;
             Action = action;
             Gravity = gravity;
+            Strength = strength;
         }
 
         public double Time { get; }
         public NodeAction Action { get; }
         public NodeGravity Gravity { get; }
+        public float Strength { get; }
     }
 
     private sealed class RouteState

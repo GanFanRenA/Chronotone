@@ -304,6 +304,7 @@ public partial class ChartTimelineWindow
                 gravity = marker.gravity,
                 auto = marker.auto,
                 visible = marker.visible,
+                strength = marker.strength,
                 position = marker.transform.position,
                 deltaX = marker.deltaX
             };

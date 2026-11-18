@@ -60,6 +60,10 @@ public class NodeData
     [Tooltip("显示：关闭后只在运行时隐藏节点，编辑模式仍然可见。")]
     public bool visible = true;
 
+    [Tooltip("动作力度：Jump 为起跳速度，FastFall 为向下速度脉冲（越大落得越快），Respawn 无效。0 表示使用 GameSettings 默认值。")]
+    [Min(0f)]
+    public float strength;
+
     public Vector2 position;
     [HideInInspector] public float deltaX;
 
@@ -73,6 +77,36 @@ public class NodeData
         action == NodeAction.Jump ||
         action == NodeAction.FastFall ||
         gravity != NodeGravity.None;
+
+    /// <summary>
+    /// 0 或负数表示沿用 GameSettings 的默认力度。
+    /// </summary>
+    public static float ResolveStrength(
+        float strength,
+        float defaultStrength) =>
+        strength > 0f ? strength : defaultStrength;
+
+    /// <summary>
+    /// 动作在 GameSettings 中的默认力度：Jump 用 JumpForce，FastFall 用默认速度脉冲，Respawn 没有力度。
+    /// </summary>
+    public static float GetDefaultStrength(
+        NodeAction action,
+        GameSettingsSO settings)
+    {
+        switch (action)
+        {
+            case NodeAction.Jump:
+                return settings != null ? settings.JumpVelocity : 8f;
+
+            case NodeAction.FastFall:
+                return settings != null
+                    ? settings.FastFallImpulse
+                    : 60f;
+
+            default:
+                return 0f;
+        }
+    }
 
     public void MarkMigrated()
     {

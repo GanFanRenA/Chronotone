@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.SceneManagement;
 #endif
 
 public class ChartPlayer : MonoBehaviour
@@ -28,7 +29,7 @@ public class ChartPlayer : MonoBehaviour
     [System.NonSerialized] private GameSettingsSO gameSettings;
     [SerializeField, HideInInspector] private int nodeDataVersion;
 
-    private const int CurrentNodeDataVersion = 1;
+    private const int CurrentNodeDataVersion = 2;
 
     public StageDefinitionSO Stage => stage;
     public Tilemap SurfaceTilemap => surfaceTilemap;
@@ -87,7 +88,8 @@ public class ChartPlayer : MonoBehaviour
     }
 
     /// <summary>
-    /// 把旧 NodeType/NodeTrigger 数据一次性转换成动作 + 重力 + 自动 + 显示。
+    /// 把旧 NodeType/NodeTrigger 数据一次性转换成动作 + 重力 + 自动 + 显示，
+    /// 再为旧节点补齐显式的力度值，保持升级前的跳跃/快速下落手感。
     /// 版本号放在 ChartPlayer 上，避免 Prefab 实例继承迁移标记导致漏转。
     /// </summary>
     public void EnsureNodeDataMigrated()
@@ -99,8 +101,11 @@ public class ChartPlayer : MonoBehaviour
         if (nodeDataVersion >= CurrentNodeDataVersion)
             return;
 
+        GameSettingsSO settings = GameSettings;
         Transform root = scanRoot != null ? scanRoot : transform;
         NodeAppearanceSet appearanceSet = ResolveNodeAppearanceSet();
+        // v1 负责旧动作迁移；v2 只为所有旧节点补 strength。
+        bool migrateLegacyAction = nodeDataVersion < 1;
         foreach (NodeMarker marker in
                  root.GetComponentsInChildren<NodeMarker>(true))
         {
@@ -109,22 +114,31 @@ public class ChartPlayer : MonoBehaviour
 
             // 旧 Jump + Manual 映射后正好等于新字段默认值；
             // 跳过可以避免覆盖已经在用新字段的新节点。
-            if (marker.type == NodeType.Jump &&
-                marker.trigger == NodeTrigger.Manual)
+            if (migrateLegacyAction &&
+                !(marker.type == NodeType.Jump &&
+                  marker.trigger == NodeTrigger.Manual))
             {
-                continue;
+                NodeData.MigrateLegacy(
+                    marker.type,
+                    marker.trigger,
+                    out NodeAction action,
+                    out NodeGravity gravity,
+                    out bool auto);
+                marker.action = action;
+                marker.gravity = gravity;
+                marker.auto = auto;
+                marker.visible = true;
             }
 
-            NodeData.MigrateLegacy(
-                marker.type,
-                marker.trigger,
-                out NodeAction action,
-                out NodeGravity gravity,
-                out bool auto);
-            marker.action = action;
-            marker.gravity = gravity;
-            marker.auto = auto;
-            marker.visible = true;
+            // 0 表示“跟随 GameSettings 默认值”；旧节点在升级时写死为当时的默认值，
+            // 这样以后改 GameSettings 不会改变已有谱面的手感。
+            if (marker.strength <= 0f)
+            {
+                marker.strength = NodeData.GetDefaultStrength(
+                    marker.action,
+                    settings);
+            }
+
             marker.ApplyAppearance(appearanceSet);
             marker.ApplyVisibility();
 #if UNITY_EDITOR
@@ -132,7 +146,30 @@ public class ChartPlayer : MonoBehaviour
             {
                 EditorUtility.SetDirty(marker);
                 PrefabUtility.RecordPrefabInstancePropertyModifications(marker);
+                var scene = marker.gameObject.scene;
+                if (scene.IsValid() && !string.IsNullOrEmpty(scene.path))
+                    EditorSceneManager.MarkSceneDirty(scene);
             }
+#endif
+        }
+
+        if (chart != null && chart.nodes != null)
+        {
+            bool chartChanged = false;
+            foreach (NodeData node in chart.nodes)
+            {
+                if (node == null || node.strength > 0f)
+                    continue;
+
+                node.strength = NodeData.GetDefaultStrength(
+                    node.action,
+                    settings);
+                chartChanged = true;
+            }
+
+#if UNITY_EDITOR
+            if (chartChanged && !Application.isPlaying)
+                EditorUtility.SetDirty(chart);
 #endif
         }
 
@@ -335,8 +372,12 @@ public class ChartPlayer : MonoBehaviour
         foreach (ChartPlayer player in
                  Object.FindObjectsByType<ChartPlayer>(FindObjectsSortMode.None))
         {
-            if (player != null && player.Chart != null)
-                player.UpdatePos();
+            if (player == null || player.Chart == null)
+                continue;
+
+            // 域名重载后主动补做节点力度迁移，避免必须打开时间轴或进入 Play 才生效。
+            player.EnsureNodeDataMigrated();
+            player.UpdatePos();
         }
     }
 
@@ -463,6 +504,7 @@ public class ChartPlayer : MonoBehaviour
             marker.gravity = data.gravity;
             marker.auto = data.auto;
             marker.visible = data.visible;
+            marker.strength = data.strength;
             marker.index = i;
             marker.name = $"Node_{i}:{data.beat:0.##}_{data.order}";
             marker.transform.position = new Vector3(
@@ -528,6 +570,7 @@ public class ChartPlayer : MonoBehaviour
                 gravity = m.gravity,
                 auto = m.auto,
                 visible = m.visible,
+                strength = m.strength,
                 position = m.transform.position,
                 deltaX = m.deltaX
             };
@@ -756,6 +799,7 @@ public class ChartPlayer : MonoBehaviour
             $"重力 {node.gravity}，" +
             $"自动 {(node.auto ? "是" : "否")}，" +
             $"显示 {(node.visible ? "是" : "否")}，" +
+            $"力度 {node.strength:0.###}，" +
             $"位置 {node.position}）";
     }
 

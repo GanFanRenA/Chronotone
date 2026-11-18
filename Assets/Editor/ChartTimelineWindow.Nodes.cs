@@ -279,6 +279,9 @@ public partial class ChartTimelineWindow
         marker.visible = inheritPreviousType && previous != null
             ? previous.visible
             : nodePrefab.visible;
+        marker.strength = inheritPreviousType && previous != null
+            ? previous.strength
+            : nodePrefab.strength;
         marker.ApplyAppearance(targetPlayer.ResolveNodeAppearanceSet());
         marker.ApplyVisibility();
 

@@ -275,6 +275,9 @@ public partial class ChartTimelineWindow
             marker.visible = previous != null
                 ? previous.visible
                 : prefab.visible;
+            marker.strength = previous != null
+                ? previous.strength
+                : prefab.strength;
             marker.ApplyAppearance(targetPlayer.ResolveNodeAppearanceSet());
             marker.ApplyVisibility();
 
