@@ -13,7 +13,7 @@ public class ChartPlayer : MonoBehaviour
     public Transform scanRoot;
     [Tooltip("留空时使用 Assets/Prefabs/Node.prefab。")]
     public NodeMarker nodePrefab;
-    [Tooltip("按 NodeType 配置节点与时间轴颜色；留空时使用 Resources/NodeAppearance/NodeAppearanceSet。")]
+    [Tooltip("按动作类型配置节点与时间轴颜色；留空时使用 Resources/NodeAppearance/NodeAppearanceSet。")]
     public NodeAppearanceSet nodeAppearanceSet;
     public bool autoBake = false;   // 想要旧行为就勾上
 
@@ -26,6 +26,9 @@ public class ChartPlayer : MonoBehaviour
 
     [System.NonSerialized] private bool updatingPositions;
     [System.NonSerialized] private GameSettingsSO gameSettings;
+    [SerializeField, HideInInspector] private int nodeDataVersion;
+
+    private const int CurrentNodeDataVersion = 1;
 
     public StageDefinitionSO Stage => stage;
     public Tilemap SurfaceTilemap => surfaceTilemap;
@@ -78,8 +81,66 @@ public class ChartPlayer : MonoBehaviour
             return;
         }
 
+        EnsureNodeDataMigrated();
         RefreshChartPositions();
         RefreshNodeAppearances();
+    }
+
+    /// <summary>
+    /// 把旧 NodeType/NodeTrigger 数据一次性转换成动作 + 重力 + 自动 + 显示。
+    /// 版本号放在 ChartPlayer 上，避免 Prefab 实例继承迁移标记导致漏转。
+    /// </summary>
+    public void EnsureNodeDataMigrated()
+    {
+        ChartSO chart = Chart;
+        if (chart != null)
+            chart.EnsureMigrated();
+
+        if (nodeDataVersion >= CurrentNodeDataVersion)
+            return;
+
+        Transform root = scanRoot != null ? scanRoot : transform;
+        NodeAppearanceSet appearanceSet = ResolveNodeAppearanceSet();
+        foreach (NodeMarker marker in
+                 root.GetComponentsInChildren<NodeMarker>(true))
+        {
+            if (marker == null)
+                continue;
+
+            // 旧 Jump + Manual 映射后正好等于新字段默认值；
+            // 跳过可以避免覆盖已经在用新字段的新节点。
+            if (marker.type == NodeType.Jump &&
+                marker.trigger == NodeTrigger.Manual)
+            {
+                continue;
+            }
+
+            NodeData.MigrateLegacy(
+                marker.type,
+                marker.trigger,
+                out NodeAction action,
+                out NodeGravity gravity,
+                out bool auto);
+            marker.action = action;
+            marker.gravity = gravity;
+            marker.auto = auto;
+            marker.visible = true;
+            marker.ApplyAppearance(appearanceSet);
+            marker.ApplyVisibility();
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                EditorUtility.SetDirty(marker);
+                PrefabUtility.RecordPrefabInstancePropertyModifications(marker);
+            }
+#endif
+        }
+
+        nodeDataVersion = CurrentNodeDataVersion;
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+            EditorUtility.SetDirty(this);
+#endif
     }
 
     public NodeAppearanceSet ResolveNodeAppearanceSet() =>
@@ -359,6 +420,7 @@ public class ChartPlayer : MonoBehaviour
         ChartSO chart = Chart;
         if (this == null || chart == null || Application.isPlaying) return;
 
+        chart.EnsureMigrated();
         if (nodePrefab == null)
             nodePrefab = AssetDatabase.LoadAssetAtPath<NodeMarker>(DefaultNodePrefabPath);
         if (nodePrefab == null)
@@ -397,14 +459,16 @@ public class ChartPlayer : MonoBehaviour
             NodeMarker marker = go.GetComponent<NodeMarker>();
             marker.beat = data.beat;
             marker.order = data.order;
-            marker.type = data.type;
-            marker.trigger = data.EffectiveTrigger;
-            marker.NormalizeTriggerForType();
+            marker.action = data.action;
+            marker.gravity = data.gravity;
+            marker.auto = data.auto;
+            marker.visible = data.visible;
             marker.index = i;
             marker.name = $"Node_{i}:{data.beat:0.##}_{data.order}";
             marker.transform.position = new Vector3(
                 root.position.x, data.position.y, root.position.z);
             marker.ApplyAppearance(ResolveNodeAppearanceSet());
+            marker.ApplyVisibility();
 
             PrefabUtility.RecordPrefabInstancePropertyModifications(go);
             PrefabUtility.RecordPrefabInstancePropertyModifications(marker);
@@ -415,6 +479,7 @@ public class ChartPlayer : MonoBehaviour
         UpdatePos();
         Undo.CollapseUndoOperations(undoGroup);
 
+        nodeDataVersion = CurrentNodeDataVersion;
         dirty = false;
         EditorUtility.SetDirty(this);
     }
@@ -432,6 +497,7 @@ public class ChartPlayer : MonoBehaviour
             return;
         }
 
+        EnsureNodeDataMigrated();
         UpdatePos();
 
         Transform root = scanRoot != null ? scanRoot : transform;
@@ -454,15 +520,19 @@ public class ChartPlayer : MonoBehaviour
 
             m.transform.SetSiblingIndex(i);
 
-            result.Add(new NodeData
+            var node = new NodeData
             {
                 beat = m.beat,
                 order = m.order,
-                type = m.type,
-                trigger = m.EffectiveTrigger,
+                action = m.action,
+                gravity = m.gravity,
+                auto = m.auto,
+                visible = m.visible,
                 position = m.transform.position,
                 deltaX = m.deltaX
-            });
+            };
+            node.MarkMigrated();
+            result.Add(node);
         }
 
         if (!TryBuildTrack(result, out PerfectRoute route))
@@ -682,8 +752,10 @@ public class ChartPlayer : MonoBehaviour
         NodeData node = nodes[index];
         return
             $"Node_{index}（Beat {node.beat:0.###}，" +
-            $"类型 {node.type}，" +
-            $"触发 {node.EffectiveTrigger}，" +
+            $"动作 {node.action}，" +
+            $"重力 {node.gravity}，" +
+            $"自动 {(node.auto ? "是" : "否")}，" +
+            $"显示 {(node.visible ? "是" : "否")}，" +
             $"位置 {node.position}）";
     }
 

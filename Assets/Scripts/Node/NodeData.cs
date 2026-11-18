@@ -1,7 +1,28 @@
 using System;
 using UnityEngine;
-using UnityEngine.Serialization;
 
+/// <summary>
+/// 节点动作。None 只做重力/标记，Respawn 用于保存重生检查点。
+/// </summary>
+public enum NodeAction
+{
+    None = 0,
+    Jump = 1,
+    FastFall = 2,
+    Respawn = 3
+}
+
+/// <summary>
+/// 节点对重力的作用。None 不改变，Normal 强制正常，Reset 反转并把垂直速度清零。
+/// </summary>
+public enum NodeGravity
+{
+    None = 0,
+    Normal = 1,
+    Reset = 2
+}
+
+// 旧版节点类型，仅用于把已有谱面/场景数据迁移到新字段。
 public enum NodeType
 {
     Jump = 0,
@@ -13,6 +34,7 @@ public enum NodeType
     GravityJump = 6
 }
 
+// 旧版触发方式，仅用于迁移。
 public enum NodeTrigger
 {
     Manual = 0,
@@ -25,29 +47,107 @@ public class NodeData
 {
     public float beat;
     public int order;
-    [Tooltip("节点的运动类型。")]
-    [FormerlySerializedAs("mode")]
-    public NodeType type = NodeType.Jump;
-    [Tooltip("Manual 需要点击并判定；Auto 自动触发且不判定；None 不触发。Respawn 固定为 None。")]
-    public NodeTrigger trigger = NodeTrigger.Manual;
+
+    [Tooltip("动作类型：None 无动作 / Jump 跳跃 / FastFall 快速下落 / Respawn 重生点。")]
+    public NodeAction action = NodeAction.Jump;
+
+    [Tooltip("重力：None 不改变 / Normal 强制正常 / Reset 反转并把垂直速度清零。")]
+    public NodeGravity gravity = NodeGravity.None;
+
+    [Tooltip("自动：不判定、不计分、不显示判定提示，始终跟随轨道；Respawn 自动时经过即保存检查点。")]
+    public bool auto;
+
+    [Tooltip("显示：关闭后只在运行时隐藏节点，编辑模式仍然可见。")]
+    public bool visible = true;
+
     public Vector2 position;
     [HideInInspector] public float deltaX;
 
-    public NodeTrigger EffectiveTrigger =>
-        NormalizeTrigger(type, trigger);
+    [HideInInspector] public NodeType type;
+    [HideInInspector] public NodeTrigger trigger;
+    [HideInInspector, SerializeField] private bool migrated;
 
-    public bool IsTriggered =>
-        EffectiveTrigger != NodeTrigger.None;
+    public bool IsManuallyTriggered => !auto;
 
-    public bool IsManuallyTriggered =>
-        EffectiveTrigger == NodeTrigger.Manual;
+    public bool HasRouteEffect =>
+        action == NodeAction.Jump ||
+        action == NodeAction.FastFall ||
+        gravity != NodeGravity.None;
 
-    public static NodeTrigger NormalizeTrigger(
-        NodeType type,
-        NodeTrigger trigger)
+    public void MarkMigrated()
     {
-        return type == NodeType.Respawn
-            ? NodeTrigger.None
-            : trigger;
+        migrated = true;
+    }
+
+    public void EnsureMigrated()
+    {
+        if (migrated)
+            return;
+
+        // 旧 Jump + Manual 映射后正好等于新字段默认值；
+        // 跳过可以避免覆盖已经在用新字段的新数据。
+        if (type == NodeType.Jump && trigger == NodeTrigger.Manual)
+        {
+            migrated = true;
+            return;
+        }
+
+        MigrateLegacy(
+            type,
+            trigger,
+            out NodeAction migratedAction,
+            out NodeGravity migratedGravity,
+            out bool migratedAuto);
+        action = migratedAction;
+        gravity = migratedGravity;
+        auto = migratedAuto;
+        visible = true;
+        migrated = true;
+    }
+
+    public static void MigrateLegacy(
+        NodeType legacyType,
+        NodeTrigger legacyTrigger,
+        out NodeAction action,
+        out NodeGravity gravity,
+        out bool auto)
+    {
+        action = NodeAction.None;
+        gravity = NodeGravity.None;
+        switch (legacyType)
+        {
+            case NodeType.Jump:
+                action = NodeAction.Jump;
+                break;
+
+            case NodeType.Respawn:
+                action = NodeAction.Respawn;
+                break;
+
+            case NodeType.Gravity:
+                gravity = NodeGravity.Reset;
+                break;
+
+            case NodeType.FastFall:
+                action = NodeAction.FastFall;
+                break;
+
+            case NodeType.GravityFastFall:
+                action = NodeAction.FastFall;
+                gravity = NodeGravity.Reset;
+                break;
+
+            case NodeType.WeakGravity:
+                gravity = NodeGravity.Reset;
+                break;
+
+            case NodeType.GravityJump:
+                action = NodeAction.Jump;
+                gravity = NodeGravity.Reset;
+                break;
+        }
+
+        // 旧版 Auto / None 都不参与判定。
+        auto = legacyTrigger != NodeTrigger.Manual;
     }
 }

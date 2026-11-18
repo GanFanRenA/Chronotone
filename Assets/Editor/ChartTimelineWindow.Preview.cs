@@ -296,15 +296,19 @@ public partial class ChartTimelineWindow
             if (marker == null)
                 continue;
 
-            nodes.Add(new NodeData
+            var node = new NodeData
             {
                 beat = marker.beat,
                 order = marker.order,
-                type = marker.type,
-                trigger = marker.EffectiveTrigger,
+                action = marker.action,
+                gravity = marker.gravity,
+                auto = marker.auto,
+                visible = marker.visible,
                 position = marker.transform.position,
                 deltaX = marker.deltaX
-            });
+            };
+            node.MarkMigrated();
+            nodes.Add(node);
             endSongTime = System.Math.Max(
                 endSongTime,
                 targetPlayer.Chart.bpmTimeline.BeatToSeconds(

@@ -48,9 +48,24 @@ public class ChartSO : ScriptableObject
         }
     }
 
+    public void EnsureMigrated()
+    {
+        if (nodes == null)
+            return;
+
+        for (int i = 0; i < nodes.Count; i++)
+            nodes[i]?.EnsureMigrated();
+    }
+
+    private void OnEnable()
+    {
+        EnsureMigrated();
+    }
+
 #if UNITY_EDITOR
     private void OnValidate()
     {
+        EnsureMigrated();
         if (!Application.isPlaying)
             ChartPlayer.RequestChartChanged(this);
     }

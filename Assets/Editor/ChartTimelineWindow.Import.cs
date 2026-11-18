@@ -203,6 +203,8 @@ public partial class ChartTimelineWindow
 
     private int CreateImportedBeatNodes(List<float> beats, NodeMarker prefab)
     {
+        targetPlayer.EnsureNodeDataMigrated();
+
         Transform root = targetPlayer.scanRoot != null
             ? targetPlayer.scanRoot
             : targetPlayer.transform;
@@ -261,14 +263,20 @@ public partial class ChartTimelineWindow
             nextOrderByBeat.TryGetValue(beat, out int order);
             marker.order = order;
             nextOrderByBeat[beat] = order + 1;
-            marker.type = previous != null
-                ? previous.type
-                : prefab.type;
-            marker.trigger = previous != null
-                ? previous.EffectiveTrigger
-                : prefab.EffectiveTrigger;
-            marker.NormalizeTriggerForType();
+            marker.action = previous != null
+                ? previous.action
+                : prefab.action;
+            marker.gravity = previous != null
+                ? previous.gravity
+                : prefab.gravity;
+            marker.auto = previous != null
+                ? previous.auto
+                : prefab.auto;
+            marker.visible = previous != null
+                ? previous.visible
+                : prefab.visible;
             marker.ApplyAppearance(targetPlayer.ResolveNodeAppearanceSet());
+            marker.ApplyVisibility();
 
             Vector3 position = previous != null ? previous.transform.position : root.position;
             position.x = root.position.x;

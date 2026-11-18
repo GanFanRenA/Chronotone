@@ -294,8 +294,13 @@ public static class PerfectRouteBuilder
                     continue;
                 }
 
-                if (node.IsTriggered)
-                    actions.Add(new RouteAction(noteTime, node.type));
+                if (node.HasRouteEffect)
+                {
+                    actions.Add(new RouteAction(
+                        noteTime,
+                        node.action,
+                        node.gravity));
+                }
             }
         }
 
@@ -327,7 +332,8 @@ public static class PerfectRouteBuilder
             ApplyNodeAction(
                 state,
                 config,
-                actions[nextActionIndex].Type);
+                actions[nextActionIndex].Action,
+                actions[nextActionIndex].Gravity);
             nextActionIndex++;
         }
 
@@ -373,7 +379,8 @@ public static class PerfectRouteBuilder
                 ApplyNodeAction(
                     state,
                     config,
-                    actions[nextActionIndex].Type);
+                    actions[nextActionIndex].Action,
+                    actions[nextActionIndex].Gravity);
                 nextActionIndex++;
             }
 
@@ -529,32 +536,38 @@ public static class PerfectRouteBuilder
     private static void ApplyNodeAction(
         RouteState state,
         PerfectRouteConfig config,
-        NodeType type)
+        NodeAction action,
+        NodeGravity gravity)
     {
+        ApplyGravity(state, gravity);
+
         float supportNormalY = state.GravityInverted ? -1f : 1f;
-        switch (type)
+        switch (action)
         {
-            case NodeType.Jump:
+            case NodeAction.Jump:
                 BeginJump(state, config, supportNormalY);
                 break;
-            case NodeType.Gravity:
-                state.GravityInverted = !state.GravityInverted;
-                break;
-            case NodeType.FastFall:
+
+            case NodeAction.FastFall:
                 ApplyFastFallImpulse(state, config);
                 break;
-            case NodeType.GravityFastFall:
-                state.GravityInverted = !state.GravityInverted;
-                ApplyFastFallImpulse(state, config);
+        }
+    }
+
+    private static void ApplyGravity(
+        RouteState state,
+        NodeGravity gravity)
+    {
+        switch (gravity)
+        {
+            case NodeGravity.Normal:
+                state.GravityInverted = false;
                 break;
-            case NodeType.WeakGravity:
+
+            case NodeGravity.Reset:
                 state.GravityInverted = !state.GravityInverted;
                 state.Grounded = false;
-                break;
-            case NodeType.GravityJump:
-                state.GravityInverted = !state.GravityInverted;
-                supportNormalY = state.GravityInverted ? -1f : 1f;
-                BeginJump(state, config, supportNormalY);
+                state.VerticalSpeed = 0f;
                 break;
         }
     }
@@ -580,28 +593,36 @@ public static class PerfectRouteBuilder
         ref bool gravityInverted,
         NodeData node)
     {
-        if (node == null || !node.IsTriggered)
+        if (node == null)
             return;
 
-        if (node.type == NodeType.Gravity ||
-            node.type == NodeType.GravityFastFall ||
-            node.type == NodeType.WeakGravity ||
-            node.type == NodeType.GravityJump)
+        switch (node.gravity)
         {
-            gravityInverted = !gravityInverted;
+            case NodeGravity.Normal:
+                gravityInverted = false;
+                break;
+
+            case NodeGravity.Reset:
+                gravityInverted = !gravityInverted;
+                break;
         }
     }
 
     private readonly struct RouteAction
     {
-        public RouteAction(double time, NodeType type)
+        public RouteAction(
+            double time,
+            NodeAction action,
+            NodeGravity gravity)
         {
             Time = time;
-            Type = type;
+            Action = action;
+            Gravity = gravity;
         }
 
         public double Time { get; }
-        public NodeType Type { get; }
+        public NodeAction Action { get; }
+        public NodeGravity Gravity { get; }
     }
 
     private sealed class RouteState

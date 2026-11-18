@@ -28,6 +28,8 @@ public partial class ChartTimelineWindow
         if (targetPlayer == null || targetPlayer.Chart == null)
             return System.Array.Empty<NodeMarker>();
 
+        targetPlayer.EnsureNodeDataMigrated();
+
         Transform root = targetPlayer.scanRoot != null ? targetPlayer.scanRoot : targetPlayer.transform;
         if (root != cachedMarkerRoot)
         {
@@ -233,6 +235,8 @@ public partial class ChartTimelineWindow
 
     private void CreateNodeAtBeat(float beat, NodeMarker[] markers, bool inheritPreviousType)
     {
+        targetPlayer.EnsureNodeDataMigrated();
+
         NodeMarker occupiedMarker = FindMarkerAtBeat(beat, markers, false);
         if (occupiedMarker != null)
         {
@@ -263,14 +267,20 @@ public partial class ChartTimelineWindow
         var marker = go.GetComponent<NodeMarker>();
         marker.beat = beat;
         marker.order = 0;
-        marker.type = inheritPreviousType && previous != null
-            ? previous.type
-            : nodePrefab.type;
-        marker.trigger = inheritPreviousType && previous != null
-            ? previous.EffectiveTrigger
-            : nodePrefab.EffectiveTrigger;
-        marker.NormalizeTriggerForType();
+        marker.action = inheritPreviousType && previous != null
+            ? previous.action
+            : nodePrefab.action;
+        marker.gravity = inheritPreviousType && previous != null
+            ? previous.gravity
+            : nodePrefab.gravity;
+        marker.auto = inheritPreviousType && previous != null
+            ? previous.auto
+            : nodePrefab.auto;
+        marker.visible = inheritPreviousType && previous != null
+            ? previous.visible
+            : nodePrefab.visible;
         marker.ApplyAppearance(targetPlayer.ResolveNodeAppearanceSet());
+        marker.ApplyVisibility();
 
         Vector3 position = previous != null ? previous.transform.position : root.position;
         position.x = root.position.x;

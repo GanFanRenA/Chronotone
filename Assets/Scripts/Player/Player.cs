@@ -442,6 +442,8 @@ public class Player : MonoBehaviour
             basicJudgementFeedback?.ShowTimingSuccess(result);
             trackEnabled = true;
             trackReleaseNodeIndex = -1;
+            if (nodes[result.NoteIndex].action == NodeAction.Respawn)
+                latestRespawnNodeIndex = result.NoteIndex;
             return;
         }
 
@@ -743,7 +745,7 @@ public class Player : MonoBehaviour
         for (int i = 0; i < nextDueNodeIndex; i++)
         {
             if (nodes[i] != null &&
-                nodes[i].type == NodeType.Respawn)
+                nodes[i].action == NodeAction.Respawn)
                 latestRespawnNodeIndex = i;
         }
     }
@@ -794,7 +796,7 @@ public class Player : MonoBehaviour
 
             int nodeIndex = nextDueNodeIndex;
 
-            if (node.type == NodeType.Respawn)
+            if (node.action == NodeAction.Respawn && node.auto)
                 latestRespawnNodeIndex = nodeIndex;
 
             nextDueNodeIndex++;

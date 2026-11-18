@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Serialization;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -8,25 +7,39 @@ public class NodeMarker : MonoBehaviour
 {
     public float beat;
     public int order;
-    [Tooltip("节点的运动类型。")]
-    [FormerlySerializedAs("mode")]
-    public NodeType type = NodeType.Jump;
-    [Tooltip("Manual 需要点击并判定；Auto 自动触发且不判定；None 不触发。Respawn 固定为 None。")]
-    public NodeTrigger trigger = NodeTrigger.Manual;
-    [HideInInspector] public int index;   // 派生结果，由 ChartPlayer 写回
+
+    [Tooltip("动作类型：None 无动作 / Jump 跳跃 / FastFall 快速下落 / Respawn 重生点。")]
+    public NodeAction action = NodeAction.Jump;
+
+    [Tooltip("重力：None 不改变 / Normal 强制正常 / Reset 反转并把垂直速度清零。")]
+    public NodeGravity gravity = NodeGravity.None;
+
+    [Tooltip("自动：不判定、不计分、不显示判定提示，始终跟随轨道；Respawn 自动时经过即保存检查点。")]
+    public bool auto;
+
+    [Tooltip("显示：关闭后只在运行时隐藏节点，编辑模式仍然可见。")]
+    public bool visible = true;
+
+    [HideInInspector] public int index;
     [HideInInspector, System.NonSerialized] public float deltaX;
 
+    [Header("Gravity Indicator")]
+    [Tooltip("Gravity 不是 None 时显示的小白圆心。把 Node 下白色 Circle 子物体的 SpriteRenderer 拖到这里。")]
+    [SerializeField] private SpriteRenderer gravityDot;
+
+    // 仅供旧数据迁移，不再参与运行逻辑。由 ChartPlayer 统一迁移。
+    [HideInInspector] public NodeType type;
+    [HideInInspector] public NodeTrigger trigger;
+
     [System.NonSerialized] private SpriteRenderer nodeRenderer;
+    private static bool missingGravityDotReported;
 
-    public NodeTrigger EffectiveTrigger =>
-        NodeData.NormalizeTrigger(type, trigger);
-    public bool IsManuallyTriggered =>
-        EffectiveTrigger == NodeTrigger.Manual;
+    public bool IsManuallyTriggered => !auto;
 
-    public void NormalizeTriggerForType()
-    {
-        trigger = NodeData.NormalizeTrigger(type, trigger);
-    }
+    public bool HasRouteEffect =>
+        action == NodeAction.Jump ||
+        action == NodeAction.FastFall ||
+        gravity != NodeGravity.None;
 
     public bool UpdatePos(float x, float deltaX)
     {
@@ -42,16 +55,14 @@ public class NodeMarker : MonoBehaviour
     public void ApplyAppearance(NodeAppearanceSet appearanceSet)
     {
         if (appearanceSet == null ||
-            !appearanceSet.TryGetNodeColor(type, out Color color))
+            !appearanceSet.TryGetNodeColor(action, out Color color))
         {
             return;
         }
 
-        if (nodeRenderer == null &&
-            !TryGetComponent(out nodeRenderer))
-        {
+        EnsureRenderer();
+        if (nodeRenderer == null)
             return;
-        }
 
         if (nodeRenderer.color == color)
             return;
@@ -66,6 +77,87 @@ public class NodeMarker : MonoBehaviour
 #endif
     }
 
+    /// <summary>
+    /// 运行时按 visible 隐藏节点；编辑模式一律显示，方便摆位。
+    /// 白色重力圆心只由 gravity 决定，并和节点本体一起受 visible 控制。
+    /// </summary>
+    public void ApplyVisibility()
+    {
+        EnsureRenderer();
+        bool editing = !Application.isPlaying;
+        bool showNode = editing || visible;
+        if (nodeRenderer != null && nodeRenderer.enabled != showNode)
+            nodeRenderer.enabled = showNode;
+
+        ApplyGravityDot(editing || visible);
+    }
+
+    private void ApplyGravityDot(bool allowed)
+    {
+        EnsureGravityDot();
+        if (gravityDot == null)
+        {
+            ReportMissingGravityDot();
+            return;
+        }
+
+        bool show = allowed && gravity != NodeGravity.None;
+        if (gravityDot.enabled != show)
+            gravityDot.enabled = show;
+
+        if (!show)
+            return;
+
+        if (gravityDot.color != Color.white)
+            gravityDot.color = Color.white;
+
+        if (nodeRenderer == null)
+            return;
+
+        if (gravityDot.sortingLayerID != nodeRenderer.sortingLayerID)
+            gravityDot.sortingLayerID = nodeRenderer.sortingLayerID;
+
+        int sortingOrder = nodeRenderer.sortingOrder + 1;
+        if (gravityDot.sortingOrder != sortingOrder)
+            gravityDot.sortingOrder = sortingOrder;
+    }
+
+    private void EnsureRenderer()
+    {
+        if (nodeRenderer == null)
+            TryGetComponent(out nodeRenderer);
+    }
+
+    private void EnsureGravityDot()
+    {
+        if (gravityDot != null)
+            return;
+
+        // 允许直接把子物体命名成 GravityDot，省去手动拖引用。
+        Transform dot = transform.Find("GravityDot");
+        if (dot != null)
+            dot.TryGetComponent(out gravityDot);
+    }
+
+    private void ReportMissingGravityDot()
+    {
+#if UNITY_EDITOR
+        if (missingGravityDotReported ||
+            gravity == NodeGravity.None ||
+            Application.isPlaying)
+        {
+            return;
+        }
+
+        missingGravityDotReported = true;
+        Debug.LogWarning(
+            "NodeMarker 找不到 GravityDot：请在 Node.prefab 下添加一个名为 " +
+            "GravityDot 的子物体，挂白色 Circle 的 SpriteRenderer（缩放约 0.3）。" +
+            "也可以手动把该 SpriteRenderer 拖到 Gravity Indicator 字段。",
+            this);
+#endif
+    }
+
     private void ApplyOwnedAppearance()
     {
         ChartPlayer owner = GetComponentInParent<ChartPlayer>();
@@ -77,8 +169,9 @@ public class NodeMarker : MonoBehaviour
 
     private void Awake()
     {
-        NormalizeTriggerForType();
+        EnsureRenderer();
         ApplyOwnedAppearance();
+        ApplyVisibility();
     }
 
 #if UNITY_EDITOR
@@ -86,8 +179,8 @@ public class NodeMarker : MonoBehaviour
 
     private void OnValidate()
     {
-        NormalizeTriggerForType();
         ApplyOwnedAppearance();
+        ApplyVisibility();
 
         ChartPlayer player = GetComponentInParent<ChartPlayer>();
         if (player == null || player.IsUpdatingPositions)
