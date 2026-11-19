@@ -18,6 +18,7 @@ public partial class ChartTimelineWindow
     private void InvalidateMarkerCache()
     {
         markersDirty = true;
+        animationEventsDirty = true;
         editorPerfectRouteDirty = true;
         RequestRepaint();
         SceneView.RepaintAll();

@@ -70,7 +70,7 @@ public partial class ChartTimelineWindow : EditorWindow
     private void OnEnable()
     {
         titleContent = new GUIContent("Chart Timeline");
-        minSize = new Vector2(400, 200);
+        minSize = new Vector2(400, 280);
         NodeAppearanceSet.Changed -= OnNodeAppearanceChanged;
         NodeAppearanceSet.Changed += OnNodeAppearanceChanged;
         NodeMarker.EditorChanged -= OnNodeMarkerChanged;
@@ -157,12 +157,18 @@ public partial class ChartTimelineWindow : EditorWindow
         }
 
         NodeMarker[] markers = GetMarkers();
+        List<StageAnimationEvent> animationEvents = GetAnimationEvents();
 
         Rect rulerRect = new Rect(0, ToolbarHeight, position.width, RulerHeight);
         Rect trackRect = new Rect(0, ToolbarHeight + RulerHeight, position.width, TrackHeight);
-        Rect scrollRect = new Rect(
+        Rect animationRect = new Rect(
             0,
             ToolbarHeight + RulerHeight + TrackHeight,
+            position.width,
+            AnimationLaneHeight);
+        Rect scrollRect = new Rect(
+            0,
+            ToolbarHeight + RulerHeight + TrackHeight + AnimationLaneHeight,
             position.width,
             ScrollbarHeight);
 
@@ -170,10 +176,12 @@ public partial class ChartTimelineWindow : EditorWindow
 
         DrawRuler(rulerRect);
         DrawTrack(trackRect, markers);
-        DrawPlayhead(rulerRect, trackRect);
-        DrawScrollbar(scrollRect, markers);
+        DrawAnimationLane(animationRect, animationEvents);
+        DrawPlayhead(rulerRect, trackRect, animationRect);
+        DrawScrollbar(scrollRect, markers, animationEvents);
         DrawBoxSelection();
         HandleInput(rulerRect, trackRect, scrollRect, markers);
+        HandleAnimationInput(animationRect);
 
         if (DoEdgeScroll(trackRect))
         {

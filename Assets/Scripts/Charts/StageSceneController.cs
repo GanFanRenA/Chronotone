@@ -60,7 +60,7 @@ public sealed class StageLayerBinding
 /// 关卡场景控制器：按歌曲时间硬切换各 Tilemap 层的显隐。
 /// 层描述、显隐事件、场景绑定都直接序列化在本组件里（一场景一关卡，不产生额外资产）。
 /// </summary>
-public sealed class StageSceneController : MonoBehaviour
+public sealed class StageSceneController : MonoBehaviour, IStageAnimationEventSource
 {
     [Header("Layers（层描述）")]
     [SerializeField] private List<StageTilemapLayerDef> layers =
@@ -99,6 +99,24 @@ public sealed class StageSceneController : MonoBehaviour
             ? resolvedPlayer.SongTime
             : 0d;
         ApplyState(songTime);
+    }
+
+    public void CollectAnimationEvents(List<StageAnimationEvent> events)
+    {
+        if (events == null || visibilityEvents == null)
+            return;
+
+        foreach (StageLayerVisibilityEvent e in visibilityEvents)
+        {
+            if (e == null || string.IsNullOrEmpty(e.layerId))
+                continue;
+
+            events.Add(new StageAnimationEvent(
+                e.beat,
+                StageAnimationEventKind.LayerVisibility,
+                $"显隐 {e.layerId}→{(e.visible ? "显示" : "隐藏")}",
+                gameObject));
+        }
     }
 
     private void RebuildIndex()

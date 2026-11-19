@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -14,7 +15,7 @@ using UnityEngine;
 /// - 两者可同时启用，偏移按向量相加（正常使用两者不重叠）。
 /// </summary>
 [DisallowMultipleComponent]
-public sealed class StageFlyAnimation : MonoBehaviour
+public sealed class StageFlyAnimation : MonoBehaviour, IStageAnimationEventSource
 {
     [Header("Fly In（飞入）")]
     [Tooltip("勾选后：从「结束拍 - 时长」开始在偏移点，经过时长飞到原始位置，在结束拍抵达。")]
@@ -63,6 +64,31 @@ public sealed class StageFlyAnimation : MonoBehaviour
             ? resolvedPlayer.SongTime
             : 0d;
         ApplyOffset(ComputeOffset(songTime));
+    }
+
+    public void CollectAnimationEvents(List<StageAnimationEvent> events)
+    {
+        if (events == null)
+            return;
+
+        if (flyInEnabled && flyOutEnabled && flyOutStartBeat > flyInEndBeat)
+        {
+            events.Add(new StageAnimationEvent(
+                flyInEndBeat,
+                flyOutStartBeat,
+                StageAnimationEventKind.Fly,
+                "飞入→飞出",
+                gameObject));
+            return;
+        }
+
+        if (flyInEnabled)
+            events.Add(new StageAnimationEvent(
+                flyInEndBeat, StageAnimationEventKind.Fly, "飞入", gameObject));
+
+        if (flyOutEnabled)
+            events.Add(new StageAnimationEvent(
+                flyOutStartBeat, StageAnimationEventKind.Fly, "飞出", gameObject));
     }
 
     private void ResolveTimeSource()

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -17,7 +18,7 @@ using UnityEngine.Tilemaps;
 /// - 两者可同时启用，按时间轴相乘叠加。
 /// </summary>
 [DisallowMultipleComponent]
-public sealed class StageDisplayAnimation : MonoBehaviour
+public sealed class StageDisplayAnimation : MonoBehaviour, IStageAnimationEventSource
 {
     private enum TargetKind
     {
@@ -77,6 +78,31 @@ public sealed class StageDisplayAnimation : MonoBehaviour
             ? resolvedPlayer.SongTime
             : 0d;
         ApplyAlpha(ComputeAlpha(songTime));
+    }
+
+    public void CollectAnimationEvents(List<StageAnimationEvent> events)
+    {
+        if (events == null)
+            return;
+
+        if (fadeInEnabled && fadeOutEnabled && fadeOutStartBeat > fadeInEndBeat)
+        {
+            events.Add(new StageAnimationEvent(
+                fadeInEndBeat,
+                fadeOutStartBeat,
+                StageAnimationEventKind.Fade,
+                "淡入→淡出",
+                gameObject));
+            return;
+        }
+
+        if (fadeInEnabled)
+            events.Add(new StageAnimationEvent(
+                fadeInEndBeat, StageAnimationEventKind.Fade, "淡入", gameObject));
+
+        if (fadeOutEnabled)
+            events.Add(new StageAnimationEvent(
+                fadeOutStartBeat, StageAnimationEventKind.Fade, "淡出", gameObject));
     }
 
     private void ResolveTimeSource()

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -6,11 +7,12 @@ public partial class ChartTimelineWindow
     private const float MinPlaybackSpeed = 0.1f;
     private const float MaxPlaybackSpeed = 2f;
 
-    private void DrawPlayhead(Rect rulerRect, Rect trackRect)
+    private void DrawPlayhead(Rect rulerRect, Rect trackRect, Rect animationRect)
     {
         DrawPlayheadLine(
             rulerRect,
             trackRect,
+            animationRect,
             playStartBeat,
             new Color(1f, 0.2f, 0.2f));
 
@@ -18,17 +20,24 @@ public partial class ChartTimelineWindow
         DrawPlayheadLine(
             rulerRect,
             trackRect,
+            animationRect,
             playheadBeat,
             new Color(1f, 0.82f, 0.12f));
     }
 
-    private void DrawPlayheadLine(Rect rulerRect, Rect trackRect, float beat, Color color)
+    private void DrawPlayheadLine(
+        Rect rulerRect,
+        Rect trackRect,
+        Rect animationRect,
+        float beat,
+        Color color)
     {
         float x = rulerRect.x + (beat - scrollBeat) * pixelsPerBeat;
         if (x < -2 || x > position.width + 2) return;
 
         EditorGUI.DrawRect(new Rect(x - 1, rulerRect.y, 2, rulerRect.height), color);
         EditorGUI.DrawRect(new Rect(x - 1, trackRect.y, 2, trackRect.height), color);
+        EditorGUI.DrawRect(new Rect(x - 1, animationRect.y, 2, animationRect.height), color);
         EditorGUI.DrawRect(new Rect(x - 5, rulerRect.yMax - 10, 10, 10), color);
     }
 
@@ -300,10 +309,21 @@ public partial class ChartTimelineWindow
         EditorGUI.DrawRect(new Rect(rect.xMax, rect.y - 1, 1, rect.height + 2), outline);
     }
 
-    private void DrawScrollbar(Rect rect, NodeMarker[] markers)
+    private void DrawScrollbar(
+        Rect rect,
+        NodeMarker[] markers,
+        List<StageAnimationEvent> animationEvents)
     {
         float viewBeats = Mathf.Max(1f, position.width) / pixelsPerBeat;
         float maxBeat = markers.Length > 0 ? markers[markers.Length - 1].beat : 0f;
+        if (animationEvents != null && animationEvents.Count > 0)
+        {
+            foreach (StageAnimationEvent e in animationEvents)
+            {
+                float eventBeat = e.IsSpan ? e.endBeat : e.beat;
+                if (eventBeat > maxBeat) maxBeat = eventBeat;
+            }
+        }
         float furthestBeat = Mathf.Max(Mathf.Max(maxBeat, playStartBeat), playheadBeat);
         float totalBeats = Mathf.Max(
             Mathf.Max(viewBeats, furthestBeat + 4f),
