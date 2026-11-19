@@ -12,8 +12,8 @@ using UnityEngine.Tilemaps;
 /// 时间用 Player.SongTime 驱动，因此死亡回溯会随 SongTime 自动回退到对应透明度。
 ///
 /// 语义：
-/// - 淡入：起始拍之前 alpha=0，经过 fadeInDurationBeats 拍淡入到基础透明度。
-/// - 淡出：起始拍之前 alpha=基础透明度，经过 fadeOutDurationBeats 拍淡出到 0。
+/// - 淡入：从「结束拍 - 时长」开始 alpha=0，经过 fadeInDurationBeats 拍淡入到基础透明度，在结束拍完全出现。
+/// - 淡出：从「开始拍」自基础透明度出发，经过 fadeOutDurationBeats 拍淡出到 0（消失）。
 /// - 两者可同时启用，按时间轴相乘叠加。
 /// </summary>
 [DisallowMultipleComponent]
@@ -27,18 +27,18 @@ public sealed class StageDisplayAnimation : MonoBehaviour
     }
 
     [Header("Fade In（淡入）")]
-    [Tooltip("勾选后：在淡入起始拍之前完全透明，经过淡入时长后恢复到基础透明度。")]
+    [Tooltip("勾选后：从「结束拍 - 时长」开始淡入，经过时长在结束拍完全出现（恢复到基础透明度）。")]
     [SerializeField] private bool fadeInEnabled;
-    [Tooltip("淡入起始拍点（相对谱面）。")]
-    [SerializeField] private float fadeInStartBeat;
-    [Tooltip("淡入持续拍数，默认 1（即从起始拍经过 1 拍淡入完成）。")]
+    [Tooltip("淡入结束拍点（完全出现的拍点）。")]
+    [SerializeField] private float fadeInEndBeat;
+    [Tooltip("淡入持续拍数，默认 1（即从「结束拍 - 1 拍」开始淡入）。")]
     [Min(0f)]
     [SerializeField] private float fadeInDurationBeats = 1f;
 
     [Header("Fade Out（淡出）")]
-    [Tooltip("勾选后：在淡出起始拍之前保持基础透明度，经过淡出时长后完全透明。")]
+    [Tooltip("勾选后：从「开始拍」自基础透明度出发，经过时长淡出到完全透明（消失）。")]
     [SerializeField] private bool fadeOutEnabled;
-    [Tooltip("淡出起始拍点（相对谱面）。")]
+    [Tooltip("淡出开始拍点（开始淡出的拍点）。")]
     [SerializeField] private float fadeOutStartBeat;
     [Tooltip("淡出持续拍数，默认 1。")]
     [Min(0f)]
@@ -169,8 +169,8 @@ public sealed class StageDisplayAnimation : MonoBehaviour
 
     private float FadeInFactor(double songTime)
     {
-        double start = BeatToSeconds(fadeInStartBeat);
-        double end = BeatToSeconds(fadeInStartBeat + fadeInDurationBeats);
+        double start = BeatToSeconds(fadeInEndBeat - fadeInDurationBeats);
+        double end = BeatToSeconds(fadeInEndBeat);
         return FadeProgress(songTime, start, end, 0f, 1f);
     }
 
