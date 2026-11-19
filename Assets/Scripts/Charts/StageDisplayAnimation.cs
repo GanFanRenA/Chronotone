@@ -6,8 +6,10 @@ using UnityEngine.Tilemaps;
 /// 按 beat 定时对目标做淡入 / 淡出，只改透明度（Tilemap.color / SpriteRenderer.color），
 /// 不碰碰撞体。Platform 的碰撞开关仍由 StageSceneController 的硬切换事件负责。
 ///
-/// 时间源：用 ChartPlayer.BpmTimeline 做 beat→秒 换算，用 Player.SongTime 取当前时间；
-/// 因此死亡回溯会随 SongTime 自动回退到对应透明度。
+/// 目标与时间源全部自动获取，不在 Inspector 暴露：
+/// - 目标：优先本物体、其次子物体上的 Tilemap / SpriteRenderer。
+/// - ChartPlayer：场景内首个 ChartPlayer；Player：由其 ResolvePlayer() 解析。
+/// 时间用 Player.SongTime 驱动，因此死亡回溯会随 SongTime 自动回退到对应透明度。
 ///
 /// 语义：
 /// - 淡入：起始拍之前 alpha=0，经过 fadeInDurationBeats 拍淡入到基础透明度。
@@ -23,16 +25,6 @@ public sealed class StageDisplayAnimation : MonoBehaviour
         Tilemap = 1,
         SpriteRenderer = 2
     }
-
-    [Header("Target")]
-    [Tooltip("淡入淡出的目标；留空时自动使用本物体上的 Tilemap 或 SpriteRenderer。")]
-    [SerializeField] private Component targetOverride;
-
-    [Header("Time Source")]
-    [Tooltip("用于 beat→秒 换算的 BPM 时间轴来源。")]
-    [SerializeField] private ChartPlayer chartPlayer;
-    [Tooltip("用于取 SongTime 的 Player；留空时自动从 chartPlayer 解析。")]
-    [SerializeField] private Player player;
 
     [Header("Fade In（淡入）")]
     [Tooltip("勾选后：在淡入起始拍之前完全透明，经过淡入时长后恢复到基础透明度。")]
@@ -52,6 +44,7 @@ public sealed class StageDisplayAnimation : MonoBehaviour
     [Min(0f)]
     [SerializeField] private float fadeOutDurationBeats = 1f;
 
+    private ChartPlayer chartPlayer;
     private Player resolvedPlayer;
     private TargetKind targetKind;
     private Tilemap tilemap;
@@ -60,16 +53,13 @@ public sealed class StageDisplayAnimation : MonoBehaviour
 
     private void Awake()
     {
+        ResolveTimeSource();
         ResolveTarget();
         baseColor = GetColor();
     }
 
     private void Start()
     {
-        resolvedPlayer = player != null
-            ? player
-            : (chartPlayer != null ? chartPlayer.ResolvePlayer() : null);
-
         if (targetKind == TargetKind.None)
         {
             Debug.LogWarning(
@@ -89,39 +79,48 @@ public sealed class StageDisplayAnimation : MonoBehaviour
         ApplyAlpha(ComputeAlpha(songTime));
     }
 
-    private void ResolveTarget()
+    private void ResolveTimeSource()
     {
-        if (targetOverride != null)
+        if (chartPlayer == null)
         {
-            if (targetOverride is Tilemap overrideTilemap)
-            {
-                tilemap = overrideTilemap;
-                targetKind = TargetKind.Tilemap;
-            }
-            else if (targetOverride is SpriteRenderer overrideSprite)
-            {
-                spriteRenderer = overrideSprite;
-                targetKind = TargetKind.SpriteRenderer;
-            }
-            else
-            {
-                Debug.LogWarning(
-                    "StageDisplayAnimation 的目标只支持 Tilemap 或 SpriteRenderer。",
-                    this);
-            }
+            ChartPlayer[] candidates =
+                Object.FindObjectsByType<ChartPlayer>(FindObjectsSortMode.None);
+            chartPlayer = candidates.Length > 0 ? candidates[0] : null;
         }
 
-        if (targetKind != TargetKind.None)
-            return;
+        resolvedPlayer = chartPlayer != null
+            ? chartPlayer.ResolvePlayer()
+            : null;
+    }
 
+    private void ResolveTarget()
+    {
         if (TryGetComponent(out Tilemap ownTilemap))
         {
             tilemap = ownTilemap;
             targetKind = TargetKind.Tilemap;
+            return;
         }
-        else if (TryGetComponent(out SpriteRenderer ownSprite))
+
+        if (TryGetComponent(out SpriteRenderer ownSprite))
         {
             spriteRenderer = ownSprite;
+            targetKind = TargetKind.SpriteRenderer;
+            return;
+        }
+
+        Tilemap childTilemap = GetComponentInChildren<Tilemap>(true);
+        if (childTilemap != null)
+        {
+            tilemap = childTilemap;
+            targetKind = TargetKind.Tilemap;
+            return;
+        }
+
+        SpriteRenderer childSprite = GetComponentInChildren<SpriteRenderer>(true);
+        if (childSprite != null)
+        {
+            spriteRenderer = childSprite;
             targetKind = TargetKind.SpriteRenderer;
         }
     }
