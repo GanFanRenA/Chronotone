@@ -5,13 +5,16 @@ using UnityEngine.SceneManagement;
 
 public partial class ChartTimelineWindow
 {
-    private const float AnimationLaneHeight = 72f;
+    private const float MinAnimationLaneHeight = 60f;
     private const float AnimationLaneHeaderHeight = 16f;
     private const float AnimationRowHeight = 9f;
     private const float AnimationDotSize = 7f;
     private const float AnimationBarThickness = 4f;
     private const float AnimationBeatEpsilon = 0.0001f;
     private const float AnimationLanePaddingY = 3f;
+    private const float AnimationScrollbarWidth = 12f;
+    private const float AnimationWheelScrollSpeed = 40f;
+    private const float AnimationDragThreshold = 3f;
 
     private static readonly Color LayerVisibilityColor =
         new Color(0.45f, 0.85f, 1f);
@@ -24,29 +27,30 @@ public partial class ChartTimelineWindow
         new List<StageAnimationEvent>();
     private readonly List<PositionedAnimationEvent> positionedAnimationEvents =
         new List<PositionedAnimationEvent>();
-    private readonly List<OverflowMarker> overflowMarkers =
-        new List<OverflowMarker>();
     private string cachedAnimationScenePath = string.Empty;
     private bool animationEventsDirty = true;
+
+    [SerializeField] private float animationScrollY;
+    private float animationContentHeight;
+    private float animationMaxScrollY;
+
+    private bool animDragActive;
+    private bool animDragged;
+    private float animDragMouseStartY;
+    private float animDragStartScrollY;
+    private PositionedAnimationEvent animPendingClickHit;
 
     private static Texture2D animationDotTexture;
 
     private sealed class PositionedAnimationEvent
     {
         public StageAnimationEvent Event;
+        public int Row;
         public float X;
         public float EndX;
         public float CenterY;
         public Rect DotRect;
         public Rect EndDotRect;
-        public bool Overflow;
-    }
-
-    private sealed class OverflowMarker
-    {
-        public float X;
-        public float Y;
-        public int Count;
     }
 
     // ---- 事件收集 ----
@@ -115,82 +119,116 @@ public partial class ChartTimelineWindow
 
     // ---- 布局 ----
 
+    private static Rect AnimationContentRect(Rect laneRect)
+    {
+        return new Rect(
+            laneRect.x,
+            laneRect.y + AnimationLaneHeaderHeight,
+            laneRect.width - AnimationScrollbarWidth,
+            laneRect.height - AnimationLaneHeaderHeight);
+    }
+
     private void BuildAnimationLayout(Rect laneRect, List<StageAnimationEvent> events)
     {
         positionedAnimationEvents.Clear();
-        overflowMarkers.Clear();
         if (events == null || events.Count == 0)
-            return;
-
-        Rect content = new Rect(
-            laneRect.x,
-            laneRect.y + AnimationLaneHeaderHeight,
-            laneRect.width,
-            laneRect.height - AnimationLaneHeaderHeight);
-
-        int maxRows = Mathf.Max(
-            1,
-            Mathf.FloorToInt(
-                (content.height - AnimationLanePaddingY * 2f) /
-                AnimationRowHeight));
-        float firstCenterY =
-            content.y + AnimationLanePaddingY + AnimationRowHeight * 0.5f;
-
-        int i = 0;
-        while (i < events.Count)
         {
-            float groupBeat = events[i].beat;
+            animationContentHeight = 0f;
+            animationMaxScrollY = 0f;
+            animationScrollY = 0f;
+            return;
+        }
+
+        Rect content = AnimationContentRect(laneRect);
+
+        // 分区：区间与点分开处理，保持各自按 beat 排序。
+        var spans = new List<StageAnimationEvent>();
+        var dots = new List<StageAnimationEvent>();
+        foreach (StageAnimationEvent evt in events)
+        {
+            if (evt.IsSpan) spans.Add(evt);
+            else dots.Add(evt);
+        }
+
+        // 区间：贪婪区间着色，重叠的才分到不同行；不重叠可共用一行。
+        var spanRowEnds = new List<float>();
+        foreach (StageAnimationEvent span in spans)
+        {
+            int row = 0;
+            while (row < spanRowEnds.Count && spanRowEnds[row] > span.beat)
+                row++;
+
+            if (row == spanRowEnds.Count)
+                spanRowEnds.Add(span.endBeat);
+            else
+                spanRowEnds[row] = span.endBeat;
+
+            AddPositionedEvent(span, row);
+        }
+        int spanRowCount = spanRowEnds.Count;
+
+        // 点：按 beat 分组，同一 beat 从区间行之后开始纵向堆叠。
+        int maxDotGroupSize = 0;
+        int i = 0;
+        while (i < dots.Count)
+        {
+            float groupBeat = dots[i].beat;
             int j = i;
-            while (j < events.Count &&
-                   Mathf.Abs(events[j].beat - groupBeat) <= AnimationBeatEpsilon)
+            while (j < dots.Count &&
+                   Mathf.Abs(dots[j].beat - groupBeat) <= AnimationBeatEpsilon)
             {
                 j++;
             }
 
             int groupCount = j - i;
-            float groupX = content.x + (groupBeat - scrollBeat) * pixelsPerBeat;
+            if (groupCount > maxDotGroupSize)
+                maxDotGroupSize = groupCount;
 
             for (int k = 0; k < groupCount; k++)
-            {
-                StageAnimationEvent evt = events[i + k];
-                var p = new PositionedAnimationEvent
-                {
-                    Event = evt,
-                    X = groupX,
-                    CenterY = firstCenterY +
-                        Mathf.Min(k, maxRows - 1) * AnimationRowHeight,
-                    Overflow = k >= maxRows
-                };
-                p.EndX = evt.IsSpan
-                    ? content.x + (evt.endBeat - scrollBeat) * pixelsPerBeat
-                    : p.X;
-                p.DotRect = new Rect(
-                    p.X - AnimationDotSize * 0.5f,
-                    p.CenterY - AnimationDotSize * 0.5f,
-                    AnimationDotSize,
-                    AnimationDotSize);
-                p.EndDotRect = evt.IsSpan
-                    ? new Rect(
-                        p.EndX - AnimationDotSize * 0.5f,
-                        p.CenterY - AnimationDotSize * 0.5f,
-                        AnimationDotSize,
-                        AnimationDotSize)
-                    : p.DotRect;
-                positionedAnimationEvents.Add(p);
-            }
-
-            if (groupCount > maxRows)
-            {
-                overflowMarkers.Add(new OverflowMarker
-                {
-                    X = groupX,
-                    Y = content.yMax - AnimationLanePaddingY,
-                    Count = groupCount - maxRows
-                });
-            }
+                AddPositionedEvent(dots[i + k], spanRowCount + k);
 
             i = j;
         }
+
+        int totalRows = Mathf.Max(1, spanRowCount + maxDotGroupSize);
+        float viewportHeight = content.height;
+        animationContentHeight =
+            AnimationLanePaddingY * 2f + totalRows * AnimationRowHeight;
+        animationMaxScrollY =
+            Mathf.Max(0f, animationContentHeight - viewportHeight);
+        animationScrollY = Mathf.Clamp(animationScrollY, 0f, animationMaxScrollY);
+
+        // 回填屏幕坐标（依赖最终 animationScrollY）。
+        foreach (PositionedAnimationEvent p in positionedAnimationEvents)
+        {
+            p.X = content.x + (p.Event.beat - scrollBeat) * pixelsPerBeat;
+            p.EndX = p.Event.IsSpan
+                ? content.x + (p.Event.endBeat - scrollBeat) * pixelsPerBeat
+                : p.X;
+            p.CenterY = content.y + AnimationLanePaddingY - animationScrollY +
+                p.Row * AnimationRowHeight + AnimationRowHeight * 0.5f;
+            p.DotRect = new Rect(
+                p.X - AnimationDotSize * 0.5f,
+                p.CenterY - AnimationDotSize * 0.5f,
+                AnimationDotSize,
+                AnimationDotSize);
+            p.EndDotRect = p.Event.IsSpan
+                ? new Rect(
+                    p.EndX - AnimationDotSize * 0.5f,
+                    p.CenterY - AnimationDotSize * 0.5f,
+                    AnimationDotSize,
+                    AnimationDotSize)
+                : p.DotRect;
+        }
+    }
+
+    private void AddPositionedEvent(StageAnimationEvent evt, int row)
+    {
+        positionedAnimationEvents.Add(new PositionedAnimationEvent
+        {
+            Event = evt,
+            Row = row
+        });
     }
 
     // ---- 绘制 ----
@@ -205,10 +243,12 @@ public partial class ChartTimelineWindow
 
         BuildAnimationLayout(rect, events);
 
-        // 先画区间带，再画点，保证点落在区间之上。
+        Rect content = AnimationContentRect(rect);
+
+        // 先画所有区间带。
         foreach (PositionedAnimationEvent p in positionedAnimationEvents)
         {
-            if (!p.Event.IsSpan || p.Overflow)
+            if (!p.Event.IsSpan || !IsAnimationEventVisible(p, content))
                 continue;
 
             Color c = ColorForKind(p.Event.kind);
@@ -224,29 +264,53 @@ public partial class ChartTimelineWindow
                 bar);
         }
 
+        // 再画点（区间两端的小点 + 独立事件点）。
         foreach (PositionedAnimationEvent p in positionedAnimationEvents)
         {
-            if (p.Overflow)
+            if (!IsAnimationEventVisible(p, content))
                 continue;
 
             Color c = ColorForKind(p.Event.kind);
-            DrawDot(p.DotRect, c);
             if (p.Event.IsSpan)
+            {
+                DrawDot(p.DotRect, c);
                 DrawDot(p.EndDotRect, c);
-
-            string tooltip = TooltipFor(p.Event);
-            GUI.Label(p.DotRect, new GUIContent(string.Empty, tooltip));
-            if (p.Event.IsSpan)
+                string tooltip = TooltipFor(p.Event);
+                GUI.Label(p.DotRect, new GUIContent(string.Empty, tooltip));
                 GUI.Label(p.EndDotRect, new GUIContent(string.Empty, tooltip));
+            }
+            else
+            {
+                DrawDot(p.DotRect, c);
+                GUI.Label(p.DotRect, new GUIContent(string.Empty, TooltipFor(p.Event)));
+            }
         }
 
-        foreach (OverflowMarker marker in overflowMarkers)
-        {
-            GUI.Label(
-                new Rect(marker.X + 3f, marker.Y - 12f, 40f, 14f),
-                $"+{marker.Count}",
-                EditorStyles.miniLabel);
-        }
+        DrawAnimationScrollbar(rect);
+    }
+
+    private void DrawAnimationScrollbar(Rect laneRect)
+    {
+        if (animationContentHeight <= 0f || animationMaxScrollY <= 0f)
+            return;
+
+        Rect content = AnimationContentRect(laneRect);
+        Rect track = new Rect(
+            laneRect.xMax - AnimationScrollbarWidth,
+            content.y,
+            AnimationScrollbarWidth,
+            content.height);
+
+        EditorGUI.DrawRect(track, new Color(0.09f, 0.09f, 0.09f));
+
+        float ratio = content.height / animationContentHeight;
+        float thumbHeight = Mathf.Max(16f, content.height * ratio);
+        float thumbTravel = Mathf.Max(0f, content.height - thumbHeight);
+        float thumbY = track.y +
+            thumbTravel * (animationScrollY / animationMaxScrollY);
+        EditorGUI.DrawRect(
+            new Rect(track.x + 1f, thumbY, track.width - 2f, thumbHeight),
+            new Color(0.42f, 0.42f, 0.45f));
     }
 
     private void DrawAnimationLegend(Rect header)
@@ -261,6 +325,20 @@ public partial class ChartTimelineWindow
     {
         DrawDot(new Rect(x, y + 4f, 6f, 6f), color);
         GUI.Label(new Rect(x + 9f, y, labelWidth, 14f), text, EditorStyles.miniLabel);
+    }
+
+    private static bool IsAnimationEventVisible(PositionedAnimationEvent p, Rect content)
+    {
+        float verticalMargin = AnimationDotSize;
+        if (p.CenterY < content.y - verticalMargin ||
+            p.CenterY > content.yMax + verticalMargin)
+        {
+            return false;
+        }
+
+        float left = Mathf.Min(p.X, p.EndX);
+        float right = Mathf.Max(p.X, p.EndX);
+        return right >= content.x - 20f && left <= content.xMax + 20f;
     }
 
     private static void DrawDot(Rect rect, Color color)
@@ -336,17 +414,91 @@ public partial class ChartTimelineWindow
     private void HandleAnimationInput(Rect laneRect)
     {
         Event e = Event.current;
+        Rect content = AnimationContentRect(laneRect);
+        Rect scrollArea = new Rect(
+            laneRect.x,
+            laneRect.y + AnimationLaneHeaderHeight,
+            laneRect.width,
+            laneRect.height - AnimationLaneHeaderHeight);
 
-        if (e.type != EventType.MouseDown || e.button != 0 ||
-            !laneRect.Contains(e.mousePosition))
+        // 滚轮：ctrl 缩放（与节点轨道一致），否则上下滚动动画内容。
+        if (e.type == EventType.ScrollWheel && scrollArea.Contains(e.mousePosition))
         {
+            if (e.control || e.command)
+            {
+                float mouseBeat =
+                    scrollBeat + (e.mousePosition.x - content.x) / pixelsPerBeat;
+                pixelsPerBeat = Mathf.Clamp(
+                    pixelsPerBeat * Mathf.Pow(1.1f, -e.delta.y),
+                    MinPixelsPerBeat,
+                    MaxPixelsPerBeat);
+                scrollBeat = Mathf.Max(
+                    MinScrollBeat,
+                    mouseBeat - (e.mousePosition.x - content.x) / pixelsPerBeat);
+            }
+            else
+            {
+                ScrollAnimationVertically(e.delta.y * AnimationWheelScrollSpeed);
+            }
+            e.Use();
+            RequestRepaint();
             return;
         }
 
-        PositionedAnimationEvent hit = FindAnimationHit(e.mousePosition);
-        if (hit == null)
+        if (e.type == EventType.MouseDown && e.button == 0 &&
+            scrollArea.Contains(e.mousePosition))
+        {
+            animDragActive = true;
+            animDragged = false;
+            animDragMouseStartY = e.mousePosition.y;
+            animDragStartScrollY = animationScrollY;
+            animPendingClickHit = FindAnimationHit(e.mousePosition);
+            e.Use();
             return;
+        }
 
+        if (e.type == EventType.MouseDrag && e.button == 0 && animDragActive)
+        {
+            float deltaY = e.mousePosition.y - animDragMouseStartY;
+            if (Mathf.Abs(deltaY) > AnimationDragThreshold)
+                animDragged = true;
+
+            if (animDragged)
+            {
+                animationScrollY = Mathf.Clamp(
+                    animDragStartScrollY - deltaY,
+                    0f,
+                    animationMaxScrollY);
+            }
+            e.Use();
+            RequestRepaint();
+            return;
+        }
+
+        if (e.type == EventType.MouseUp && e.button == 0 && animDragActive)
+        {
+            animDragActive = false;
+            if (!animDragged && animPendingClickHit != null)
+                SelectAnimationOwner(animPendingClickHit);
+
+            animPendingClickHit = null;
+            animDragged = false;
+            e.Use();
+            RequestRepaint();
+            return;
+        }
+    }
+
+    private void ScrollAnimationVertically(float delta)
+    {
+        animationScrollY = Mathf.Clamp(
+            animationScrollY + delta,
+            0f,
+            animationMaxScrollY);
+    }
+
+    private void SelectAnimationOwner(PositionedAnimationEvent hit)
+    {
         Object owner = hit.Event.owner;
         if (owner is GameObject gameObject)
             Selection.activeGameObject = gameObject;
@@ -355,9 +507,6 @@ public partial class ChartTimelineWindow
 
         if (owner != null)
             EditorGUIUtility.PingObject(owner);
-
-        e.Use();
-        RequestRepaint();
     }
 
     private PositionedAnimationEvent FindAnimationHit(Vector2 mouse)
@@ -367,7 +516,7 @@ public partial class ChartTimelineWindow
         // 区间带优先命中。
         foreach (PositionedAnimationEvent p in positionedAnimationEvents)
         {
-            if (p.Overflow || !p.Event.IsSpan)
+            if (!p.Event.IsSpan)
                 continue;
 
             Rect bar = new Rect(
@@ -383,9 +532,6 @@ public partial class ChartTimelineWindow
         float bestDistance = threshold;
         foreach (PositionedAnimationEvent p in positionedAnimationEvents)
         {
-            if (p.Overflow)
-                continue;
-
             float distance = DistanceToRect(mouse, p.DotRect);
             if (distance < bestDistance)
             {

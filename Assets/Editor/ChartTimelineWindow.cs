@@ -17,7 +17,7 @@ public partial class ChartTimelineWindow : EditorWindow
 
     private const float ToolbarHeight = 54f;
     private const float RulerHeight = 32f;
-    private const float TrackHeight = 80f;
+    private const float TrackHeight = 40f;
     private const float ScrollbarHeight = 16f;
     private const float MinPixelsPerBeat = 4f;
     private const float MaxPixelsPerBeat = 400f;
@@ -159,16 +159,20 @@ public partial class ChartTimelineWindow : EditorWindow
         NodeMarker[] markers = GetMarkers();
         List<StageAnimationEvent> animationEvents = GetAnimationEvents();
 
+        float animationLaneHeight = Mathf.Max(
+            MinAnimationLaneHeight,
+            position.height - ToolbarHeight - RulerHeight - TrackHeight - ScrollbarHeight);
+
         Rect rulerRect = new Rect(0, ToolbarHeight, position.width, RulerHeight);
         Rect trackRect = new Rect(0, ToolbarHeight + RulerHeight, position.width, TrackHeight);
         Rect animationRect = new Rect(
             0,
             ToolbarHeight + RulerHeight + TrackHeight,
             position.width,
-            AnimationLaneHeight);
+            animationLaneHeight);
         Rect scrollRect = new Rect(
             0,
-            ToolbarHeight + RulerHeight + TrackHeight + AnimationLaneHeight,
+            ToolbarHeight + RulerHeight + TrackHeight + animationLaneHeight,
             position.width,
             ScrollbarHeight);
 
