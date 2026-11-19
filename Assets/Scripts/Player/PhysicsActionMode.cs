@@ -182,7 +182,7 @@ public sealed class PhysicsActionMode : PlayerActionMode
 
     protected override void OnModeEnter()
     {
-        if (body == null || bodyCollider == null || Player.Chart == null)
+        if (body == null || bodyCollider == null || Player.chartPlayer == null)
             return;
 
         EnsurePerfectRoute();
@@ -207,7 +207,7 @@ public sealed class PhysicsActionMode : PlayerActionMode
 
     protected override void OnModePrepareForPlayback()
     {
-        if (body == null || bodyCollider == null || Player.Chart == null)
+        if (body == null || bodyCollider == null || Player.chartPlayer == null)
             return;
 
         EnsurePerfectRoute();
@@ -319,11 +319,11 @@ public sealed class PhysicsActionMode : PlayerActionMode
             Player.Nodes != null &&
             nodeIndex < Player.Nodes.Count &&
             Player.Nodes[nodeIndex] != null &&
-            Player.Chart != null &&
-            Player.Chart.bpmTimeline != null)
+            Player.chartPlayer != null &&
+            Player.chartPlayer.BpmTimeline != null)
         {
             double nodeTime =
-                Player.Chart.bpmTimeline.BeatToSeconds(
+                Player.chartPlayer.BpmTimeline.BeatToSeconds(
                     Player.Nodes[nodeIndex].beat);
             if (releaseTime + 0.00001d >= nodeTime)
                 releaseTime = nodeTime - 0.00001d;
@@ -333,7 +333,7 @@ public sealed class PhysicsActionMode : PlayerActionMode
                 releaseTime,
                 false,
                 out PerfectRouteSample releaseSample) &&
-            Player.Chart != null &&
+            Player.chartPlayer != null &&
             Time.fixedDeltaTime > 0f)
         {
             double previousTime =
@@ -768,29 +768,20 @@ public sealed class PhysicsActionMode : PlayerActionMode
         if (perfectRoute != null)
             return;
 
-        ChartTrackSO track = Player.Track;
-        if (track == null)
+        if (Player.chartPlayer == null)
         {
             Debug.LogError(
-                "Player 的 Stage 没有绑定 ChartTrack，角色无法移动",
+                "Player 没有绑定 ChartPlayer，角色无法移动",
                 this);
             return;
         }
 
-        if (!track.HasCurrentRouteVersion)
-        {
-            Debug.LogError(
-                "ChartTrack 使用了旧节点规则，请重新烘焙 Chart + Track",
-                this);
-            return;
-        }
-
-        perfectRoute = track.CreateRoute();
+        perfectRoute = Player.chartPlayer.CreateBakedRoute();
         if (perfectRoute == null || perfectRoute.Count == 0)
         {
             perfectRoute = null;
             Debug.LogError(
-                "ChartTrack 没有可用于开局的轨道样本，请重新烘焙轨道",
+                "ChartPlayer 没有可用的烘焙轨道，请先烘焙 Stage",
                 this);
             return;
         }
@@ -798,15 +789,14 @@ public sealed class PhysicsActionMode : PlayerActionMode
         if (!perfectRoute.IsComplete || perfectRoute.Blocked)
         {
             Debug.LogWarning(
-                $"ChartTrack 未完整生成，将使用现有 {perfectRoute.Count} 个样本继续跟轨",
+                $"烘焙轨道未完整生成，将使用现有 {perfectRoute.Count} 个样本继续跟轨",
                 this);
         }
 
         PerfectRouteSample first = perfectRoute.Samples[0];
         bool anchorMatches =
-            Player.Chart != null &&
             System.Math.Abs(
-                first.Time + Player.Chart.GlobalOffsetSeconds) <=
+                first.Time + Player.chartPlayer.GlobalOffsetSeconds) <=
             0.00001d &&
             Vector2.SqrMagnitude(
                 first.Position - Player.OriginalPosition) <=
@@ -814,14 +804,14 @@ public sealed class PhysicsActionMode : PlayerActionMode
         if (!anchorMatches)
         {
             Debug.LogError(
-                "ChartTrack 首点必须对应角色起点和音乐起始时刻，请重新烘焙轨道",
+                "烘焙轨道首点必须对应角色起点和音乐起始时刻，请重新烘焙 Stage",
                 this);
             perfectRoute = null;
             return;
         }
 
         Debug.Log(
-            $"[轨道] 已接入 ChartTrack：{perfectRoute.Count} 个样本，首点 {first.Position}",
+            $"[轨道] 已接入烘焙轨道：{perfectRoute.Count} 个样本，首点 {first.Position}",
             this);
     }
 

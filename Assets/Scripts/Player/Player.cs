@@ -75,10 +75,6 @@ public class Player : MonoBehaviour
     public int PlaybackStartNodeIndex => playbackStartNodeIndex;
     public Vector2 PlaybackStartPosition => playbackStartPosition;
     public double PlaybackStartSongTime => playbackStartSongTime;
-    public StageDefinitionSO Stage =>
-        chartPlayer != null ? chartPlayer.Stage : null;
-    public ChartSO Chart => Stage != null ? Stage.Chart : null;
-    public ChartTrackSO Track => Stage != null ? Stage.Track : null;
     public IReadOnlyList<NodeData> Nodes => nodes;
     public IReadOnlyList<PlayerActionMode> ActionModes => actionModes;
     public PlayerActionMode CurrentActionMode => currentActionMode;
@@ -169,22 +165,19 @@ public class Player : MonoBehaviour
 
     private void Start()
     {
-        if (chartPlayer == null || chartPlayer.Chart == null)
+        if (chartPlayer == null ||
+            chartPlayer.Clip == null ||
+            chartPlayer.BpmTimeline == null)
         {
-            Debug.LogError("Block 没有绑定 ChartPlayer 或 ChartSO", this);
+            Debug.LogError(
+                "Player 没有绑定 ChartPlayer，或缺少 AudioClip / BpmTimeline",
+                this);
             enabled = false;
             return;
         }
 
-        ChartSO chart = chartPlayer.Chart;
-        if (chart.clip == null)
-        {
-            Debug.LogError("ChartSO 上没有 AudioClip", this);
-            enabled = false;
-            return;
-        }
-
-        nodes = chart.nodes;
+        AudioClip clip = chartPlayer.Clip;
+        nodes = chartPlayer.Nodes;
         InitializeNodeQueues();
         rewindState = RewindState.None;
         respawnDelayRemaining = 0f;
@@ -203,18 +196,17 @@ public class Player : MonoBehaviour
 
         audioSource.playOnAwake = false;
         audioSource.Stop();
-        audioSource.clip = chart.clip;
+        audioSource.clip = clip;
         audioSource.time = 0f;
 
-        if (chart.clip.loadState == AudioDataLoadState.Loaded)
-            BeginPlayback(chart);
+        if (clip.loadState == AudioDataLoadState.Loaded)
+            BeginPlayback();
         else
-            StartCoroutine(BeginPlaybackWhenAudioDataReady(chart));
+            StartCoroutine(BeginPlaybackWhenAudioDataReady(clip));
     }
 
-    private IEnumerator BeginPlaybackWhenAudioDataReady(ChartSO chart)
+    private IEnumerator BeginPlaybackWhenAudioDataReady(AudioClip clip)
     {
-        AudioClip clip = chart.clip;
         if (clip.loadState == AudioDataLoadState.Unloaded)
             clip.LoadAudioData();
 
@@ -228,30 +220,30 @@ public class Player : MonoBehaviour
             yield break;
         }
 
-        BeginPlayback(chart);
+        BeginPlayback();
     }
 
-    private void BeginPlayback(ChartSO chart)
+    private void BeginPlayback()
     {
         playbackStarted = true;
         trackEnabled = true;
         trackReleaseNodeIndex = -1;
 
         float startSongTime =
-            chart.bpmTimeline.BeatToSeconds(playbackStartBeat);
+            chartPlayer.BpmTimeline.BeatToSeconds(playbackStartBeat);
         double audioSeconds;
         if (playbackStartNodeIndex < 0 && playbackStartBeat <= 0f)
         {
             playbackStartPosition = OriginalPosition;
-            playbackStartSongTime = -chart.GlobalOffsetSeconds;
+            playbackStartSongTime = -chartPlayer.GlobalOffsetSeconds;
             audioSeconds = 0d;
         }
         else
         {
             playbackStartSongTime = startSongTime;
-            playbackStartPosition = ResolvePlaybackStartPosition(chart);
+            playbackStartPosition = ResolvePlaybackStartPosition();
 
-            audioSeconds = startSongTime + chart.GlobalOffsetSeconds;
+            audioSeconds = startSongTime + chartPlayer.GlobalOffsetSeconds;
             double maxAudioSeconds =
                 Math.Max(0d, audioSource.clip.length - 0.001d);
             if (audioSeconds < 0d || audioSeconds > maxAudioSeconds)
@@ -269,7 +261,7 @@ public class Player : MonoBehaviour
             playbackStartBeat <= 0f
                 ? songClock.Schedule(
                     ScheduleLead,
-                    chart.GlobalOffsetSeconds)
+                    chartPlayer.GlobalOffsetSeconds)
                 : songClock.Seek(
                     ScheduleLead,
                     playbackStartSongTime);
@@ -662,8 +654,7 @@ public class Player : MonoBehaviour
             latestRespawnNodeIndex >= 0 &&
             latestRespawnNodeIndex < nodes.Count &&
             chartPlayer != null &&
-            chartPlayer.Chart != null &&
-            chartPlayer.Chart.bpmTimeline != null;
+            chartPlayer.BpmTimeline != null;
 
         checkpointNodeIndex = hasCheckpoint ? latestRespawnNodeIndex : -1;
         checkpointPosition = hasCheckpoint
@@ -672,8 +663,8 @@ public class Player : MonoBehaviour
         checkpointSongTime =
             hasCheckpoint &&
             chartPlayer != null &&
-            chartPlayer.Chart != null
-                ? chartPlayer.Chart.bpmTimeline.BeatToSeconds(
+            chartPlayer.BpmTimeline != null
+                ? chartPlayer.BpmTimeline.BeatToSeconds(
                     nodes[checkpointNodeIndex].beat)
                 : playbackStartSongTime;
         return playbackStarted;
@@ -686,8 +677,7 @@ public class Player : MonoBehaviour
         playbackStartNodeIndex = -1;
 
         if (chartPlayer == null ||
-            chartPlayer.Chart == null ||
-            chartPlayer.Chart.bpmTimeline == null)
+            chartPlayer.BpmTimeline == null)
             return;
 
 #if UNITY_EDITOR
@@ -696,14 +686,14 @@ public class Player : MonoBehaviour
             out playbackStartBeat);
 #endif
 
-        ChartSO chart = chartPlayer.Chart;
-        if (chart.clip == null)
+        AudioClip clip = chartPlayer.Clip;
+        if (clip == null)
             return;
 
         float maxAudioSeconds = Mathf.Max(
             0f,
-            chart.clip.length - 0.001f - chart.GlobalOffsetSeconds);
-        float maxBeat = chart.bpmTimeline.SecondsToBeat(maxAudioSeconds);
+            clip.length - 0.001f - chartPlayer.GlobalOffsetSeconds);
+        float maxBeat = chartPlayer.BpmTimeline.SecondsToBeat(maxAudioSeconds);
         float clampedBeat = Mathf.Clamp(
             playbackStartBeat,
             0f,
@@ -716,12 +706,12 @@ public class Player : MonoBehaviour
             playbackStartBeat = clampedBeat;
         }
 
-        if (chart.nodes == null)
+        if (chartPlayer.Nodes == null)
             return;
 
-        for (int i = chart.nodes.Count - 1; i >= 0; i--)
+        for (int i = chartPlayer.Nodes.Count - 1; i >= 0; i--)
         {
-            NodeData node = chart.nodes[i];
+            NodeData node = chartPlayer.Nodes[i];
             if (node == null || node.beat >= playbackStartBeat)
                 continue;
 
@@ -750,7 +740,7 @@ public class Player : MonoBehaviour
         }
     }
 
-    private Vector2 ResolvePlaybackStartPosition(ChartSO chart)
+    private Vector2 ResolvePlaybackStartPosition()
     {
         if (nodes != null &&
             playbackStartNodeIndex >= 0 &&
@@ -765,18 +755,17 @@ public class Player : MonoBehaviour
 
         var baseline = new ChartMotionTimeline(
             OriginalPosition,
-            -chart.GlobalOffsetSeconds,
+            -chartPlayer.GlobalOffsetSeconds,
             nodes,
-            chart.bpmTimeline);
+            chartPlayer.BpmTimeline);
         return baseline.Sample(
-            chart.bpmTimeline.BeatToSeconds(playbackStartBeat));
+            chartPlayer.BpmTimeline.BeatToSeconds(playbackStartBeat));
     }
 
     private void ProcessDueNodes(double songTime)
     {
         if (nodes == null || nodes.Count == 0 ||
-            chartPlayer == null || chartPlayer.Chart == null ||
-            chartPlayer.Chart.bpmTimeline == null ||
+            chartPlayer == null || chartPlayer.BpmTimeline == null ||
             !songClock.AudioHasStarted)
             return;
 
@@ -790,7 +779,7 @@ public class Player : MonoBehaviour
             }
 
             double nodeSongTime =
-                chartPlayer.Chart.bpmTimeline.BeatToSeconds(node.beat);
+                chartPlayer.BpmTimeline.BeatToSeconds(node.beat);
             if (songTime < nodeSongTime)
                 break;
 
@@ -808,7 +797,7 @@ public class Player : MonoBehaviour
     private void RespawnToLatestCheckpoint()
     {
         if (!playbackStarted || audioSource == null ||
-            chartPlayer == null || chartPlayer.Chart == null)
+            chartPlayer == null)
             return;
 
         int checkpointNodeIndex = rewindCheckpointNodeIndex;
@@ -816,7 +805,7 @@ public class Player : MonoBehaviour
         double checkpointSongTime = rewindCheckpointSongTime;
 
         double audioSeconds =
-            checkpointSongTime + chartPlayer.Chart.GlobalOffsetSeconds;
+            checkpointSongTime + chartPlayer.GlobalOffsetSeconds;
         double maxAudioSeconds = Math.Max(0d, audioSource.clip.length - 0.001d);
         audioSeconds = Math.Max(0d, Math.Min(audioSeconds, maxAudioSeconds));
 

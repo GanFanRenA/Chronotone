@@ -47,8 +47,7 @@ public partial class ChartTimelineWindow
             Application.isPlaying ||
             selection.Count != 1 ||
             targetPlayer == null ||
-            targetPlayer.Chart == null ||
-            targetPlayer.Chart.bpmTimeline == null)
+            targetPlayer.BpmTimeline == null)
         {
             return;
         }
@@ -96,7 +95,7 @@ public partial class ChartTimelineWindow
                 selected,
                 selected.transform.position.z,
                 IncomingPreviewColor,
-                targetPlayer.Chart.bpmTimeline);
+                targetPlayer.BpmTimeline);
         }
 
         if (selectedIndex + 1 < markers.Length)
@@ -107,15 +106,14 @@ public partial class ChartTimelineWindow
                 markers[selectedIndex + 1],
                 selected.transform.position.z,
                 OutgoingPreviewColor,
-                targetPlayer.Chart.bpmTimeline);
+                targetPlayer.BpmTimeline);
         }
     }
 
     private void AdjustSelectedNodesToPerfectPath()
     {
         if (targetPlayer == null ||
-            targetPlayer.Chart == null ||
-            targetPlayer.Chart.bpmTimeline == null ||
+            targetPlayer.BpmTimeline == null ||
             selection.Count == 0)
         {
             ShowNotification(
@@ -188,7 +186,7 @@ public partial class ChartTimelineWindow
         foreach (NodeMarker target in orderedSelection)
         {
             double targetTime =
-                targetPlayer.Chart.bpmTimeline.BeatToSeconds(
+                targetPlayer.BpmTimeline.BeatToSeconds(
                     target.beat);
             if (!route.TrySampleAt(
                     targetTime,
@@ -233,8 +231,7 @@ public partial class ChartTimelineWindow
         NodeMarker[] markers)
     {
         if (targetPlayer == null ||
-            targetPlayer.Chart == null ||
-            targetPlayer.Chart.bpmTimeline == null ||
+            targetPlayer.BpmTimeline == null ||
             markers == null ||
             markers.Length == 0)
         {
@@ -242,7 +239,7 @@ public partial class ChartTimelineWindow
         }
 
         double chartOffset =
-            targetPlayer.Chart.GlobalOffsetSeconds;
+            targetPlayer.GlobalOffsetSeconds;
         float uprightAngle =
             player.transform.localEulerAngles.z;
         int nodeSignature = ComputeRouteNodeSignature(markers);
@@ -315,7 +312,7 @@ public partial class ChartTimelineWindow
             nodes.Add(node);
             endSongTime = System.Math.Max(
                 endSongTime,
-                targetPlayer.Chart.bpmTimeline.BeatToSeconds(
+                targetPlayer.BpmTimeline.BeatToSeconds(
                     marker.beat));
         }
 
@@ -328,7 +325,7 @@ public partial class ChartTimelineWindow
             player.transform.position,
             -chartOffset,
             nodes,
-            targetPlayer.Chart.bpmTimeline,
+            targetPlayer.BpmTimeline,
             config,
             bodyCollider,
             body,

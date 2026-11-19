@@ -25,7 +25,7 @@ public partial class ChartTimelineWindow
 
     private NodeMarker[] GetMarkers()
     {
-        if (targetPlayer == null || targetPlayer.Chart == null)
+        if (targetPlayer == null)
             return System.Array.Empty<NodeMarker>();
 
         targetPlayer.EnsureNodeDataMigrated();
@@ -103,8 +103,7 @@ public partial class ChartTimelineWindow
         if (state == PlayModeStateChange.ExitingEditMode)
         {
             if (targetPlayer != null &&
-                targetPlayer.Chart != null &&
-                targetPlayer.Chart.bpmTimeline != null)
+                targetPlayer.BpmTimeline != null)
             {
                 ChartPlayer.SetEditorPlayStartBeat(
                     targetPlayer,
@@ -139,15 +138,12 @@ public partial class ChartTimelineWindow
         {
             Object target = modification.currentValue.target;
             if (target is NodeMarker ||
-                target == targetPlayer ||
-                (targetPlayer != null && target == targetPlayer.Chart))
+                target == targetPlayer)
             {
                 InvalidateMarkerCache();
                 if (targetPlayer != null)
                 {
-                    if (target is NodeMarker ||
-                        (targetPlayer.Chart != null &&
-                         target == targetPlayer.Chart))
+                    if (target is NodeMarker || target == targetPlayer)
                     {
                         targetPlayer.MarkDirty();
                     }
@@ -163,7 +159,7 @@ public partial class ChartTimelineWindow
 
     private void SelectAllNodes()
     {
-        if (targetPlayer == null || targetPlayer.Chart == null) return;
+        if (targetPlayer == null) return;
 
         ReplaceSelection(GetMarkers());
         SyncSelectionToUnity();
@@ -224,7 +220,7 @@ public partial class ChartTimelineWindow
 
     private void CreateNodeAtPlayhead()
     {
-        if (targetPlayer == null || targetPlayer.Chart == null) return;
+        if (targetPlayer == null) return;
 
         float beat = Mathf.Max(0f, playheadBeat);
         if (snap > 0f)

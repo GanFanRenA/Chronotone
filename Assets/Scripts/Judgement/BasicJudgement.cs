@@ -61,29 +61,28 @@ public class BasicJudgement : MonoBehaviour
     {
         if (player == null ||
             player.chartPlayer == null ||
-            player.chartPlayer.Chart == null)
+            player.chartPlayer.BpmTimeline == null)
         {
             enabled = false;
             return;
         }
 
-        ChartSO chart = player.chartPlayer.Chart;
-        nodes = chart.nodes;
+        nodes = player.chartPlayer.Nodes;
         if (nodes == null ||
-            nodes.Count == 0 ||
-            chart.bpmTimeline == null)
+            nodes.Count == 0)
         {
             enabled = false;
             return;
         }
 
+        BpmTimeline timeline = player.chartPlayer.BpmTimeline;
         noteTimes = new double[nodes.Count];
         judged = new bool[nodes.Count];
 
         for (int i = 0; i < nodes.Count; i++)
         {
             noteTimes[i] = nodes[i] != null
-                ? chart.bpmTimeline.BeatToSeconds(
+                ? timeline.BeatToSeconds(
                     nodes[i].beat)
                 : double.PositiveInfinity;
         }

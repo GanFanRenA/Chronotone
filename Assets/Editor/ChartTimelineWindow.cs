@@ -149,10 +149,10 @@ public partial class ChartTimelineWindow : EditorWindow
 
         DrawToolbar();
 
-        if (targetPlayer == null || targetPlayer.Chart == null)
+        if (targetPlayer == null)
         {
             StopPlayback();
-            EditorGUILayout.HelpBox("请在上方选择 ChartPlayer（且它绑定了 ChartSO）", MessageType.Info);
+            EditorGUILayout.HelpBox("请在上方选择 ChartPlayer", MessageType.Info);
             return;
         }
 

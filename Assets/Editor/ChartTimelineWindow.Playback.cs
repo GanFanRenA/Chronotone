@@ -5,8 +5,8 @@ public partial class ChartTimelineWindow
     private void UpdatePlayheadIfPlaying()
     {
         if (!playing) return;
-        if (targetPlayer == null || targetPlayer.Chart == null ||
-            targetPlayer.Chart.bpmTimeline == null)
+        if (targetPlayer == null ||
+            targetPlayer.BpmTimeline == null)
         {
             StopPlayback();
             return;
@@ -35,17 +35,17 @@ public partial class ChartTimelineWindow
             }
 
             previewSource.pitch = playbackSpeed;
-            float chartSeconds = previewSource.time - targetPlayer.Chart.GlobalOffsetSeconds;
-            playheadBeat = targetPlayer.Chart.bpmTimeline.SecondsToBeat(
+            float chartSeconds = previewSource.time - targetPlayer.GlobalOffsetSeconds;
+            playheadBeat = targetPlayer.BpmTimeline.SecondsToBeat(
                 Mathf.Max(0f, chartSeconds));
         }
         else
         {
             float startSec =
-                targetPlayer.Chart.bpmTimeline.BeatToSeconds(playbackAnchorBeat);
+                targetPlayer.BpmTimeline.BeatToSeconds(playbackAnchorBeat);
             float elapsed = (float)(AudioSettings.dspTime - playStartDspTime);
             if (elapsed < 0f) elapsed = 0f;
-            playheadBeat = targetPlayer.Chart.bpmTimeline.SecondsToBeat(
+            playheadBeat = targetPlayer.BpmTimeline.SecondsToBeat(
                 startSec + elapsed * playbackSpeed);
         }
 
@@ -62,13 +62,12 @@ public partial class ChartTimelineWindow
     {
         if (!playing ||
             targetPlayer == null ||
-            targetPlayer.Chart == null ||
-            targetPlayer.Chart.bpmTimeline == null)
+            targetPlayer.BpmTimeline == null)
         {
             return playheadBeat;
         }
 
-        BpmTimeline timeline = targetPlayer.Chart.bpmTimeline;
+        BpmTimeline timeline = targetPlayer.BpmTimeline;
         if (playbackUsesAudio)
         {
             if (previewSource == null)
@@ -76,7 +75,7 @@ public partial class ChartTimelineWindow
 
             float chartSeconds =
                 previewSource.time -
-                targetPlayer.Chart.GlobalOffsetSeconds;
+                targetPlayer.GlobalOffsetSeconds;
             return timeline.SecondsToBeat(
                 Mathf.Max(0f, chartSeconds));
         }
@@ -103,7 +102,7 @@ public partial class ChartTimelineWindow
 
         playbackAnchorBeat = playheadBeat;
 
-        AudioClip clip = targetPlayer.Chart.clip;
+        AudioClip clip = targetPlayer.Clip;
         playbackUsesAudio = clip != null;
         if (playbackUsesAudio)
         {
@@ -114,19 +113,19 @@ public partial class ChartTimelineWindow
             previewSource.pitch = playbackSpeed;
 
             float audioSeconds =
-                targetPlayer.Chart.bpmTimeline.BeatToSeconds(playbackAnchorBeat) +
-                targetPlayer.Chart.GlobalOffsetSeconds;
+                targetPlayer.BpmTimeline.BeatToSeconds(playbackAnchorBeat) +
+                targetPlayer.GlobalOffsetSeconds;
             float clampedAudioSeconds = Mathf.Clamp(
                 audioSeconds,
                 0f,
                 Mathf.Max(0f, clip.length - 0.001f));
             previewSource.time = clampedAudioSeconds;
             playbackAnchorBeat =
-                targetPlayer.Chart.bpmTimeline.SecondsToBeat(
+                targetPlayer.BpmTimeline.SecondsToBeat(
                     Mathf.Max(
                         0f,
                         clampedAudioSeconds -
-                        targetPlayer.Chart.GlobalOffsetSeconds));
+                        targetPlayer.GlobalOffsetSeconds));
             playStartDspTime = AudioSettings.dspTime + PlaybackLeadTime;
             previewSource.PlayScheduled(playStartDspTime);
         }
@@ -181,8 +180,7 @@ public partial class ChartTimelineWindow
 
     private bool CanPlay() =>
         targetPlayer != null &&
-        targetPlayer.Chart != null &&
-        targetPlayer.Chart.bpmTimeline != null;
+        targetPlayer.BpmTimeline != null;
 
     private void EnsurePreviewSource()
     {
@@ -199,7 +197,7 @@ public partial class ChartTimelineWindow
         PrepareNodeClickAudio();
         if (previewSource == null) return;
 
-        AudioClip clip = CanPlay() ? targetPlayer.Chart.clip : null;
+        AudioClip clip = CanPlay() ? targetPlayer.Clip : null;
         if (playing)
         {
             if (previewSource.clip != clip) StopPlayback();

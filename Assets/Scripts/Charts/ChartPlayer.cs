@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -8,15 +7,25 @@ using UnityEditor.SceneManagement;
 
 public class ChartPlayer : MonoBehaviour
 {
-    [SerializeField] private StageDefinitionSO stage;
-    [Tooltip("当前关卡使用的铺面；多个铺面可以位于同一场景并按关卡切换。")]
-    [SerializeField] private Tilemap surfaceTilemap;
+    [Header("Stage（关卡元数据，收进场景）")]
+    [SerializeField] private AudioClip clip;
+    [SerializeField] private BpmTimeline bpmTimeline = new BpmTimeline();
+    [Tooltip("全局偏移，单位为拍。正值让谱面整体晚于音乐。")]
+    [SerializeField] private float globalOffsetBeats;
+
+    [Header("Baked（烘焙产物，运行只读）")]
+    [SerializeField] private NodeData[] bakedNodes = System.Array.Empty<NodeData>();
+    [SerializeField] private PerfectRouteSample[] bakedTrackSamples =
+        System.Array.Empty<PerfectRouteSample>();
+    [SerializeField] private bool bakedTrackBlocked;
+    [SerializeField] private bool bakedTrackComplete;
+
+    [Header("Scan & Appearance")]
     public Transform scanRoot;
     [Tooltip("留空时使用 Assets/Prefabs/Node.prefab。")]
     public NodeMarker nodePrefab;
     [Tooltip("按动作类型配置节点与时间轴颜色；留空时使用 Resources/NodeAppearance/NodeAppearanceSet。")]
     public NodeAppearanceSet nodeAppearanceSet;
-    public bool autoBake = false;   // 想要旧行为就勾上
 
     [Header("Chart Timeline Preview")]
     [Tooltip("Chart Timeline 播放经过节点时使用的卡点音效。")]
@@ -31,13 +40,35 @@ public class ChartPlayer : MonoBehaviour
 
     private const int CurrentNodeDataVersion = 2;
 
-    public StageDefinitionSO Stage => stage;
-    public Tilemap SurfaceTilemap => surfaceTilemap;
-    public ChartSO Chart => stage != null ? stage.Chart : null;
-    public ChartTrackSO Track => stage != null ? stage.Track : null;
+    public AudioClip Clip => clip;
+    public BpmTimeline BpmTimeline => bpmTimeline;
+    public float GlobalOffsetBeats
+    {
+        get => globalOffsetBeats;
+        set => globalOffsetBeats = value;
+    }
+
+    public float GlobalOffsetSeconds =>
+        bpmTimeline != null ? bpmTimeline.BeatToSeconds(globalOffsetBeats) : 0f;
+
+    public IReadOnlyList<NodeData> Nodes => bakedNodes;
+    public bool HasStageData => clip != null && bpmTimeline != null;
+    public bool HasBakedTrack =>
+        bakedTrackSamples != null &&
+        bakedTrackSamples.Length > 0 &&
+        bakedTrackComplete &&
+        !bakedTrackBlocked;
     public bool IsUpdatingPositions => updatingPositions;
     public float TimelineNodeClickVolume =>
         GameSettings.TimelineNodeClickVolume;
+
+    public PerfectRoute CreateBakedRoute() =>
+        HasBakedTrack
+            ? new PerfectRoute(
+                bakedTrackSamples,
+                bakedTrackBlocked,
+                bakedTrackComplete)
+            : null;
 
     public GameSettingsSO GameSettings
     {
@@ -64,47 +95,42 @@ public class ChartPlayer : MonoBehaviour
 
     private void Awake()
     {
-        if (stage == null || !stage.IsComplete)
+        if (!HasStageData)
         {
             Debug.LogError(
-                "ChartPlayer 必须绑定包含 Chart 和 Track 的 StageDefinition",
+                "ChartPlayer 未配置 AudioClip 或 BpmTimeline（关卡元数据）。",
                 this);
             enabled = false;
             return;
         }
 
-        if (surfaceTilemap == null)
+        if (!HasBakedTrack)
         {
             Debug.LogError(
-                $"Stage '{stage.name}' 没有绑定铺面 Tilemap",
+                "关卡尚未烘焙：请先在编辑器里对 ChartPlayer 执行 " +
+                "“Bake Stage”，再进入 Play。运行阶段不会自动重烘焙。",
                 this);
             enabled = false;
             return;
         }
 
         EnsureNodeDataMigrated();
-        RefreshChartPositions();
         RefreshNodeAppearances();
     }
 
     /// <summary>
     /// 把旧 NodeType/NodeTrigger 数据一次性转换成动作 + 重力 + 自动 + 显示，
-    /// 再为旧节点补齐显式的力度值，保持升级前的跳跃/快速下落手感。
-    /// 版本号放在 ChartPlayer 上，避免 Prefab 实例继承迁移标记导致漏转。
+    /// 再为旧节点补齐显式的力度值。版本号放在 ChartPlayer 上，避免 Prefab 实例继承迁移标记导致漏转。
+    /// 现在只迁移场景里的 NodeMarker，不再迁移 ChartSO 资产。
     /// </summary>
     public void EnsureNodeDataMigrated()
     {
-        ChartSO chart = Chart;
-        if (chart != null)
-            chart.EnsureMigrated();
-
         if (nodeDataVersion >= CurrentNodeDataVersion)
             return;
 
         GameSettingsSO settings = GameSettings;
         Transform root = scanRoot != null ? scanRoot : transform;
         NodeAppearanceSet appearanceSet = ResolveNodeAppearanceSet();
-        // v1 负责旧动作迁移；v2 只为所有旧节点补 strength。
         bool migrateLegacyAction = nodeDataVersion < 1;
         foreach (NodeMarker marker in
                  root.GetComponentsInChildren<NodeMarker>(true))
@@ -112,8 +138,6 @@ public class ChartPlayer : MonoBehaviour
             if (marker == null)
                 continue;
 
-            // 旧 Jump + Manual 映射后正好等于新字段默认值；
-            // 跳过可以避免覆盖已经在用新字段的新节点。
             if (migrateLegacyAction &&
                 !(marker.type == NodeType.Jump &&
                   marker.trigger == NodeTrigger.Manual))
@@ -130,8 +154,6 @@ public class ChartPlayer : MonoBehaviour
                 marker.visible = true;
             }
 
-            // 0 表示“跟随 GameSettings 默认值”；旧节点在升级时写死为当时的默认值，
-            // 这样以后改 GameSettings 不会改变已有谱面的手感。
             if (marker.strength <= 0f)
             {
                 marker.strength = NodeData.GetDefaultStrength(
@@ -150,26 +172,6 @@ public class ChartPlayer : MonoBehaviour
                 if (scene.IsValid() && !string.IsNullOrEmpty(scene.path))
                     EditorSceneManager.MarkSceneDirty(scene);
             }
-#endif
-        }
-
-        if (chart != null && chart.nodes != null)
-        {
-            bool chartChanged = false;
-            foreach (NodeData node in chart.nodes)
-            {
-                if (node == null || node.strength > 0f)
-                    continue;
-
-                node.strength = NodeData.GetDefaultStrength(
-                    node.action,
-                    settings);
-                chartChanged = true;
-            }
-
-#if UNITY_EDITOR
-            if (chartChanged && !Application.isPlaying)
-                EditorUtility.SetDirty(chart);
 #endif
         }
 
@@ -202,16 +204,17 @@ public class ChartPlayer : MonoBehaviour
 
     public void RefreshChartPositions()
     {
-        ChartSO chart = Chart;
-        if (chart == null) return;
-        Transform root = scanRoot != null ? scanRoot : transform;
-        chart.UpdatePos(root.position.x);
+        UpdatePos();
     }
 
+    /// <summary>
+    /// 按 beat/order 排序场景 NodeMarker，并用 BpmTimeline 计算每个节点的 X 坐标。
+    /// Y 坐标保留作者在场景里的摆放。烘焙前会调用，保证节点位置与拍点一致。
+    /// </summary>
     public void UpdatePos(float fromBeat = 0f)
     {
-        ChartSO chart = Chart;
-        if (chart == null) return;
+        if (bpmTimeline == null)
+            return;
 
         Transform root = scanRoot != null ? scanRoot : transform;
         NodeMarker[] markers = root.GetComponentsInChildren<NodeMarker>(false);
@@ -220,10 +223,10 @@ public class ChartPlayer : MonoBehaviour
             int byBeat = a.beat.CompareTo(b.beat);
             return byBeat != 0 ? byBeat : a.order.CompareTo(b.order);
         });
-        if (markers.Length == 0) return;
+        if (markers.Length == 0)
+            return;
 
-        BpmTimeline timeline = chart.bpmTimeline;
-        timeline?.RebuildDistanceCache();
+        bpmTimeline.RebuildDistanceCache();
 
         int firstIndex = 0;
         while (firstIndex < markers.Length &&
@@ -231,7 +234,8 @@ public class ChartPlayer : MonoBehaviour
         {
             firstIndex++;
         }
-        if (firstIndex >= markers.Length) return;
+        if (firstIndex >= markers.Length)
+            return;
 
         float previousBeat = 0f;
         float previousX = root.position.x;
@@ -247,13 +251,14 @@ public class ChartPlayer : MonoBehaviour
             for (int i = firstIndex; i < markers.Length; i++)
             {
                 NodeMarker marker = markers[i];
-                if (marker == null) continue;
+                if (marker == null)
+                    continue;
 
                 marker.index = i;
                 float beat = Mathf.Max(0f, marker.beat);
-                float deltaX = timeline != null
-                    ? timeline.DistanceBetweenBeats(previousBeat, beat)
-                    : (beat - previousBeat) * 5f;
+                float deltaX = bpmTimeline.DistanceBetweenBeats(
+                    previousBeat,
+                    beat);
                 float x = previousX + deltaX;
 
                 bool changed = marker.UpdatePos(x, deltaX);
@@ -274,6 +279,294 @@ public class ChartPlayer : MonoBehaviour
         {
             updatingPositions = false;
         }
+    }
+
+    /// <summary>
+    /// 显式烘焙（编辑器内执行一次）：扫描场景 NodeMarker → 生成节点缓存 → 物理模拟
+    /// 完美路径 → 把结果序列化写回本组件。运行阶段只反序列化，不重新模拟。
+    /// </summary>
+    [ContextMenu("Bake Stage")]
+    public void Bake()
+    {
+        if (this == null || Application.isPlaying)
+            return;
+
+        if (bpmTimeline == null)
+        {
+            Debug.LogError("Bake 需要先配置 BpmTimeline", this);
+            return;
+        }
+
+        EnsureNodeDataMigrated();
+        UpdatePos();
+
+        Transform root = scanRoot != null ? scanRoot : transform;
+        NodeMarker[] markers = root.GetComponentsInChildren<NodeMarker>(false);
+
+        System.Array.Sort(markers, (a, b) =>
+        {
+            int byBeat = a.beat.CompareTo(b.beat);
+            return byBeat != 0 ? byBeat : a.order.CompareTo(b.order);
+        });
+
+        var nodes = new List<NodeData>(markers.Length);
+        for (int i = 0; i < markers.Length; i++)
+        {
+            NodeMarker m = markers[i];
+            m.index = i;
+
+            string newName = $"Node_{i}:{m.beat:0.##}_{m.order}";
+            if (m.name != newName)
+                m.name = newName;
+
+            m.transform.SetSiblingIndex(i);
+
+            var node = new NodeData
+            {
+                beat = m.beat,
+                order = m.order,
+                action = m.action,
+                gravity = m.gravity,
+                auto = m.auto,
+                visible = m.visible,
+                strength = m.strength,
+                position = m.transform.position,
+                deltaX = m.deltaX
+            };
+            node.MarkMigrated();
+            nodes.Add(node);
+        }
+
+        if (!TrySimulateRoute(nodes, out PerfectRoute route))
+            return;
+
+        bakedNodes = nodes.ToArray();
+
+        PerfectRouteSample[] samples = new PerfectRouteSample[route.Count];
+        for (int i = 0; i < route.Count; i++)
+            samples[i] = route.Samples[i];
+        bakedTrackSamples = samples;
+        bakedTrackBlocked = route.Blocked;
+        bakedTrackComplete = route.IsComplete;
+
+#if UNITY_EDITOR
+        EditorUtility.SetDirty(this);
+        var scene = gameObject.scene;
+        if (scene.IsValid() && !string.IsNullOrEmpty(scene.path))
+            EditorSceneManager.MarkSceneDirty(scene);
+#endif
+
+        Debug.Log(
+            $"烘焙完成：{bakedNodes.Length} 个节点，" +
+            $"{bakedTrackSamples.Length} 个轨道样本。",
+            this);
+    }
+
+    private bool TrySimulateRoute(
+        IReadOnlyList<NodeData> nodes,
+        out PerfectRoute route)
+    {
+        route = null;
+
+        Player scenePlayer = ResolvePlayer();
+        PhysicsActionMode physicsMode = scenePlayer != null
+            ? scenePlayer.GetComponent<PhysicsActionMode>()
+            : null;
+        BoxCollider2D bodyCollider = scenePlayer != null
+            ? scenePlayer.GetComponent<BoxCollider2D>()
+            : null;
+        Rigidbody2D body = scenePlayer != null
+            ? scenePlayer.GetComponent<Rigidbody2D>()
+            : null;
+
+        if (bpmTimeline == null ||
+            scenePlayer == null ||
+            physicsMode == null ||
+            bodyCollider == null)
+        {
+            Debug.LogError(
+                "烘焙 Stage 需要 Player、PhysicsActionMode 和 BoxCollider2D。",
+                this);
+            return false;
+        }
+
+        double startSongTime = -GlobalOffsetSeconds;
+        double endSongTime = startSongTime;
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            NodeData node = nodes[i];
+            if (node == null)
+                continue;
+
+            endSongTime = System.Math.Max(
+                endSongTime,
+                bpmTimeline.BeatToSeconds(node.beat));
+        }
+
+        if (clip != null)
+        {
+            endSongTime = System.Math.Max(
+                endSongTime,
+                clip.length - GlobalOffsetSeconds);
+        }
+
+        endSongTime += Mathf.Max(1f, Time.fixedDeltaTime * 2f);
+
+        Vector2 startPosition = scenePlayer.transform.position;
+        var config = new PerfectRouteConfig(
+            physicsMode,
+            scenePlayer.transform.localEulerAngles.z);
+        route = PerfectRouteBuilder.Build(
+            startPosition,
+            startSongTime,
+            nodes,
+            bpmTimeline,
+            config,
+            bodyCollider,
+            body,
+            endSongTime,
+            out PerfectRouteBuildFailure failure);
+
+        if (route == null ||
+            route.Count == 0 ||
+            route.Blocked ||
+            !route.IsComplete)
+        {
+            route = null;
+            LogTrackBuildFailure(failure, nodes);
+            return false;
+        }
+
+        PerfectRouteSample first = route.Samples[0];
+        bool anchorMatches =
+            System.Math.Abs(first.Time - startSongTime) <= 0.00001d &&
+            Vector2.SqrMagnitude(first.Position - startPosition) <=
+            0.000001f;
+        if (!anchorMatches)
+        {
+            PerfectRouteSample actualFirst = route.Samples[0];
+            route = null;
+            Debug.LogError(
+                "轨道首点必须等于角色起点和歌曲起始时刻。\n" +
+                $"实际首点：时间 {actualFirst.Time:0.#####} 秒，" +
+                $"位置 {actualFirst.Position}\n" +
+                $"期望首点：时间 {startSongTime:0.00000} 秒，" +
+                $"位置 {startPosition}\n" +
+                "这是起点/歌曲时间锚点问题，不是 Node 碰撞。",
+                this);
+            return false;
+        }
+
+        return true;
+    }
+
+    private void LogTrackBuildFailure(
+        PerfectRouteBuildFailure failure,
+        IReadOnlyList<NodeData> nodes)
+    {
+        if (!failure.Failed)
+        {
+            Debug.LogError(
+                "轨道烘焙失败：轨道构建没有返回可用样本。",
+                this);
+            return;
+        }
+
+        string previousNode = DescribeNode(
+            nodes,
+            failure.PreviousNodeIndex);
+        string targetNode = DescribeNode(
+            nodes,
+            failure.TargetNodeIndex);
+
+        switch (failure.Reason)
+        {
+            case PerfectRouteBuildFailureReason.MissingBpmTimeline:
+                Debug.LogError(
+                    "轨道烘焙失败。\n" +
+                    "原因：ChartPlayer 没有配置 BpmTimeline。",
+                    this);
+                return;
+
+            case PerfectRouteBuildFailureReason.MissingBodyCollider:
+                Debug.LogError(
+                    "轨道烘焙失败。\n" +
+                    "原因：Player 缺少 BoxCollider2D。",
+                    this);
+                return;
+
+            case PerfectRouteBuildFailureReason.Blocked:
+                Debug.LogError(
+                    "轨道烘焙失败。\n" +
+                    $"相关节点：前往 {targetNode} 的路径，" +
+                    $"上一个节点是 {previousNode}。\n" +
+                    $"原因：角色在歌曲时间 {failure.SongTime:0.###} 秒、" +
+                    $"位置 {failure.Position} 附近横向移动受阻。" +
+                    DescribeBlockingCollider(failure) + "\n" +
+                    $"角色状态：Grounded={failure.Grounded}，" +
+                    $"角度={failure.Angle:0.##}°，" +
+                    $"竖直速度={failure.VerticalSpeed:0.###}。\n" +
+                    "处理建议：检查该节点前后的跳跃/重力模式，或把地面物体从 " +
+                    "PhysicsActionMode 的 Blocking Layers 移到专用的 Wall 层。",
+                    this);
+                return;
+
+            case PerfectRouteBuildFailureReason.SimulationIncomplete:
+                Debug.LogError(
+                    "轨道烘焙失败。\n" +
+                    $"相关节点：前往 {targetNode} 的路径，" +
+                    $"上一个节点是 {previousNode}。\n" +
+                    $"原因：模拟在歌曲时间 {failure.SongTime:0.###} 秒仍未完成，" +
+                    "达到了模拟步数上限。\n" +
+                    $"最后位置：{failure.Position}。",
+                    this);
+                return;
+
+            default:
+                Debug.LogError(
+                    "轨道烘焙失败，未识别的构建错误。",
+                    this);
+                return;
+        }
+    }
+
+    private static string DescribeBlockingCollider(
+        PerfectRouteBuildFailure failure)
+    {
+        if (string.IsNullOrEmpty(failure.BlockingObjectName))
+            return "横向 BoxCast 检测到阻挡，但没有返回具体 Collider。";
+
+        string layer = string.IsNullOrEmpty(failure.BlockingLayerName)
+            ? "未命名层"
+            : failure.BlockingLayerName;
+        return
+            $"阻挡物体为 '{failure.BlockingObjectName}'" +
+            $"（Layer: {layer}），" +
+            $"接触点 {failure.BlockingPoint}，" +
+            $"法线 {failure.BlockingNormal}。";
+    }
+
+    private static string DescribeNode(
+        IReadOnlyList<NodeData> nodes,
+        int index)
+    {
+        if (nodes == null ||
+            index < 0 ||
+            index >= nodes.Count ||
+            nodes[index] == null)
+        {
+            return "无";
+        }
+
+        NodeData node = nodes[index];
+        return
+            $"Node_{index}（Beat {node.beat:0.###}，" +
+            $"动作 {node.action}，" +
+            $"重力 {node.gravity}，" +
+            $"自动 {(node.auto ? "是" : "否")}，" +
+            $"显示 {(node.visible ? "是" : "否")}，" +
+            $"力度 {node.strength:0.###}，" +
+            $"位置 {node.position}）";
     }
 
 #if UNITY_EDITOR
@@ -318,61 +611,30 @@ public class ChartPlayer : MonoBehaviour
 
     private static string BuildEditorPlayStartBeatKey(ChartPlayer player)
     {
-        string chartPath = player.Chart != null
-            ? AssetDatabase.GetAssetPath(player.Chart)
+        // 一场景一关卡后，用场景路径作为唯一键（原来是 ChartSO 资产路径）。
+        string scenePath = player != null && player.gameObject.scene.IsValid()
+            ? player.gameObject.scene.path
             : string.Empty;
         return EditorPlayStartBeatPrefix +
-            System.Uri.EscapeDataString(chartPath);
+            System.Uri.EscapeDataString(scenePath);
     }
 
     [InitializeOnLoadMethod]
-    private static void HookPlayMode()
+    private static void HookDomainReload()
     {
-        EditorApplication.playModeStateChanged -= OnPlayModeChanged;
-        EditorApplication.playModeStateChanged += OnPlayModeChanged;
         EditorApplication.delayCall -= RefreshAllPositions;
         EditorApplication.delayCall += RefreshAllPositions;
     }
 
-    private static void OnPlayModeChanged(PlayModeStateChange state)
-    {
-        if (state != PlayModeStateChange.ExitingEditMode) return;
-        foreach (var p in Object.FindObjectsByType<ChartPlayer>(FindObjectsSortMode.None))
-            if (p.NeedsTrackBake()) p.Bake();
-    }
-
-    private bool NeedsTrackBake()
-    {
-        ChartSO chart = Chart;
-        ChartTrackSO track = Track;
-        Player player = ResolvePlayer();
-        if (chart == null ||
-            track == null ||
-            !track.HasSamples ||
-            !track.IsComplete ||
-            !track.HasCurrentRouteVersion ||
-            player == null)
-        {
-            return true;
-        }
-
-        PerfectRouteSample first = track.Samples[0];
-        return dirty ||
-            System.Math.Abs(
-                first.Time + chart.GlobalOffsetSeconds) > 0.00001d ||
-            Vector2.SqrMagnitude(
-                first.Position - (Vector2)player.transform.position) >
-            0.000001f;
-    }
-
     private static void RefreshAllPositions()
     {
-        if (Application.isPlaying) return;
+        if (Application.isPlaying)
+            return;
 
         foreach (ChartPlayer player in
                  Object.FindObjectsByType<ChartPlayer>(FindObjectsSortMode.None))
         {
-            if (player == null || player.Chart == null)
+            if (player == null || player.BpmTimeline == null)
                 continue;
 
             // 域名重载后主动补做节点力度迁移，避免必须打开时间轴或进入 Play 才生效。
@@ -381,25 +643,20 @@ public class ChartPlayer : MonoBehaviour
         }
     }
 
-    // 由 Marker 调用：只标记，不写盘
+    // 由 Marker 调用：只标记，不再自动烘焙
     public void MarkDirty()
     {
-        if (dirty) return;
+        if (dirty)
+            return;
+
         dirty = true;
         EditorUtility.SetDirty(this);       // 刷新 Inspector 状态
-        if (autoBake) QueueBake();
-    }
-
-    // 由 autoBake 触发：合并同帧多次调用
-    private void QueueBake()
-    {
-        EditorApplication.delayCall -= Bake;
-        EditorApplication.delayCall += Bake;
     }
 
     public void QueueUpdatePos(float fromBeat = 0f)
     {
-        if (this == null) return;
+        if (this == null)
+            return;
 
         fromBeat = Mathf.Max(0f, fromBeat);
         if (updatePosQueued)
@@ -410,7 +667,8 @@ public class ChartPlayer : MonoBehaviour
             updatePosQueued = true;
         }
 
-        if (positionUpdateBatchDepth > 0) return;
+        if (positionUpdateBatchDepth > 0)
+            return;
 
         EditorApplication.delayCall -= FlushQueuedUpdatePos;
         EditorApplication.delayCall += FlushQueuedUpdatePos;
@@ -424,7 +682,8 @@ public class ChartPlayer : MonoBehaviour
     public void EndPositionUpdateBatch(float fallbackFromBeat)
     {
         positionUpdateBatchDepth = Mathf.Max(0, positionUpdateBatchDepth - 1);
-        if (positionUpdateBatchDepth > 0) return;
+        if (positionUpdateBatchDepth > 0)
+            return;
 
         if (updatePosQueued)
             fallbackFromBeat = Mathf.Min(fallbackFromBeat, queuedUpdateBeat);
@@ -433,374 +692,12 @@ public class ChartPlayer : MonoBehaviour
 
     private void FlushQueuedUpdatePos()
     {
-        if (this == null || !updatePosQueued) return;
+        if (this == null || !updatePosQueued)
+            return;
 
         float fromBeat = queuedUpdateBeat;
         updatePosQueued = false;
         UpdatePos(fromBeat);
-    }
-
-    public static void RequestChartChanged(ChartSO changedChart)
-    {
-        if (changedChart == null) return;
-
-        foreach (ChartPlayer player in
-                 Object.FindObjectsByType<ChartPlayer>(FindObjectsSortMode.None))
-        {
-            if (player != null && player.Chart == changedChart)
-            {
-                player.MarkDirty();
-                player.QueueUpdatePos();
-            }
-        }
-    }
-
-    [ContextMenu("Load From Chart")]
-    public void LoadFromChart()
-    {
-        ChartSO chart = Chart;
-        if (this == null || chart == null || Application.isPlaying) return;
-
-        chart.EnsureMigrated();
-        if (nodePrefab == null)
-            nodePrefab = AssetDatabase.LoadAssetAtPath<NodeMarker>(DefaultNodePrefabPath);
-        if (nodePrefab == null)
-        {
-            Debug.LogError(
-                $"ChartPlayer 无法加载 Node Prefab：{DefaultNodePrefabPath}", this);
-            return;
-        }
-
-        Transform root = scanRoot != null ? scanRoot : transform;
-        Undo.IncrementCurrentGroup();
-        int undoGroup = Undo.GetCurrentGroup();
-        Undo.SetCurrentGroupName("Load Chart Nodes");
-
-        NodeMarker[] existingMarkers = root.GetComponentsInChildren<NodeMarker>(true);
-        foreach (NodeMarker marker in existingMarkers)
-        {
-            if (marker != null)
-                Undo.DestroyObjectImmediate(marker.gameObject);
-        }
-
-        for (int i = 0; i < chart.nodes.Count; i++)
-        {
-            NodeData data = chart.nodes[i];
-            if (data == null) continue;
-
-            GameObject go = (GameObject)PrefabUtility.InstantiatePrefab(nodePrefab.gameObject, root);
-            if (go == null)
-            {
-                Debug.LogError($"ChartPlayer 无法实例化 Node Prefab：{nodePrefab.name}", this);
-                break;
-            }
-
-            Undo.RegisterCreatedObjectUndo(go, "Create Chart Node");
-
-            NodeMarker marker = go.GetComponent<NodeMarker>();
-            marker.beat = data.beat;
-            marker.order = data.order;
-            marker.action = data.action;
-            marker.gravity = data.gravity;
-            marker.auto = data.auto;
-            marker.visible = data.visible;
-            marker.strength = data.strength;
-            marker.index = i;
-            marker.name = $"Node_{i}:{data.beat:0.##}_{data.order}";
-            marker.transform.position = new Vector3(
-                root.position.x, data.position.y, root.position.z);
-            marker.ApplyAppearance(ResolveNodeAppearanceSet());
-            marker.ApplyVisibility();
-
-            PrefabUtility.RecordPrefabInstancePropertyModifications(go);
-            PrefabUtility.RecordPrefabInstancePropertyModifications(marker);
-            PrefabUtility.RecordPrefabInstancePropertyModifications(marker.transform);
-            EditorUtility.SetDirty(marker);
-        }
-
-        UpdatePos();
-        Undo.CollapseUndoOperations(undoGroup);
-
-        nodeDataVersion = CurrentNodeDataVersion;
-        dirty = false;
-        EditorUtility.SetDirty(this);
-    }
-
-    [ContextMenu("Bake Chart + Track")]
-    public void Bake()
-    {
-        ChartSO chart = Chart;
-        ChartTrackSO track = Track;
-        if (this == null ||
-            chart == null ||
-            track == null ||
-            Application.isPlaying)
-        {
-            return;
-        }
-
-        EnsureNodeDataMigrated();
-        UpdatePos();
-
-        Transform root = scanRoot != null ? scanRoot : transform;
-        NodeMarker[] markers = root.GetComponentsInChildren<NodeMarker>(false);
-
-        System.Array.Sort(markers, (a, b) =>
-        {
-            int byBeat = a.beat.CompareTo(b.beat);
-            return byBeat != 0 ? byBeat : a.order.CompareTo(b.order);
-        });
-
-        var result = new List<NodeData>(markers.Length);
-        for (int i = 0; i < markers.Length; i++)
-        {
-            NodeMarker m = markers[i];
-            m.index = i;
-
-            string newName = $"Node_{i}:{m.beat:0.##}_{m.order}";
-            if (m.name != newName) m.name = newName;
-
-            m.transform.SetSiblingIndex(i);
-
-            var node = new NodeData
-            {
-                beat = m.beat,
-                order = m.order,
-                action = m.action,
-                gravity = m.gravity,
-                auto = m.auto,
-                visible = m.visible,
-                strength = m.strength,
-                position = m.transform.position,
-                deltaX = m.deltaX
-            };
-            node.MarkMigrated();
-            result.Add(node);
-        }
-
-        if (!TryBuildTrack(result, out PerfectRoute route))
-            return;
-
-        chart.nodes = result;
-        chart.UpdatePos(root.position.x);
-        track.Set(route);
-        EditorUtility.SetDirty(chart);
-        EditorUtility.SetDirty(track);
-        AssetDatabase.SaveAssets();
-
-        dirty = false;
-        EditorUtility.SetDirty(this);
-    }
-
-    private bool TryBuildTrack(
-        IReadOnlyList<NodeData> nodes,
-        out PerfectRoute route)
-    {
-        route = null;
-
-        ChartSO chart = Chart;
-        Player scenePlayer = ResolvePlayer();
-        PhysicsActionMode physicsMode = scenePlayer != null
-            ? scenePlayer.GetComponent<PhysicsActionMode>()
-            : null;
-        BoxCollider2D bodyCollider = scenePlayer != null
-            ? scenePlayer.GetComponent<BoxCollider2D>()
-            : null;
-        Rigidbody2D body = scenePlayer != null
-            ? scenePlayer.GetComponent<Rigidbody2D>()
-            : null;
-
-        if (chart == null ||
-            chart.bpmTimeline == null ||
-            scenePlayer == null ||
-            physicsMode == null ||
-            bodyCollider == null)
-        {
-            Debug.LogError(
-                "烘焙 ChartTrack 需要 Chart、Player、PhysicsActionMode 和 BoxCollider2D",
-                this);
-            return false;
-        }
-
-        double startSongTime = -chart.GlobalOffsetSeconds;
-        double endSongTime = startSongTime;
-        for (int i = 0; i < nodes.Count; i++)
-        {
-            NodeData node = nodes[i];
-            if (node == null)
-                continue;
-
-            endSongTime = System.Math.Max(
-                endSongTime,
-                chart.bpmTimeline.BeatToSeconds(node.beat));
-        }
-
-        if (chart.clip != null)
-        {
-            endSongTime = System.Math.Max(
-                endSongTime,
-                chart.clip.length - chart.GlobalOffsetSeconds);
-        }
-
-        endSongTime += Mathf.Max(1f, Time.fixedDeltaTime * 2f);
-
-        Vector2 startPosition = scenePlayer.transform.position;
-        var config = new PerfectRouteConfig(
-            physicsMode,
-            scenePlayer.transform.localEulerAngles.z);
-        route = PerfectRouteBuilder.Build(
-            startPosition,
-            startSongTime,
-            nodes,
-            chart.bpmTimeline,
-            config,
-            bodyCollider,
-            body,
-            endSongTime,
-            out PerfectRouteBuildFailure failure);
-
-        if (route == null ||
-            route.Count == 0 ||
-            route.Blocked ||
-            !route.IsComplete)
-        {
-            route = null;
-            LogTrackBuildFailure(failure, nodes);
-            return false;
-        }
-
-        PerfectRouteSample first = route.Samples[0];
-        bool anchorMatches =
-            System.Math.Abs(first.Time - startSongTime) <= 0.00001d &&
-            Vector2.SqrMagnitude(first.Position - startPosition) <=
-            0.000001f;
-        if (!anchorMatches)
-        {
-            PerfectRouteSample actualFirst = route.Samples[0];
-            route = null;
-            Debug.LogError(
-                "ChartTrack 首点必须等于角色起点和歌曲起始时刻。\n" +
-                $"实际首点：时间 {actualFirst.Time:0.#####} 秒，" +
-                $"位置 {actualFirst.Position}\n" +
-                $"期望首点：时间 {startSongTime:0.#####} 秒，" +
-                $"位置 {startPosition}\n" +
-                "相关节点：无。这是起点/歌曲时间锚点问题，不是 Node 碰撞。",
-                this);
-            return false;
-        }
-
-        return true;
-    }
-
-    private void LogTrackBuildFailure(
-        PerfectRouteBuildFailure failure,
-        IReadOnlyList<NodeData> nodes)
-    {
-        if (!failure.Failed)
-        {
-            Debug.LogError(
-                "ChartTrack 烘焙失败：轨道构建没有返回可用样本。",
-                this);
-            return;
-        }
-
-        string previousNode = DescribeNode(
-            nodes,
-            failure.PreviousNodeIndex);
-        string targetNode = DescribeNode(
-            nodes,
-            failure.TargetNodeIndex);
-
-        switch (failure.Reason)
-        {
-            case PerfectRouteBuildFailureReason.MissingBpmTimeline:
-                Debug.LogError(
-                    "ChartTrack 烘焙失败。\n" +
-                    "原因：Chart 没有配置 BpmTimeline。\n" +
-                    "相关节点：无，先检查 ChartSO 的 BPM 时间轴。",
-                    this);
-                return;
-
-            case PerfectRouteBuildFailureReason.MissingBodyCollider:
-                Debug.LogError(
-                    "ChartTrack 烘焙失败。\n" +
-                    "原因：Player 缺少 BoxCollider2D。\n" +
-                    "相关节点：无，先检查 Player 的碰撞体。",
-                    this);
-                return;
-
-            case PerfectRouteBuildFailureReason.Blocked:
-                Debug.LogError(
-                    "ChartTrack 烘焙失败。\n" +
-                    $"相关节点：前往 {targetNode} 的路径，" +
-                    $"上一个节点是 {previousNode}。\n" +
-                    $"原因：角色在歌曲时间 {failure.SongTime:0.###} 秒、" +
-                    $"位置 {failure.Position} 附近横向移动受阻。" +
-                    DescribeBlockingCollider(failure) + "\n" +
-                    $"角色状态：Grounded={failure.Grounded}，" +
-                    $"角度={failure.Angle:0.##}°，" +
-                    $"竖直速度={failure.VerticalSpeed:0.###}。\n" +
-                    "处理建议：检查该节点前后的跳跃/重力模式，或把地面物体从 " +
-                    "PhysicsActionMode 的 Blocking Layers 移到专用的 Wall 层。",
-                    this);
-                return;
-
-            case PerfectRouteBuildFailureReason.SimulationIncomplete:
-                Debug.LogError(
-                    "ChartTrack 烘焙失败。\n" +
-                    $"相关节点：前往 {targetNode} 的路径，" +
-                    $"上一个节点是 {previousNode}。\n" +
-                    $"原因：模拟在歌曲时间 {failure.SongTime:0.###} 秒仍未完成，" +
-                    "达到了模拟步数上限。\n" +
-                    $"最后位置：{failure.Position}。",
-                    this);
-                return;
-
-            default:
-                Debug.LogError(
-                    "ChartTrack 烘焙失败，未识别的构建错误。",
-                    this);
-                return;
-        }
-    }
-
-    private static string DescribeBlockingCollider(
-        PerfectRouteBuildFailure failure)
-    {
-        if (string.IsNullOrEmpty(failure.BlockingObjectName))
-            return "横向 BoxCast 检测到阻挡，但没有返回具体 Collider。";
-
-        string layer = string.IsNullOrEmpty(failure.BlockingLayerName)
-            ? "未命名层"
-            : failure.BlockingLayerName;
-        return
-            $"阻挡物体为 '{failure.BlockingObjectName}'" +
-            $"（Layer: {layer}），" +
-            $"接触点 {failure.BlockingPoint}，" +
-            $"法线 {failure.BlockingNormal}。";
-    }
-
-    private static string DescribeNode(
-        IReadOnlyList<NodeData> nodes,
-        int index)
-    {
-        if (nodes == null ||
-            index < 0 ||
-            index >= nodes.Count ||
-            nodes[index] == null)
-        {
-            return "无";
-        }
-
-        NodeData node = nodes[index];
-        return
-            $"Node_{index}（Beat {node.beat:0.###}，" +
-            $"动作 {node.action}，" +
-            $"重力 {node.gravity}，" +
-            $"自动 {(node.auto ? "是" : "否")}，" +
-            $"显示 {(node.visible ? "是" : "否")}，" +
-            $"力度 {node.strength:0.###}，" +
-            $"位置 {node.position}）";
     }
 
     private void OnValidate()

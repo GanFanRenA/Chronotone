@@ -104,7 +104,6 @@ public partial class ChartTimelineWindow
 
         EditorGUI.BeginDisabledGroup(
             targetPlayer == null ||
-            targetPlayer.Chart == null ||
             EditorApplication.isPlayingOrWillChangePlaymode);
         if (GUILayout.Button(
                 new GUIContent("导入CSV", "导入每行一个 beat 数字的 CSV，并追加到当前谱面"),
@@ -125,24 +124,24 @@ public partial class ChartTimelineWindow
         GUILayout.EndHorizontal();
 
         GUILayout.BeginHorizontal(EditorStyles.toolbar);
-        EditorGUI.BeginDisabledGroup(targetPlayer == null || targetPlayer.Chart == null);
+        EditorGUI.BeginDisabledGroup(targetPlayer == null);
 
         GUILayout.Label(OffsetLabel, EditorStyles.miniLabel, GUILayout.Width(40));
-        float currentOffset = targetPlayer != null && targetPlayer.Chart != null
-            ? targetPlayer.Chart.globalOffsetBeats
+        float currentOffset = targetPlayer != null
+            ? targetPlayer.GlobalOffsetBeats
             : 0f;
 
         EditorGUI.BeginChangeCheck();
         float newOffset = EditorGUILayout.DelayedFloatField(currentOffset, GUILayout.Width(62));
-        if (EditorGUI.EndChangeCheck() && targetPlayer != null && targetPlayer.Chart != null)
+        if (EditorGUI.EndChangeCheck() && targetPlayer != null)
         {
-            Undo.RecordObject(targetPlayer.Chart, "Change Chart Global Offset");
-            targetPlayer.Chart.globalOffsetBeats = Mathf.Clamp(newOffset, -64f, 64f);
-            EditorUtility.SetDirty(targetPlayer.Chart);
+            Undo.RecordObject(targetPlayer, "Change Chart Global Offset");
+            targetPlayer.GlobalOffsetBeats = Mathf.Clamp(newOffset, -64f, 64f);
+            EditorUtility.SetDirty(targetPlayer);
         }
 
-        float offsetSeconds = targetPlayer != null && targetPlayer.Chart != null
-            ? targetPlayer.Chart.GlobalOffsetSeconds
+        float offsetSeconds = targetPlayer != null
+            ? targetPlayer.GlobalOffsetSeconds
             : 0f;
         GUILayout.Label(
             $"{offsetSeconds * 1000f:+0.0;-0.0;0} ms",
