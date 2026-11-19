@@ -554,7 +554,11 @@ public static class PerfectRouteBuilder
                 break;
 
             case NodeAction.FastFall:
-                ApplyFastFallImpulse(state, config, strength);
+                ApplyFastFallImpulse(
+                    state,
+                    config,
+                    supportNormalY,
+                    strength);
                 break;
         }
     }
@@ -592,10 +596,13 @@ public static class PerfectRouteBuilder
     private static void ApplyFastFallImpulse(
         RouteState state,
         PerfectRouteConfig config,
+        float supportNormalY,
         float strength)
     {
         state.Grounded = false;
+        // 朝角色当前重力的方向加速：正常重力向下，反转重力向上。
         state.VerticalSpeed -=
+            supportNormalY *
             NodeData.ResolveStrength(strength, config.FastFallImpulse);
     }
 

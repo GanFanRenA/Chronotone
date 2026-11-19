@@ -46,7 +46,7 @@ public sealed class GameSettingsSO : ScriptableObject
     [SerializeField, Min(0f)] private float gravityScale = 3f;
     [Tooltip("空中旋转角速度，单位为度/秒。")]
     [SerializeField] private float angularSpeed = 220f;
-    [Tooltip("FastFall 节点的默认向下速度脉冲；节点 strength 为 0 时使用。")]
+    [Tooltip("FastFall 节点的默认向重力方向速度脉冲；节点 strength 为 0 时使用。")]
     [SerializeField, Min(0f)]
     private float fastFallImpulse = 60f;
     [SerializeField, Min(1f)] private float fallDeathDistance = 12f;

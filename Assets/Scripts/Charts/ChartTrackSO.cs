@@ -7,7 +7,7 @@ using UnityEngine;
 [PreferBinarySerialization]
 public sealed class ChartTrackSO : ScriptableObject
 {
-    private const int CurrentRouteVersion = 3;
+    private const int CurrentRouteVersion = 4;
 
     [SerializeField] private List<PerfectRouteSample> samples =
         new List<PerfectRouteSample>();

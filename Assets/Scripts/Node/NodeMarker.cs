@@ -20,7 +20,7 @@ public class NodeMarker : MonoBehaviour
     [Tooltip("显示：关闭后只在运行时隐藏节点，编辑模式仍然可见。")]
     public bool visible = true;
 
-    [Tooltip("动作力度：Jump 为起跳速度，FastFall 为向下速度脉冲（越大落得越快），Respawn 无效。0 表示使用 GameSettings 默认值。")]
+    [Tooltip("动作力度：Jump 为起跳速度，FastFall 为沿当前重力方向的速度脉冲（越大落得越快），Respawn 无效。0 表示使用 GameSettings 默认值。")]
     [Min(0f)]
     public float strength;
 
