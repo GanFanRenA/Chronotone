@@ -6,7 +6,6 @@ public class ChartPlayerEditor : Editor
 {
     private SerializedProperty clipProperty;
     private SerializedProperty bpmTimelineProperty;
-    private SerializedProperty globalOffsetBeatsProperty;
     private SerializedProperty scanRootProperty;
     private SerializedProperty nodePrefabProperty;
     private SerializedProperty nodeAppearanceSetProperty;
@@ -17,8 +16,6 @@ public class ChartPlayerEditor : Editor
     {
         clipProperty = serializedObject.FindProperty("clip");
         bpmTimelineProperty = serializedObject.FindProperty("bpmTimeline");
-        globalOffsetBeatsProperty =
-            serializedObject.FindProperty("globalOffsetBeats");
         scanRootProperty = serializedObject.FindProperty("scanRoot");
         nodePrefabProperty = serializedObject.FindProperty("nodePrefab");
         nodeAppearanceSetProperty =
@@ -40,7 +37,6 @@ public class ChartPlayerEditor : Editor
         EditorGUILayout.LabelField("Stage（关卡元数据）", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(clipProperty);
         EditorGUILayout.PropertyField(bpmTimelineProperty, true);
-        EditorGUILayout.PropertyField(globalOffsetBeatsProperty);
 
         EditorGUILayout.Space(6);
         EditorGUILayout.LabelField(

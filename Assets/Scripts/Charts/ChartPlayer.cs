@@ -7,13 +7,11 @@ using UnityEditor.SceneManagement;
 
 public class ChartPlayer : MonoBehaviour
 {
-    [Header("Stage（关卡元数据，收进场景）")]
+    [Header("Stage")]
     [SerializeField] private AudioClip clip;
     [SerializeField] private BpmTimeline bpmTimeline = new BpmTimeline();
-    [Tooltip("全局偏移，单位为拍。正值让谱面整体晚于音乐。")]
-    [SerializeField] private float globalOffsetBeats;
 
-    [Header("Baked（烘焙产物，运行只读）")]
+    [Header("Baked")]
     [SerializeField] private NodeData[] bakedNodes = System.Array.Empty<NodeData>();
     [SerializeField] private PerfectRouteSample[] bakedTrackSamples =
         System.Array.Empty<PerfectRouteSample>();
@@ -42,14 +40,8 @@ public class ChartPlayer : MonoBehaviour
 
     public AudioClip Clip => clip;
     public BpmTimeline BpmTimeline => bpmTimeline;
-    public float GlobalOffsetBeats
-    {
-        get => globalOffsetBeats;
-        set => globalOffsetBeats = value;
-    }
 
-    public float GlobalOffsetSeconds =>
-        bpmTimeline != null ? bpmTimeline.BeatToSeconds(globalOffsetBeats) : 0f;
+    public float GlobalOffsetSeconds => GameSettings.GlobalOffsetSeconds;
 
     public IReadOnlyList<NodeData> Nodes => bakedNodes;
     public bool HasStageData => clip != null && bpmTimeline != null;

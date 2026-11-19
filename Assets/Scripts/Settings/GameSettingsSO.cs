@@ -28,6 +28,8 @@ public sealed class GameSettingsSO : ScriptableObject
 
     [Header("Playback")]
     [SerializeField, Min(0f)] private float scheduleLeadSeconds = 0.15f;
+    [Tooltip("全局音画偏移，单位为秒。正值让谱面整体晚于音乐。")]
+    [SerializeField] private float globalOffsetSeconds;
     [SerializeField, Range(0f, 1f)]
     private float timelineNodeClickVolume = 0.8f;
 
@@ -90,6 +92,11 @@ public sealed class GameSettingsSO : ScriptableObject
     }
 
     public float ScheduleLeadSeconds => scheduleLeadSeconds;
+    public float GlobalOffsetSeconds
+    {
+        get => globalOffsetSeconds;
+        set => globalOffsetSeconds = value;
+    }
     public float TimelineNodeClickVolume => timelineNodeClickVolume;
 
     public float RespawnDelaySeconds => respawnDelaySeconds;

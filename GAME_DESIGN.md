@@ -148,6 +148,7 @@ X 坐标由 `beat` 经 BPM 自动计算（`UpdatePos`），Y 坐标自由摆放�
 | Auto Play | `autoModeEnabled` | `false` | 自动模式开关 |
 | Auto Play | `autoPlayOffsetMilliseconds` | `0` | 自动输入偏移（限制在 Great 窗内） |
 | Playback | `scheduleLeadSeconds` | `0.15` | 音频预调度提前量 |
+| Playback | `globalOffsetSeconds` | `0` | 全局音画偏移（秒），正值让谱面整体晚于音乐 |
 | Playback | `timelineNodeClickVolume` | `0.8` | 时间轴预览卡点音量 |
 | Death Rewind | `respawnDelaySeconds` | `0.35` | 死亡后等待回溯的延迟 |
 | Death Rewind | `rewindDurationSeconds` | `0.65` | 回溯动画时长 |
@@ -241,7 +242,7 @@ X 坐标由 `beat` 经 BPM 自动计算（`UpdatePos`），Y 坐标自由摆放�
 | --- | --- | --- |
 | 音频 clip | `ChartSO.clip` | 场景组件字段（引用 AudioClip 资产） |
 | BPM 时间轴 | `ChartSO.bpmTimeline` | 场景组件字段（`[Serializable]` 直接序列化） |
-| 全局偏移 | `ChartSO.globalOffsetBeats` | 场景组件字段 |
+| 全局偏移 | `ChartSO.globalOffsetBeats` | `GameSettingsSO.globalOffsetSeconds`（全局秒） |
 | 节点（编辑源） | `ChartSO.nodes` + 场景 `NodeMarker`（双份） | **仅场景 `NodeMarker`** |
 | 节点（运行缓存） | 无（运行时读 `ChartSO.nodes`） | 场景组件序列化的 `NodeData[]`（烘焙生成） |
 | 完美路径 | `ChartTrackSO.samples` | 场景组件序列化的 `PerfectRouteSample[]`（烘焙生成） |
@@ -263,7 +264,7 @@ X 坐标由 `beat` 经 BPM 自动计算（`UpdatePos`），Y 坐标自由摆放�
 │   ├─ Node_0 …
 │   └─ …
 ├─ <ChartPlayer>  (ChartPlayer 组件)
-│   ├─ clip / bpmTimeline / globalOffsetBeats        ← 关卡元数据（收进场景）
+│   ├─ clip / bpmTimeline                             ← 关卡元数据（收进场景）
 │   ├─ bakedNodes: NodeData[]                        ← 节点缓存（烘焙生成）
 │   ├─ bakedTrack: PerfectRouteSample[]              ← 完美路径缓存（烘焙生成）
 │   └─ (扫描范围 scanRoot / 各 Tilemap 绑定)
@@ -369,7 +370,7 @@ public enum StageLayerCategory { Background = 0, Platform = 1, Frontground = 2 }
 ### 10.3 已实现的脚本（代码）
 
 - 修改 `ChartPlayer.cs`：
-  - 新增字段 `clip` / `bpmTimeline` / `globalOffsetBeats` / `bakedNodes(NodeData[])` / `bakedTrack(PerfectRouteSample[])`。
+  - 新增字段 `clip` / `bpmTimeline` / `bakedNodes(NodeData[])` / `bakedTrack(PerfectRouteSample[])`。
   - 新增 `Bake()`（扫描 NodeMarker → 生成缓存 → 模拟轨道 → 序列化写回）。
   - 移除关卡切换、`LoadFromChart` 重建、Play 前自动重烘焙。
 - 新增 `StageSceneController.cs`（含 `StageLayerCategory` / `StageTilemapLayerDef` / `StageLayerVisibilityEvent` / `StageLayerBinding`，Tilemap 绑定 + 按拍点硬切换显隐）。

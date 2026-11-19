@@ -29,7 +29,7 @@ public partial class ChartTimelineWindow : EditorWindow
     private static readonly string[] SnapLabels = { "1", "1/2", "1/4", "1/8", "1/16", "1/32", "关" };
     private static readonly float[] SnapValues = { 1f, 0.5f, 0.25f, 0.125f, 0.0625f, 0.03125f, 0f };
     private static readonly GUIContent OffsetLabel =
-        new GUIContent("偏移拍", "正值让谱面整体晚于音乐；单位是拍。");
+        new GUIContent("偏移秒", "全局音画偏移，单位是秒；正值让谱面整体晚于音乐。");
     private static readonly GUIContent PlaybackSpeedLabel =
         new GUIContent("速度", "只调整时间轴试听速度，不改变游戏运行速度。范围 0.1–2.0。");
 

@@ -127,24 +127,25 @@ public partial class ChartTimelineWindow
         EditorGUI.BeginDisabledGroup(targetPlayer == null);
 
         GUILayout.Label(OffsetLabel, EditorStyles.miniLabel, GUILayout.Width(40));
-        float currentOffset = targetPlayer != null
-            ? targetPlayer.GlobalOffsetBeats
+        GameSettingsSO settings = targetPlayer != null
+            ? targetPlayer.GameSettings
+            : null;
+        float currentOffset = settings != null
+            ? settings.GlobalOffsetSeconds
             : 0f;
 
         EditorGUI.BeginChangeCheck();
         float newOffset = EditorGUILayout.DelayedFloatField(currentOffset, GUILayout.Width(62));
-        if (EditorGUI.EndChangeCheck() && targetPlayer != null)
+        if (EditorGUI.EndChangeCheck() && settings != null)
         {
-            Undo.RecordObject(targetPlayer, "Change Chart Global Offset");
-            targetPlayer.GlobalOffsetBeats = Mathf.Clamp(newOffset, -64f, 64f);
-            EditorUtility.SetDirty(targetPlayer);
+            Undo.RecordObject(settings, "Change Global Offset");
+            settings.GlobalOffsetSeconds = newOffset;
+            EditorUtility.SetDirty(settings);
+            currentOffset = newOffset;
         }
 
-        float offsetSeconds = targetPlayer != null
-            ? targetPlayer.GlobalOffsetSeconds
-            : 0f;
         GUILayout.Label(
-            $"{offsetSeconds * 1000f:+0.0;-0.0;0} ms",
+            $"{currentOffset * 1000f:+0.0;-0.0;0} ms",
             EditorStyles.miniLabel,
             GUILayout.Width(54));
 
