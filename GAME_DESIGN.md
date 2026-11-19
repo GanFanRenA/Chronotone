@@ -5,7 +5,7 @@
 > 当前阶段目标：把项目从「单场景多关卡 + 数据/场景双份 + 运行时反复重建」重构为
 > **「一场景一关卡 + 场景为唯一来源 + 烘焙一次、运行只读」**。
 >
-> 状态：**设计已确认，实现中**（先更新本文档，再落地代码）。
+> 状态：**代码实现已完成**；Player 共享 Prefab 提取与场景迁移需在 Unity 编辑器手动完成（见 §10、§11）。
 
 ---
 
@@ -366,13 +366,13 @@ public enum StageLayerCategory { Background = 0, Platform = 1, Frontground = 2 }
 - 新建一个“关卡模板”场景：`Grid` + 空的三组 Tilemap（Background/Platform/Frontground）+ `ChartPlayer` + `Player.prefab` 实例。
 - 新关卡 = 复制模板场景，改名，再摆节点 / 画 Tilemap / 填 clip 与 BPM。
 
-### 10.3 拟新增 / 修改的脚本
+### 10.3 已实现的脚本（代码）
 
 - 修改 `ChartPlayer.cs`：
   - 新增字段 `clip` / `bpmTimeline` / `globalOffsetBeats` / `bakedNodes(NodeData[])` / `bakedTrack(PerfectRouteSample[])`。
   - 新增 `Bake()`（扫描 NodeMarker → 生成缓存 → 模拟轨道 → 序列化写回）。
   - 移除关卡切换、`LoadFromChart` 重建、Play 前自动重烘焙。
-- 新增 `StageLayerCategory.cs`、`StageTilemapLayerDef.cs`、`StageLayerVisibilityEvent.cs`、`StageSceneController.cs`（Tilemap 绑定 + 显隐驱动）。
+- 新增 `StageSceneController.cs`（含 `StageLayerCategory` / `StageTilemapLayerDef` / `StageLayerVisibilityEvent` / `StageLayerBinding`，Tilemap 绑定 + 按拍点硬切换显隐）。
 - 修改 `Player.cs` / `BasicJudgement.cs` / `PhysicsActionMode.cs`：从 `ChartPlayer` 缓存读节点与轨道，而非 `ChartSO.nodes`。
 - 修改 `ChartTimelineWindow.cs`：从场景 `NodeMarker` 读，而非 `ChartSO.nodes`。
 
