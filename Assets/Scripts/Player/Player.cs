@@ -167,10 +167,12 @@ public class Player : MonoBehaviour
     {
         if (chartPlayer == null ||
             chartPlayer.Clip == null ||
-            chartPlayer.BpmTimeline == null)
+            chartPlayer.BpmTimeline == null ||
+            !chartPlayer.HasBakedTrack)
         {
             Debug.LogError(
-                "Player 没有绑定 ChartPlayer，或缺少 AudioClip / BpmTimeline",
+                "Player 没有绑定 ChartPlayer，或关卡未配置 / 未烘焙" +
+                "（需要 Clip、BpmTimeline，并先对 ChartPlayer 执行 Bake Stage）",
                 this);
             enabled = false;
             return;
