@@ -11,7 +11,7 @@ public class NodeMarker : MonoBehaviour
     [Tooltip("动作类型：None 无动作 / Jump 跳跃 / FastFall 快速下落 / Respawn 重生点。")]
     public NodeAction action = NodeAction.Jump;
 
-    [Tooltip("重力：None 不改变 / Normal 强制正常 / Reset 反转并把垂直速度清零。")]
+    [Tooltip("重力：None 不改变 / Normal 反转方向并保留竖直速度 / Reset 反转方向并把垂直速度清零。重力转换永远先于动作执行。")]
     public NodeGravity gravity = NodeGravity.None;
 
     [Tooltip("自动：不判定、不计分、不显示判定提示，始终跟随轨道；Respawn 自动时经过即保存检查点。")]

@@ -543,6 +543,7 @@ public static class PerfectRouteBuilder
         NodeGravity gravity,
         float strength)
     {
+        // 只要不是 None，就先做重力转换；Jump / FastFall 再基于新的重力方向执行。
         ApplyGravity(state, gravity);
 
         float supportNormalY = state.GravityInverted ? -1f : 1f;
@@ -565,7 +566,8 @@ public static class PerfectRouteBuilder
         switch (gravity)
         {
             case NodeGravity.Normal:
-                state.GravityInverted = false;
+                state.GravityInverted = !state.GravityInverted;
+                state.Grounded = false;
                 break;
 
             case NodeGravity.Reset:
@@ -607,9 +609,6 @@ public static class PerfectRouteBuilder
         switch (node.gravity)
         {
             case NodeGravity.Normal:
-                gravityInverted = false;
-                break;
-
             case NodeGravity.Reset:
                 gravityInverted = !gravityInverted;
                 break;
