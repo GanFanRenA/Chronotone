@@ -321,6 +321,9 @@ public partial class ChartTimelineWindow
 
         endSongTime += 1d;
         var config = new PerfectRouteConfig(physicsMode, uprightAngle);
+        StageCollisionPresence presence = StageCollisionPresence.Build(
+            targetPlayer.BpmTimeline,
+            targetPlayer.gameObject.scene.GetRootGameObjects());
         cachedEditorPerfectRoute = PerfectRouteBuilder.Build(
             player.transform.position,
             -chartOffset,
@@ -329,7 +332,8 @@ public partial class ChartTimelineWindow
             config,
             bodyCollider,
             body,
-            endSongTime);
+            endSongTime,
+            presence.IsActive);
         cachedRoutePlayer = player;
         cachedRoutePhysicsMode = physicsMode;
         cachedRouteJumpVelocity = physicsMode.JumpVelocity;

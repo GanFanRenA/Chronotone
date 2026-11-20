@@ -19,7 +19,10 @@ using UnityEngine.Tilemaps;
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class StageDisplayAnimation :
-    MonoBehaviour, IStageAnimationEventSource, IStageAnimationSource
+    MonoBehaviour,
+    IStageAnimationEventSource,
+    IStageAnimationSource,
+    IStageAppearanceAnimation
 {
     private enum TargetKind
     {
@@ -126,6 +129,12 @@ public sealed class StageDisplayAnimation :
     {
         ApplyAlpha(ComputeAlpha(songTime));
     }
+
+    public float CollisionEnterBeat =>
+        fadeInEnabled ? fadeInEndBeat : float.NegativeInfinity;
+
+    public float CollisionExitBeat =>
+        fadeOutEnabled ? fadeOutStartBeat : float.PositiveInfinity;
 
     public void CollectAnimationEvents(List<StageAnimationEvent> events)
     {
@@ -279,4 +288,11 @@ public sealed class StageDisplayAnimation :
 
         return beat * 0.5d; // 兜底 120 BPM
     }
+
+#if UNITY_EDITOR
+    /// <summary>编辑器里淡入淡出参数变化后触发，让 Chart Timeline 立即失效预览并重绘。</summary>
+    public static event System.Action EditorChanged;
+
+    private void OnValidate() => EditorChanged?.Invoke();
+#endif
 }

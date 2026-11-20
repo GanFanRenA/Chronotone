@@ -221,7 +221,8 @@ public static class PerfectRouteBuilder
         PerfectRouteConfig config,
         BoxCollider2D bodyCollider,
         Rigidbody2D body,
-        double endSongTime)
+        double endSongTime,
+        Func<Collider2D, double, bool> colliderActive = null)
     {
         return Build(
             startPosition,
@@ -232,7 +233,8 @@ public static class PerfectRouteBuilder
             bodyCollider,
             body,
             endSongTime,
-            out _);
+            out _,
+            colliderActive);
     }
 
     public static PerfectRoute Build(
@@ -244,7 +246,8 @@ public static class PerfectRouteBuilder
         BoxCollider2D bodyCollider,
         Rigidbody2D body,
         double endSongTime,
-        out PerfectRouteBuildFailure failure)
+        out PerfectRouteBuildFailure failure,
+        Func<Collider2D, double, bool> colliderActive = null)
     {
         failure = default;
         if (bpmTimeline == null)
@@ -321,7 +324,9 @@ public static class PerfectRouteBuilder
             config,
             bodyCollider,
             body,
-            state);
+            state,
+            colliderActive);
+        physics.SetSongTime(startSongTime);
         state.Grounded = physics.HasSupport(
             state.Position,
             state.Angle);
@@ -358,6 +363,7 @@ public static class PerfectRouteBuilder
             float targetX = xTimeline.Sample((float)tickTime);
             float deltaTime =
                 (float)(tickTime - previousTickTime);
+            physics.SetSongTime(tickTime);
             if (physics.Step(
                     targetX,
                     deltaTime,
@@ -737,17 +743,21 @@ public static class PerfectRouteBuilder
         private readonly RaycastHit2D[] castHits =
             new RaycastHit2D[16];
         private readonly RouteState state;
+        private readonly Func<Collider2D, double, bool> colliderActive;
+        private double currentSongTime;
 
         public RoutePhysics(
             PerfectRouteConfig config,
             BoxCollider2D bodyCollider,
             Rigidbody2D body,
-            RouteState state)
+            RouteState state,
+            Func<Collider2D, double, bool> colliderActive)
         {
             this.config = config;
             this.bodyCollider = bodyCollider;
             this.body = body;
             this.state = state;
+            this.colliderActive = colliderActive;
 
             groundFilter = new ContactFilter2D
             {
@@ -769,6 +779,11 @@ public static class PerfectRouteBuilder
                     config.BlockingLayers.value |
                     config.GroundLayers.value
             };
+        }
+
+        public void SetSongTime(double songTime)
+        {
+            currentSongTime = songTime;
         }
 
         public bool HasSupport(Vector2 position, float angle)
@@ -1101,6 +1116,12 @@ public static class PerfectRouteBuilder
             if (hitCollider == bodyCollider ||
                 (body != null &&
                  hitCollider.attachedRigidbody == body))
+            {
+                return true;
+            }
+
+            if (colliderActive != null &&
+                !colliderActive(hitCollider, currentSongTime))
             {
                 return true;
             }

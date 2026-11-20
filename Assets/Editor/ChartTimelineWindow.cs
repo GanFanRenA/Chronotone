@@ -74,6 +74,10 @@ public partial class ChartTimelineWindow : EditorWindow
         NodeAppearanceSet.Changed += OnNodeAppearanceChanged;
         NodeMarker.EditorChanged -= OnNodeMarkerChanged;
         NodeMarker.EditorChanged += OnNodeMarkerChanged;
+        StageFlyAnimation.EditorChanged -= InvalidateMarkerCache;
+        StageFlyAnimation.EditorChanged += InvalidateMarkerCache;
+        StageDisplayAnimation.EditorChanged -= InvalidateMarkerCache;
+        StageDisplayAnimation.EditorChanged += InvalidateMarkerCache;
         if (nodePrefab == null)
             nodePrefab = AssetDatabase.LoadAssetAtPath<NodeMarker>(NodePrefabPath);
         EditorApplication.hierarchyChanged -= OnHierarchyChanged;
@@ -96,6 +100,8 @@ public partial class ChartTimelineWindow : EditorWindow
     {
         NodeAppearanceSet.Changed -= OnNodeAppearanceChanged;
         NodeMarker.EditorChanged -= OnNodeMarkerChanged;
+        StageFlyAnimation.EditorChanged -= InvalidateMarkerCache;
+        StageDisplayAnimation.EditorChanged -= InvalidateMarkerCache;
         EditorApplication.hierarchyChanged -= OnHierarchyChanged;
         Undo.undoRedoPerformed -= OnUndoRedoPerformed;
         Undo.postprocessModifications -= OnPostprocessModifications;

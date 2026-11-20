@@ -16,7 +16,10 @@ using UnityEngine;
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class StageFlyAnimation :
-    MonoBehaviour, IStageAnimationEventSource, IStageAnimationSource
+    MonoBehaviour,
+    IStageAnimationEventSource,
+    IStageAnimationSource,
+    IStageAppearanceAnimation
 {
     [Header("Fly In（飞入）")]
     [Tooltip("勾选后：从「结束拍 - 时长」开始在偏移点，经过时长飞到原始位置，在结束拍抵达。")]
@@ -112,6 +115,12 @@ public sealed class StageFlyAnimation :
     {
         ApplyOffset(ComputeOffset(songTime));
     }
+
+    public float CollisionEnterBeat =>
+        flyInEnabled ? flyInEndBeat : float.NegativeInfinity;
+
+    public float CollisionExitBeat =>
+        flyOutEnabled ? flyOutStartBeat : float.PositiveInfinity;
 
     public void CollectAnimationEvents(List<StageAnimationEvent> events)
     {
@@ -217,4 +226,11 @@ public sealed class StageFlyAnimation :
 
         return beat * 0.5d; // 兜底 120 BPM
     }
+
+#if UNITY_EDITOR
+    /// <summary>编辑器里飞入飞出参数变化后触发，让 Chart Timeline 立即失效预览并重绘。</summary>
+    public static event System.Action EditorChanged;
+
+    private void OnValidate() => EditorChanged?.Invoke();
+#endif
 }

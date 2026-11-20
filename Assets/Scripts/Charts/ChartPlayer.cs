@@ -399,6 +399,7 @@ public class ChartPlayer : MonoBehaviour
         var config = new PerfectRouteConfig(
             physicsMode,
             scenePlayer.transform.localEulerAngles.z);
+        StageCollisionPresence presence = BuildStageCollisionPresence();
         route = PerfectRouteBuilder.Build(
             startPosition,
             startSongTime,
@@ -408,7 +409,8 @@ public class ChartPlayer : MonoBehaviour
             bodyCollider,
             body,
             endSongTime,
-            out PerfectRouteBuildFailure failure);
+            out PerfectRouteBuildFailure failure,
+            presence.IsActive);
 
         if (route == null ||
             route.Count == 0 ||
@@ -441,6 +443,14 @@ public class ChartPlayer : MonoBehaviour
         }
 
         return true;
+    }
+
+    private StageCollisionPresence BuildStageCollisionPresence()
+    {
+        GameObject[] roots = gameObject.scene.IsValid()
+            ? gameObject.scene.GetRootGameObjects()
+            : null;
+        return StageCollisionPresence.Build(bpmTimeline, roots);
     }
 
     private void LogTrackBuildFailure(

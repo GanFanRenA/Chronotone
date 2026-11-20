@@ -57,7 +57,8 @@ public sealed class StageLayerBinding
 }
 
 /// <summary>
-/// 关卡场景控制器：按歌曲时间硬切换各 Tilemap 层的显隐。
+/// 关卡场景控制器：按歌曲时间硬切换各 Tilemap 层的显隐，并按外观动画（飞入飞出 / 淡入淡出）
+/// 的入场/出场窗口门控 Platform 的物理碰撞（入场完成前 / 出场开始后关闭碰撞体）。
 /// 层描述、显隐事件、场景绑定都直接序列化在本组件里（一场景一关卡，不产生额外资产）。
 /// </summary>
 public sealed class StageSceneController :
@@ -83,9 +84,13 @@ public sealed class StageSceneController :
 
     private readonly Dictionary<string, StageTilemapLayerDef> defById =
         new Dictionary<string, StageTilemapLayerDef>();
+    private readonly Dictionary<StageLayerBinding, IStageAppearanceAnimation[]> appearanceCache =
+        new Dictionary<StageLayerBinding, IStageAppearanceAnimation[]>();
     private Player resolvedPlayer;
     private StageAnimationDriver driver;
     private bool driverDriven;
+
+    private const float BeatEpsilon = 0.0001f;
 
     private void OnEnable()
     {
@@ -97,16 +102,7 @@ public sealed class StageSceneController :
             return;
         }
 
-        if (visibilityEvents == null)
-            return;
-
-        foreach (StageLayerVisibilityEvent e in visibilityEvents)
-        {
-            if (e == null || string.IsNullOrEmpty(e.layerId))
-                continue;
-
-            driver.RegisterDiscrete(this, e.beat);
-        }
+        RegisterStageBeats(driver);
     }
 
     private void OnDisable()
@@ -120,6 +116,9 @@ public sealed class StageSceneController :
 
     private void Start()
     {
+        if (chartPlayer == null)
+            chartPlayer = Object.FindFirstObjectByType<ChartPlayer>();
+
         resolvedPlayer = player != null
             ? player
             : (chartPlayer != null ? chartPlayer.ResolvePlayer() : null);
@@ -161,6 +160,70 @@ public sealed class StageSceneController :
         }
     }
 
+    private void RegisterStageBeats(StageAnimationDriver targetDriver)
+    {
+        if (visibilityEvents != null)
+        {
+            foreach (StageLayerVisibilityEvent e in visibilityEvents)
+            {
+                if (e == null || string.IsNullOrEmpty(e.layerId))
+                    continue;
+
+                targetDriver.RegisterDiscrete(this, e.beat);
+            }
+        }
+
+        if (bindings == null)
+            return;
+
+        foreach (StageLayerBinding binding in bindings)
+        {
+            foreach (IStageAppearanceAnimation appearance in
+                     GetAppearanceComponents(binding))
+            {
+                if (appearance.CollisionEnterBeat > float.NegativeInfinity)
+                {
+                    targetDriver.RegisterDiscrete(
+                        this,
+                        appearance.CollisionEnterBeat);
+                }
+
+                if (appearance.CollisionExitBeat < float.PositiveInfinity)
+                {
+                    targetDriver.RegisterDiscrete(
+                        this,
+                        appearance.CollisionExitBeat);
+                }
+            }
+        }
+    }
+
+    private IStageAppearanceAnimation[] GetAppearanceComponents(
+        StageLayerBinding binding)
+    {
+        if (appearanceCache.TryGetValue(binding, out IStageAppearanceAnimation[] cached))
+            return cached;
+
+        IStageAppearanceAnimation[] result =
+            System.Array.Empty<IStageAppearanceAnimation>();
+        if (binding != null && binding.collider != null)
+        {
+            var list = new List<IStageAppearanceAnimation>();
+            MonoBehaviour[] behaviours =
+                binding.collider.GetComponentsInParent<MonoBehaviour>(true);
+            foreach (MonoBehaviour behaviour in behaviours)
+            {
+                if (behaviour is IStageAppearanceAnimation appearance)
+                    list.Add(appearance);
+            }
+
+            result = list.ToArray();
+        }
+
+        appearanceCache[binding] = result;
+        return result;
+    }
+
     private void RebuildIndex()
     {
         defById.Clear();
@@ -185,17 +248,20 @@ public sealed class StageSceneController :
         if (bindings == null)
             return;
 
+        float currentBeat = SecondsToBeat(songTime);
+
         foreach (StageLayerBinding binding in bindings)
         {
             if (binding == null || string.IsNullOrEmpty(binding.id))
                 continue;
 
-            bool visible = ResolveVisible(binding.id, songTime);
-            ApplyVisible(binding, visible);
+            bool visible = ResolveVisible(binding.id, currentBeat);
+            bool physicallyPresent = ResolvePhysicallyPresent(binding, currentBeat);
+            ApplyVisible(binding, visible, physicallyPresent);
         }
     }
 
-    private bool ResolveVisible(string layerId, double songTime)
+    private bool ResolveVisible(string layerId, float currentBeat)
     {
         bool visible = GetDefaultVisible(layerId);
 
@@ -207,12 +273,29 @@ public sealed class StageSceneController :
             if (e == null || e.layerId != layerId)
                 continue;
 
-            double eventTime = BeatToSeconds(e.beat);
-            if (eventTime <= songTime)
+            if (e.beat <= currentBeat + BeatEpsilon)
                 visible = e.visible;
         }
 
         return visible;
+    }
+
+    private bool ResolvePhysicallyPresent(
+        StageLayerBinding binding,
+        float currentBeat)
+    {
+        float enterBeat = float.NegativeInfinity;
+        float exitBeat = float.PositiveInfinity;
+
+        foreach (IStageAppearanceAnimation appearance in
+                 GetAppearanceComponents(binding))
+        {
+            enterBeat = Mathf.Max(enterBeat, appearance.CollisionEnterBeat);
+            exitBeat = Mathf.Min(exitBeat, appearance.CollisionExitBeat);
+        }
+
+        return currentBeat >= enterBeat - BeatEpsilon &&
+               currentBeat < exitBeat - BeatEpsilon;
     }
 
     private bool GetDefaultVisible(string layerId)
@@ -223,15 +306,18 @@ public sealed class StageSceneController :
         return true;
     }
 
-    private double BeatToSeconds(float beat)
+    private float SecondsToBeat(double songTime)
     {
         if (chartPlayer != null && chartPlayer.BpmTimeline != null)
-            return chartPlayer.BpmTimeline.BeatToSeconds(beat);
+            return chartPlayer.BpmTimeline.SecondsToBeat((float)songTime);
 
-        return beat * 0.5d; // 兜底 120 BPM
+        return (float)songTime * 2f; // 兜底 120 BPM
     }
 
-    private static void ApplyVisible(StageLayerBinding binding, bool visible)
+    private static void ApplyVisible(
+        StageLayerBinding binding,
+        bool visible,
+        bool physicallyPresent)
     {
         if (binding.renderer != null &&
             binding.renderer.enabled != visible)
@@ -239,10 +325,11 @@ public sealed class StageSceneController :
             binding.renderer.enabled = visible;
         }
 
+        bool colliderEnabled = visible && physicallyPresent;
         if (binding.collider != null &&
-            binding.collider.enabled != visible)
+            binding.collider.enabled != colliderEnabled)
         {
-            binding.collider.enabled = visible;
+            binding.collider.enabled = colliderEnabled;
         }
     }
 }
