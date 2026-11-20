@@ -131,10 +131,14 @@ public sealed class StageDisplayAnimation :
     }
 
     public float CollisionEnterBeat =>
-        fadeInEnabled ? fadeInEndBeat : float.NegativeInfinity;
+        fadeInEnabled
+            ? fadeInEndBeat - fadeInDurationBeats * 0.5f
+            : float.NegativeInfinity;
 
     public float CollisionExitBeat =>
-        fadeOutEnabled ? fadeOutStartBeat : float.PositiveInfinity;
+        fadeOutEnabled
+            ? fadeOutStartBeat + fadeOutDurationBeats * 0.5f
+            : float.PositiveInfinity;
 
     public void CollectAnimationEvents(List<StageAnimationEvent> events)
     {
