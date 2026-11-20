@@ -13,7 +13,6 @@ public partial class ChartTimelineWindow : EditorWindow
     [SerializeField] private float playbackSpeed = 1f;
     [SerializeField] private NodeMarker nodePrefab;
     [SerializeField] private bool previewEnabled;
-    [SerializeField] private bool nodeClickEnabled;
 
     private const float ToolbarHeight = 54f;
     private const float RulerHeight = 32f;
@@ -83,8 +82,6 @@ public partial class ChartTimelineWindow : EditorWindow
         Undo.undoRedoPerformed += OnUndoRedoPerformed;
         Undo.postprocessModifications -= OnPostprocessModifications;
         Undo.postprocessModifications += OnPostprocessModifications;
-        EditorApplication.update -= UpdateNodeClickSchedule;
-        EditorApplication.update += UpdateNodeClickSchedule;
         EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
         EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         SceneView.duringSceneGui -= DrawTrajectoryPreview;
@@ -102,7 +99,6 @@ public partial class ChartTimelineWindow : EditorWindow
         EditorApplication.hierarchyChanged -= OnHierarchyChanged;
         Undo.undoRedoPerformed -= OnUndoRedoPerformed;
         Undo.postprocessModifications -= OnPostprocessModifications;
-        EditorApplication.update -= UpdateNodeClickSchedule;
         EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
         SceneView.duringSceneGui -= DrawTrajectoryPreview;
         StopPlayback();

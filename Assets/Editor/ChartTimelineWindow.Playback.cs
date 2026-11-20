@@ -140,9 +140,6 @@ public partial class ChartTimelineWindow
         }
 
         playing = true;
-        BeginNodeClickSchedule(
-            playStartDspTime,
-            playbackAnchorBeat);
         RequestRepaint();
     }
 
@@ -173,7 +170,6 @@ public partial class ChartTimelineWindow
     {
         playing = false;
         playbackUsesAudio = false;
-        StopNodeClickAudio();
         if (previewSource != null)
             previewSource.Stop();
     }
@@ -194,7 +190,6 @@ public partial class ChartTimelineWindow
 
     private void PreparePreviewClip()
     {
-        PrepareNodeClickAudio();
         if (previewSource == null) return;
 
         AudioClip clip = CanPlay() ? targetPlayer.Clip : null;

@@ -30,8 +30,6 @@ public sealed class GameSettingsSO : ScriptableObject
     [SerializeField, Min(0f)] private float scheduleLeadSeconds = 0.15f;
     [Tooltip("全局音画偏移，单位为秒。正值让谱面整体晚于音乐。")]
     [SerializeField] private float globalOffsetSeconds;
-    [SerializeField, Range(0f, 1f)]
-    private float timelineNodeClickVolume = 0.8f;
 
     [Header("Death Rewind")]
     [SerializeField, Min(0f)] private float respawnDelaySeconds = 0.35f;
@@ -97,8 +95,6 @@ public sealed class GameSettingsSO : ScriptableObject
         get => globalOffsetSeconds;
         set => globalOffsetSeconds = value;
     }
-    public float TimelineNodeClickVolume => timelineNodeClickVolume;
-
     public float RespawnDelaySeconds => respawnDelaySeconds;
     public float RewindDurationSeconds => rewindDurationSeconds;
     public int MotionSamplesPerSecond => motionSamplesPerSecond;
@@ -179,8 +175,6 @@ public sealed class GameSettingsSO : ScriptableObject
             autoPlayLimit);
 
         scheduleLeadSeconds = Mathf.Max(0f, scheduleLeadSeconds);
-        timelineNodeClickVolume =
-            Mathf.Clamp01(timelineNodeClickVolume);
 
         respawnDelaySeconds = Mathf.Max(0f, respawnDelaySeconds);
         rewindDurationSeconds =

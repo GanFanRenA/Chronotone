@@ -174,12 +174,7 @@ public partial class ChartTimelineWindow
             if (previewSource != null)
                 previewSource.pitch = playbackSpeed;
             if (playing)
-            {
                 playheadBeat = currentBeat;
-                BeginNodeClickSchedule(
-                    AudioSettings.dspTime,
-                    currentBeat);
-            }
         }
         GUILayout.Label($"{playbackSpeed:0.0}x", EditorStyles.miniLabel, GUILayout.Width(36));
 
@@ -196,19 +191,6 @@ public partial class ChartTimelineWindow
             previewEnabled = newPreviewEnabled;
             SceneView.RepaintAll();
         }
-
-        GUILayout.Space(4);
-        EditorGUI.BeginDisabledGroup(!CanUseNodeClickAudio);
-        bool newNodeClickEnabled = GUILayout.Toggle(
-            nodeClickEnabled,
-            new GUIContent(
-                "卡点音",
-                "播放经过节点时按 DSP 时间预调度固定音效。需要在 ChartPlayer 配置音效和 AudioSource 池。"),
-            EditorStyles.toolbarButton,
-            GUILayout.Width(56));
-        if (newNodeClickEnabled != nodeClickEnabled)
-            SetNodeClickEnabled(newNodeClickEnabled);
-        EditorGUI.EndDisabledGroup();
 
         EditorGUI.EndDisabledGroup();
         GUILayout.FlexibleSpace();

@@ -9,8 +9,6 @@ public class ChartPlayerEditor : Editor
     private SerializedProperty scanRootProperty;
     private SerializedProperty nodePrefabProperty;
     private SerializedProperty nodeAppearanceSetProperty;
-    private SerializedProperty timelineNodeClickClipProperty;
-    private SerializedProperty timelineNodeClickSourcesProperty;
 
     private void OnEnable()
     {
@@ -20,10 +18,6 @@ public class ChartPlayerEditor : Editor
         nodePrefabProperty = serializedObject.FindProperty("nodePrefab");
         nodeAppearanceSetProperty =
             serializedObject.FindProperty("nodeAppearanceSet");
-        timelineNodeClickClipProperty =
-            serializedObject.FindProperty("timelineNodeClickClip");
-        timelineNodeClickSourcesProperty =
-            serializedObject.FindProperty("timelineNodeClickSources");
     }
 
     public override void OnInspectorGUI()
@@ -61,18 +55,6 @@ public class ChartPlayerEditor : Editor
         EditorGUILayout.PropertyField(scanRootProperty);
         EditorGUILayout.PropertyField(nodePrefabProperty);
         EditorGUILayout.PropertyField(nodeAppearanceSetProperty);
-
-        EditorGUILayout.Space(6);
-        EditorGUILayout.LabelField(
-            "Chart Timeline Preview",
-            EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(timelineNodeClickClipProperty);
-        EditorGUILayout.PropertyField(
-            timelineNodeClickSourcesProperty,
-            new GUIContent(
-                "Node Click Sources",
-                "建议在独立音源对象上添加多个 AudioSource 并全部引用。数组留空时才使用本对象上的全部 AudioSource。"),
-            true);
 
         serializedObject.ApplyModifiedProperties();
 

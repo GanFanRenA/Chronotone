@@ -25,13 +25,6 @@ public class ChartPlayer : MonoBehaviour
     [Tooltip("按动作类型配置节点与时间轴颜色；留空时使用 Resources/NodeAppearance/NodeAppearanceSet。")]
     public NodeAppearanceSet nodeAppearanceSet;
 
-    [Header("Chart Timeline Preview")]
-    [Tooltip("Chart Timeline 播放经过节点时使用的卡点音效。")]
-    public AudioClip timelineNodeClickClip;
-    [Tooltip("用于预调度卡点音效的 AudioSource 池。留空时自动使用本对象上的所有 AudioSource。")]
-    public AudioSource[] timelineNodeClickSources =
-        System.Array.Empty<AudioSource>();
-
     [System.NonSerialized] private bool updatingPositions;
     [System.NonSerialized] private GameSettingsSO gameSettings;
     [SerializeField, HideInInspector] private int nodeDataVersion;
@@ -51,8 +44,6 @@ public class ChartPlayer : MonoBehaviour
         bakedTrackComplete &&
         !bakedTrackBlocked;
     public bool IsUpdatingPositions => updatingPositions;
-    public float TimelineNodeClickVolume =>
-        GameSettings.TimelineNodeClickVolume;
 
     public PerfectRoute CreateBakedRoute() =>
         HasBakedTrack
