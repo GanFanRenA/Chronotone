@@ -6,8 +6,8 @@ using UnityEngine;
 /// 按 beat 定时移动物体自身 Transform，只改 localPosition，不碰碰撞体开关。
 /// 通过 IStageVisibilityAnimation 暴露可见窗口：飞入开始前、飞出结束后
 /// 由 StageSceneController 隐藏渲染器（其余时间可见）。
-/// 碰撞窗口与可见窗口一致：飞入开始 ~ 飞出结束之间可碰撞，
-/// 动画尚未开始 / 已飞出后无碰撞。
+/// 碰撞窗口由 collideDuringFly 控制：开启时飞入开始 ~ 飞出结束之间可碰撞；
+/// 关闭时只在飞入结束 ~ 飞出开始之间可碰撞。动画尚未开始 / 已飞出后始终无碰撞。
 ///
 /// 目标（自身 Transform）与时间源全部自动获取，不在 Inspector 暴露：
 /// - ChartPlayer：场景内首个 ChartPlayer；Player：由其 ResolvePlayer() 解析。
@@ -51,6 +51,10 @@ public sealed class StageFlyAnimation :
     [SerializeField] private float flyOutDurationBeats = 1f;
     [Tooltip("飞出开始拍点（自原始位置出发的拍点）。")]
     [SerializeField] private float flyOutStartBeat;
+
+    [Header("Collision（碰撞）")]
+    [Tooltip("勾选后：飞入 / 飞出动画过程中保持碰撞体开启；取消则只在飞入结束到飞出开始之间可碰撞。")]
+    [SerializeField] private bool collideDuringFly = true;
 
     private ChartPlayer chartPlayer;
     private Player resolvedPlayer;
@@ -121,15 +125,31 @@ public sealed class StageFlyAnimation :
         ApplyOffset(ComputeOffset(songTime));
     }
 
-    public float CollisionEnterBeat =>
-        flyInEnabled
-            ? flyInEndBeat - flyInDurationBeats
-            : float.NegativeInfinity;
+    public float CollisionEnterBeat
+    {
+        get
+        {
+            if (!flyInEnabled)
+                return float.NegativeInfinity;
 
-    public float CollisionExitBeat =>
-        flyOutEnabled
-            ? flyOutStartBeat + flyOutDurationBeats
-            : float.PositiveInfinity;
+            return collideDuringFly
+                ? flyInEndBeat - flyInDurationBeats
+                : flyInEndBeat;
+        }
+    }
+
+    public float CollisionExitBeat
+    {
+        get
+        {
+            if (!flyOutEnabled)
+                return float.PositiveInfinity;
+
+            return collideDuringFly
+                ? flyOutStartBeat + flyOutDurationBeats
+                : flyOutStartBeat;
+        }
+    }
 
     public float VisibilityEnterBeat =>
         flyInEnabled
