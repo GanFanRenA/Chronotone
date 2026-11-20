@@ -173,7 +173,8 @@ public partial class ChartTimelineWindow
         switch (e.keyCode)
         {
             case KeyCode.Delete:
-                DeleteSelection();
+                if (selectedVfxIndex >= 0) DeleteSelectedVfxEvent();
+                else DeleteSelection();
                 break;
             case KeyCode.A:
                 if (e.control || e.command)
@@ -204,6 +205,7 @@ public partial class ChartTimelineWindow
                 break;
             case KeyCode.Escape:
                 ClearSelection();
+                selectedVfxIndex = -1;
                 SyncSelectionToUnity();
                 RequestRepaint();
                 break;

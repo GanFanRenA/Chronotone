@@ -160,34 +160,54 @@ public partial class ChartTimelineWindow : EditorWindow
 
         NodeMarker[] markers = GetMarkers();
         List<StageAnimationEvent> animationEvents = GetAnimationEvents();
+        List<StageVfxEvent> vfxEvents = GetVfxEvents();
+        ValidateVfxSelection();
 
+        float vfxLaneHeight = VfxLaneHeight;
+        float detailHeight = selectedVfxIndex >= 0 ? VfxDetailPanelHeight : 0f;
         float animationLaneHeight = Mathf.Max(
             MinAnimationLaneHeight,
-            position.height - ToolbarHeight - RulerHeight - TrackHeight - ScrollbarHeight);
+            position.height - ToolbarHeight - RulerHeight - TrackHeight -
+            vfxLaneHeight - detailHeight - ScrollbarHeight);
 
         Rect rulerRect = new Rect(0, ToolbarHeight, position.width, RulerHeight);
         Rect trackRect = new Rect(0, ToolbarHeight + RulerHeight, position.width, TrackHeight);
-        Rect animationRect = new Rect(
+        Rect vfxRect = new Rect(
             0,
             ToolbarHeight + RulerHeight + TrackHeight,
+            position.width,
+            vfxLaneHeight);
+        Rect animationRect = new Rect(
+            0,
+            ToolbarHeight + RulerHeight + TrackHeight + vfxLaneHeight,
             position.width,
             animationLaneHeight);
         Rect scrollRect = new Rect(
             0,
-            ToolbarHeight + RulerHeight + TrackHeight + animationLaneHeight,
+            ToolbarHeight + RulerHeight + TrackHeight + vfxLaneHeight +
+            animationLaneHeight,
             position.width,
             ScrollbarHeight);
+        Rect detailRect = new Rect(
+            0,
+            ToolbarHeight + RulerHeight + TrackHeight + vfxLaneHeight +
+            animationLaneHeight + ScrollbarHeight,
+            position.width,
+            detailHeight);
 
         UpdatePlayheadIfPlaying();
 
         DrawRuler(rulerRect);
         DrawTrack(trackRect, markers);
+        DrawVfxLane(vfxRect, vfxEvents);
         DrawAnimationLane(animationRect, animationEvents);
-        DrawPlayhead(rulerRect, trackRect, animationRect);
-        DrawScrollbar(scrollRect, markers, animationEvents);
+        DrawPlayhead(rulerRect, trackRect, vfxRect, animationRect);
+        DrawScrollbar(scrollRect, markers, animationEvents, vfxEvents);
         DrawBoxSelection();
         HandleInput(rulerRect, trackRect, scrollRect, markers);
+        HandleVfxInput(vfxRect);
         HandleAnimationInput(animationRect);
+        DrawVfxDetailPanel(detailRect);
 
         if (DoEdgeScroll(trackRect))
         {

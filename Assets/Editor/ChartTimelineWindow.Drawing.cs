@@ -7,11 +7,16 @@ public partial class ChartTimelineWindow
     private const float MinPlaybackSpeed = 0.1f;
     private const float MaxPlaybackSpeed = 2f;
 
-    private void DrawPlayhead(Rect rulerRect, Rect trackRect, Rect animationRect)
+    private void DrawPlayhead(
+        Rect rulerRect,
+        Rect trackRect,
+        Rect vfxRect,
+        Rect animationRect)
     {
         DrawPlayheadLine(
             rulerRect,
             trackRect,
+            vfxRect,
             animationRect,
             playStartBeat,
             new Color(1f, 0.2f, 0.2f));
@@ -20,6 +25,7 @@ public partial class ChartTimelineWindow
         DrawPlayheadLine(
             rulerRect,
             trackRect,
+            vfxRect,
             animationRect,
             playheadBeat,
             new Color(1f, 0.82f, 0.12f));
@@ -28,6 +34,7 @@ public partial class ChartTimelineWindow
     private void DrawPlayheadLine(
         Rect rulerRect,
         Rect trackRect,
+        Rect vfxRect,
         Rect animationRect,
         float beat,
         Color color)
@@ -37,6 +44,7 @@ public partial class ChartTimelineWindow
 
         EditorGUI.DrawRect(new Rect(x - 1, rulerRect.y, 2, rulerRect.height), color);
         EditorGUI.DrawRect(new Rect(x - 1, trackRect.y, 2, trackRect.height), color);
+        EditorGUI.DrawRect(new Rect(x - 1, vfxRect.y, 2, vfxRect.height), color);
         EditorGUI.DrawRect(new Rect(x - 1, animationRect.y, 2, animationRect.height), color);
         EditorGUI.DrawRect(new Rect(x - 5, rulerRect.yMax - 10, 10, 10), color);
     }
@@ -84,6 +92,7 @@ public partial class ChartTimelineWindow
         {
             StopPlayback();
             ClearSelection();
+            selectedVfxIndex = -1;
             SyncSelectionToUnity();
             InvalidateMarkerCache();
             SceneView.RepaintAll();
@@ -294,7 +303,8 @@ public partial class ChartTimelineWindow
     private void DrawScrollbar(
         Rect rect,
         NodeMarker[] markers,
-        List<StageAnimationEvent> animationEvents)
+        List<StageAnimationEvent> animationEvents,
+        List<StageVfxEvent> vfxEvents)
     {
         float viewBeats = Mathf.Max(1f, position.width) / pixelsPerBeat;
         float maxBeat = markers.Length > 0 ? markers[markers.Length - 1].beat : 0f;
@@ -304,6 +314,14 @@ public partial class ChartTimelineWindow
             {
                 float eventBeat = e.IsSpan ? e.endBeat : e.beat;
                 if (eventBeat > maxBeat) maxBeat = eventBeat;
+            }
+        }
+        if (vfxEvents != null && vfxEvents.Count > 0)
+        {
+            foreach (StageVfxEvent e in vfxEvents)
+            {
+                if (e != null && e.beat > maxBeat)
+                    maxBeat = e.beat;
             }
         }
         float furthestBeat = Mathf.Max(Mathf.Max(maxBeat, playStartBeat), playheadBeat);

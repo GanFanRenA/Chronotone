@@ -25,6 +25,11 @@ public class ChartPlayer : MonoBehaviour
     [Tooltip("按动作类型配置节点与时间轴颜色；留空时使用 Resources/NodeAppearance/NodeAppearanceSet。")]
     public NodeAppearanceSet nodeAppearanceSet;
 
+    [Header("Visual Effects")]
+    [Tooltip("视效事件列表，在 Chart Timeline 里编辑；运行时由 StageVfxDriver 触发。")]
+    [SerializeField] private List<StageVfxEvent> vfxEvents =
+        new List<StageVfxEvent>();
+
     [System.NonSerialized] private bool updatingPositions;
     [System.NonSerialized] private GameSettingsSO gameSettings;
     [SerializeField, HideInInspector] private int nodeDataVersion;
@@ -37,6 +42,10 @@ public class ChartPlayer : MonoBehaviour
     public float GlobalOffsetSeconds => GameSettings.GlobalOffsetSeconds;
 
     public IReadOnlyList<NodeData> Nodes => bakedNodes;
+    public IReadOnlyList<StageVfxEvent> VfxEvents => vfxEvents;
+#if UNITY_EDITOR
+    public List<StageVfxEvent> VfxEventsEditable => vfxEvents;
+#endif
     public bool HasStageData => clip != null && bpmTimeline != null;
     public bool HasBakedTrack =>
         bakedTrackSamples != null &&
