@@ -6,6 +6,8 @@ using UnityEngine;
 /// 按 beat 定时移动物体自身 Transform，只改 localPosition，不碰碰撞体开关。
 /// 通过 IStageVisibilityAnimation 暴露可见窗口：飞入开始前、飞出结束后
 /// 由 StageSceneController 隐藏渲染器（其余时间可见）。
+/// 碰撞窗口与可见窗口一致：飞入开始 ~ 飞出结束之间可碰撞，
+/// 动画尚未开始 / 已飞出后无碰撞。
 ///
 /// 目标（自身 Transform）与时间源全部自动获取，不在 Inspector 暴露：
 /// - ChartPlayer：场景内首个 ChartPlayer；Player：由其 ResolvePlayer() 解析。
@@ -120,10 +122,14 @@ public sealed class StageFlyAnimation :
     }
 
     public float CollisionEnterBeat =>
-        flyInEnabled ? flyInEndBeat : float.NegativeInfinity;
+        flyInEnabled
+            ? flyInEndBeat - flyInDurationBeats
+            : float.NegativeInfinity;
 
     public float CollisionExitBeat =>
-        flyOutEnabled ? flyOutStartBeat : float.PositiveInfinity;
+        flyOutEnabled
+            ? flyOutStartBeat + flyOutDurationBeats
+            : float.PositiveInfinity;
 
     public float VisibilityEnterBeat =>
         flyInEnabled
