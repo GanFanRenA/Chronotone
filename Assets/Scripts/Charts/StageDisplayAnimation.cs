@@ -18,7 +18,8 @@ using UnityEngine.Tilemaps;
 /// - 两者可同时启用，按时间轴相乘叠加。
 /// </summary>
 [DisallowMultipleComponent]
-public sealed class StageDisplayAnimation : MonoBehaviour, IStageAnimationEventSource
+public sealed class StageDisplayAnimation :
+    MonoBehaviour, IStageAnimationEventSource, IStageAnimationSource
 {
     private enum TargetKind
     {
@@ -51,12 +52,50 @@ public sealed class StageDisplayAnimation : MonoBehaviour, IStageAnimationEventS
     private Tilemap tilemap;
     private SpriteRenderer spriteRenderer;
     private Color baseColor = Color.white;
+    private StageAnimationDriver driver;
+    private bool driverDriven;
 
     private void Awake()
     {
         ResolveTimeSource();
         ResolveTarget();
         baseColor = GetColor();
+    }
+
+    private void OnEnable()
+    {
+        driver = StageAnimationDriver.FindDriver();
+        driverDriven = driver != null;
+        if (!driverDriven)
+        {
+            StageAnimationDriver.WarnMissingDriver(this);
+            return;
+        }
+
+        if (fadeInEnabled)
+        {
+            driver.RegisterWindow(
+                this,
+                fadeInEndBeat - fadeInDurationBeats,
+                fadeInEndBeat);
+        }
+
+        if (fadeOutEnabled)
+        {
+            driver.RegisterWindow(
+                this,
+                fadeOutStartBeat,
+                fadeOutStartBeat + fadeOutDurationBeats);
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (driverDriven && driver != null)
+            driver.Unregister(this);
+
+        driverDriven = false;
+        driver = null;
     }
 
     private void Start()
@@ -74,9 +113,17 @@ public sealed class StageDisplayAnimation : MonoBehaviour, IStageAnimationEventS
 
     private void Update()
     {
+        if (driverDriven)
+            return;
+
         double songTime = resolvedPlayer != null
             ? resolvedPlayer.SongTime
             : 0d;
+        ApplyAlpha(ComputeAlpha(songTime));
+    }
+
+    public void ApplyAt(double songTime)
+    {
         ApplyAlpha(ComputeAlpha(songTime));
     }
 

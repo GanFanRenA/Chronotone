@@ -15,7 +15,8 @@ using UnityEngine;
 /// - 两者可同时启用，偏移按向量相加（正常使用两者不重叠）。
 /// </summary>
 [DisallowMultipleComponent]
-public sealed class StageFlyAnimation : MonoBehaviour, IStageAnimationEventSource
+public sealed class StageFlyAnimation :
+    MonoBehaviour, IStageAnimationEventSource, IStageAnimationSource
 {
     [Header("Fly In（飞入）")]
     [Tooltip("勾选后：从「结束拍 - 时长」开始在偏移点，经过时长飞到原始位置，在结束拍抵达。")]
@@ -46,11 +47,49 @@ public sealed class StageFlyAnimation : MonoBehaviour, IStageAnimationEventSourc
     private ChartPlayer chartPlayer;
     private Player resolvedPlayer;
     private Vector3 originalLocalPosition;
+    private StageAnimationDriver driver;
+    private bool driverDriven;
 
     private void Awake()
     {
         ResolveTimeSource();
         originalLocalPosition = transform.localPosition;
+    }
+
+    private void OnEnable()
+    {
+        driver = StageAnimationDriver.FindDriver();
+        driverDriven = driver != null;
+        if (!driverDriven)
+        {
+            StageAnimationDriver.WarnMissingDriver(this);
+            return;
+        }
+
+        if (flyInEnabled)
+        {
+            driver.RegisterWindow(
+                this,
+                flyInEndBeat - flyInDurationBeats,
+                flyInEndBeat);
+        }
+
+        if (flyOutEnabled)
+        {
+            driver.RegisterWindow(
+                this,
+                flyOutStartBeat,
+                flyOutStartBeat + flyOutDurationBeats);
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (driverDriven && driver != null)
+            driver.Unregister(this);
+
+        driverDriven = false;
+        driver = null;
     }
 
     private void Start()
@@ -60,9 +99,17 @@ public sealed class StageFlyAnimation : MonoBehaviour, IStageAnimationEventSourc
 
     private void Update()
     {
+        if (driverDriven)
+            return;
+
         double songTime = resolvedPlayer != null
             ? resolvedPlayer.SongTime
             : 0d;
+        ApplyOffset(ComputeOffset(songTime));
+    }
+
+    public void ApplyAt(double songTime)
+    {
         ApplyOffset(ComputeOffset(songTime));
     }
 

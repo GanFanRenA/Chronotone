@@ -60,7 +60,8 @@ public sealed class StageLayerBinding
 /// 关卡场景控制器：按歌曲时间硬切换各 Tilemap 层的显隐。
 /// 层描述、显隐事件、场景绑定都直接序列化在本组件里（一场景一关卡，不产生额外资产）。
 /// </summary>
-public sealed class StageSceneController : MonoBehaviour, IStageAnimationEventSource
+public sealed class StageSceneController :
+    MonoBehaviour, IStageAnimationEventSource, IStageAnimationSource
 {
     [Header("Layers（层描述）")]
     [SerializeField] private List<StageTilemapLayerDef> layers =
@@ -83,6 +84,39 @@ public sealed class StageSceneController : MonoBehaviour, IStageAnimationEventSo
     private readonly Dictionary<string, StageTilemapLayerDef> defById =
         new Dictionary<string, StageTilemapLayerDef>();
     private Player resolvedPlayer;
+    private StageAnimationDriver driver;
+    private bool driverDriven;
+
+    private void OnEnable()
+    {
+        driver = StageAnimationDriver.FindDriver();
+        driverDriven = driver != null;
+        if (!driverDriven)
+        {
+            StageAnimationDriver.WarnMissingDriver(this);
+            return;
+        }
+
+        if (visibilityEvents == null)
+            return;
+
+        foreach (StageLayerVisibilityEvent e in visibilityEvents)
+        {
+            if (e == null || string.IsNullOrEmpty(e.layerId))
+                continue;
+
+            driver.RegisterDiscrete(this, e.beat);
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (driverDriven && driver != null)
+            driver.Unregister(this);
+
+        driverDriven = false;
+        driver = null;
+    }
 
     private void Start()
     {
@@ -95,9 +129,17 @@ public sealed class StageSceneController : MonoBehaviour, IStageAnimationEventSo
 
     private void Update()
     {
+        if (driverDriven)
+            return;
+
         double songTime = resolvedPlayer != null
             ? resolvedPlayer.SongTime
             : 0d;
+        ApplyState(songTime);
+    }
+
+    public void ApplyAt(double songTime)
+    {
         ApplyState(songTime);
     }
 
