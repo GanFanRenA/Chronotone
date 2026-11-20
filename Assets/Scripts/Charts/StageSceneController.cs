@@ -86,6 +86,8 @@ public sealed class StageSceneController :
         new Dictionary<string, StageTilemapLayerDef>();
     private readonly Dictionary<StageLayerBinding, IStageAppearanceAnimation[]> appearanceCache =
         new Dictionary<StageLayerBinding, IStageAppearanceAnimation[]>();
+    private readonly Dictionary<StageLayerBinding, IStageVisibilityAnimation[]> visibilityCache =
+        new Dictionary<StageLayerBinding, IStageVisibilityAnimation[]>();
     private Player resolvedPlayer;
     private StageAnimationDriver driver;
     private bool driverDriven;
@@ -195,6 +197,24 @@ public sealed class StageSceneController :
                         appearance.CollisionExitBeat);
                 }
             }
+
+            foreach (IStageVisibilityAnimation visibility in
+                     GetVisibilityComponents(binding))
+            {
+                if (visibility.VisibilityEnterBeat > float.NegativeInfinity)
+                {
+                    targetDriver.RegisterDiscrete(
+                        this,
+                        visibility.VisibilityEnterBeat);
+                }
+
+                if (visibility.VisibilityExitBeat < float.PositiveInfinity)
+                {
+                    targetDriver.RegisterDiscrete(
+                        this,
+                        visibility.VisibilityExitBeat);
+                }
+            }
         }
     }
 
@@ -204,24 +224,53 @@ public sealed class StageSceneController :
         if (appearanceCache.TryGetValue(binding, out IStageAppearanceAnimation[] cached))
             return cached;
 
-        IStageAppearanceAnimation[] result =
-            System.Array.Empty<IStageAppearanceAnimation>();
-        if (binding != null && binding.collider != null)
+        var result = new List<IStageAppearanceAnimation>();
+        foreach (MonoBehaviour behaviour in GetBindingBehaviours(binding))
         {
-            var list = new List<IStageAppearanceAnimation>();
-            MonoBehaviour[] behaviours =
-                binding.collider.GetComponentsInParent<MonoBehaviour>(true);
-            foreach (MonoBehaviour behaviour in behaviours)
-            {
-                if (behaviour is IStageAppearanceAnimation appearance)
-                    list.Add(appearance);
-            }
-
-            result = list.ToArray();
+            if (behaviour is IStageAppearanceAnimation appearance)
+                result.Add(appearance);
         }
 
-        appearanceCache[binding] = result;
-        return result;
+        IStageAppearanceAnimation[] array = result.ToArray();
+        appearanceCache[binding] = array;
+        return array;
+    }
+
+    private IStageVisibilityAnimation[] GetVisibilityComponents(
+        StageLayerBinding binding)
+    {
+        if (visibilityCache.TryGetValue(binding, out IStageVisibilityAnimation[] cached))
+            return cached;
+
+        var result = new List<IStageVisibilityAnimation>();
+        foreach (MonoBehaviour behaviour in GetBindingBehaviours(binding))
+        {
+            if (behaviour is IStageVisibilityAnimation visibility)
+                result.Add(visibility);
+        }
+
+        IStageVisibilityAnimation[] array = result.ToArray();
+        visibilityCache[binding] = array;
+        return array;
+    }
+
+    private static MonoBehaviour[] GetBindingBehaviours(StageLayerBinding binding)
+    {
+        Component anchor = GetBindingAnchor(binding);
+        return anchor != null
+            ? anchor.GetComponentsInParent<MonoBehaviour>(true)
+            : System.Array.Empty<MonoBehaviour>();
+    }
+
+    private static Component GetBindingAnchor(StageLayerBinding binding)
+    {
+        if (binding == null)
+            return null;
+        if (binding.tilemap != null)
+            return binding.tilemap;
+        if (binding.renderer != null)
+            return binding.renderer;
+        return binding.collider;
     }
 
     private void RebuildIndex()
@@ -257,7 +306,8 @@ public sealed class StageSceneController :
 
             bool visible = ResolveVisible(binding.id, currentBeat);
             bool physicallyPresent = ResolvePhysicallyPresent(binding, currentBeat);
-            ApplyVisible(binding, visible, physicallyPresent);
+            bool visibilityVisible = ResolveVisibility(binding, currentBeat);
+            ApplyVisible(binding, visible, physicallyPresent, visibilityVisible);
         }
     }
 
@@ -298,6 +348,24 @@ public sealed class StageSceneController :
                currentBeat < exitBeat - BeatEpsilon;
     }
 
+    private bool ResolveVisibility(
+        StageLayerBinding binding,
+        float currentBeat)
+    {
+        float enterBeat = float.NegativeInfinity;
+        float exitBeat = float.PositiveInfinity;
+
+        foreach (IStageVisibilityAnimation visibility in
+                 GetVisibilityComponents(binding))
+        {
+            enterBeat = Mathf.Max(enterBeat, visibility.VisibilityEnterBeat);
+            exitBeat = Mathf.Min(exitBeat, visibility.VisibilityExitBeat);
+        }
+
+        return currentBeat >= enterBeat - BeatEpsilon &&
+               currentBeat < exitBeat - BeatEpsilon;
+    }
+
     private bool GetDefaultVisible(string layerId)
     {
         if (defById.TryGetValue(layerId, out StageTilemapLayerDef def))
@@ -317,12 +385,14 @@ public sealed class StageSceneController :
     private static void ApplyVisible(
         StageLayerBinding binding,
         bool visible,
-        bool physicallyPresent)
+        bool physicallyPresent,
+        bool visibilityVisible)
     {
+        bool rendererEnabled = visible && visibilityVisible;
         if (binding.renderer != null &&
-            binding.renderer.enabled != visible)
+            binding.renderer.enabled != rendererEnabled)
         {
-            binding.renderer.enabled = visible;
+            binding.renderer.enabled = rendererEnabled;
         }
 
         bool colliderEnabled = visible && physicallyPresent;

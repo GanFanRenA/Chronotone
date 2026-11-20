@@ -4,6 +4,8 @@ using UnityEngine;
 /// <summary>
 /// 场景「飞入 / 飞出」动画组件（动画组件系列之一）。
 /// 按 beat 定时移动物体自身 Transform，只改 localPosition，不碰碰撞体开关。
+/// 通过 IStageVisibilityAnimation 暴露可见窗口：飞入开始前、飞出结束后
+/// 由 StageSceneController 隐藏渲染器（其余时间可见）。
 ///
 /// 目标（自身 Transform）与时间源全部自动获取，不在 Inspector 暴露：
 /// - ChartPlayer：场景内首个 ChartPlayer；Player：由其 ResolvePlayer() 解析。
@@ -19,7 +21,8 @@ public sealed class StageFlyAnimation :
     MonoBehaviour,
     IStageAnimationEventSource,
     IStageAnimationSource,
-    IStageAppearanceAnimation
+    IStageAppearanceAnimation,
+    IStageVisibilityAnimation
 {
     [Header("Fly In（飞入）")]
     [Tooltip("勾选后：从「结束拍 - 时长」开始在偏移点，经过时长飞到原始位置，在结束拍抵达。")]
@@ -121,6 +124,16 @@ public sealed class StageFlyAnimation :
 
     public float CollisionExitBeat =>
         flyOutEnabled ? flyOutStartBeat : float.PositiveInfinity;
+
+    public float VisibilityEnterBeat =>
+        flyInEnabled
+            ? flyInEndBeat - flyInDurationBeats
+            : float.NegativeInfinity;
+
+    public float VisibilityExitBeat =>
+        flyOutEnabled
+            ? flyOutStartBeat + flyOutDurationBeats
+            : float.PositiveInfinity;
 
     public void CollectAnimationEvents(List<StageAnimationEvent> events)
     {

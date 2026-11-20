@@ -15,6 +15,19 @@ public interface IStageAppearanceAnimation
 }
 
 /// <summary>
+/// 需要按时间窗口隐藏/显示渲染器的外观动画（当前只有飞入飞出）。
+/// 在 [VisibilityEnterBeat, VisibilityExitBeat) 之外，渲染器应被隐藏。
+/// </summary>
+public interface IStageVisibilityAnimation
+{
+    /// <summary>开始可见的拍点；无飞入时返回 float.NegativeInfinity（自始可见）。</summary>
+    float VisibilityEnterBeat { get; }
+
+    /// <summary>变回隐藏的拍点；无飞出时返回 float.PositiveInfinity（永不因该动画隐藏）。</summary>
+    float VisibilityExitBeat { get; }
+}
+
+/// <summary>
 /// 场景里所有外观型平台碰撞体的「在场时间表」。
 /// 供 PerfectRoute 模拟（烘焙 + 编辑器轨迹预览）按当前歌曲时间忽略
 /// 「尚未入场 / 已退场」的碰撞体命中。
