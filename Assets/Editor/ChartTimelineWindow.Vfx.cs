@@ -130,13 +130,13 @@ public partial class ChartTimelineWindow
         if (e == null)
             return;
 
-        const float fieldWidth = 112f;
-        const float gap = 10f;
+        const float fieldWidth = 90f;
+        const float gap = 8f;
         float x = rect.x + 8f;
         float y = rect.y + 6f;
 
         float previousLabelWidth = EditorGUIUtility.labelWidth;
-        EditorGUIUtility.labelWidth = 40f;
+        EditorGUIUtility.labelWidth = 42f;
 
         EditorGUI.BeginChangeCheck();
         float newBeat = EditorGUI.FloatField(
@@ -145,8 +145,8 @@ public partial class ChartTimelineWindow
         float newDuration = EditorGUI.FloatField(
             new Rect(x, y, fieldWidth, 18f), "时长s", e.duration);
         x += fieldWidth + gap;
-        float newAmplitude = EditorGUI.FloatField(
-            new Rect(x, y, fieldWidth, 18f), "幅度", e.amplitude);
+        float newStrength = EditorGUI.FloatField(
+            new Rect(x, y, fieldWidth, 18f), "强度", e.strength);
         x += fieldWidth + gap;
         float newFrequency = EditorGUI.FloatField(
             new Rect(x, y, fieldWidth, 18f), "频率", e.frequency);
@@ -158,7 +158,7 @@ public partial class ChartTimelineWindow
             RecordVfxUndo("Edit VFX Event");
             e.beat = Mathf.Max(0f, newBeat);
             e.duration = Mathf.Max(0f, newDuration);
-            e.amplitude = Mathf.Max(0f, newAmplitude);
+            e.strength = Mathf.Max(0f, newStrength);
             e.frequency = Mathf.Max(0f, newFrequency);
             CommitVfxEdit();
         }
@@ -189,7 +189,7 @@ public partial class ChartTimelineWindow
         if (e.kind == StageVfxEventKind.ScreenShake)
         {
             return $"屏幕震动 · beat {e.beat:0.###} · " +
-                   $"{e.duration:0.##}s · 幅度 {e.amplitude:0.##} · 频率 {e.frequency:0.##}";
+                   $"{e.duration:0.##}s · 强度 {e.strength:0.##} · 频率 {e.frequency:0.##}";
         }
 
         return $"视效 · beat {e.beat:0.###}";

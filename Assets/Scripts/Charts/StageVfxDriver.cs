@@ -80,7 +80,7 @@ public sealed class StageVfxDriver : MonoBehaviour
 
                 // 窗口内线性衰减到 0，形成「触一下、震一下、渐停」的观感。
                 float progress = (float)((songTime - start) / e.duration);
-                float gain = e.amplitude * (1f - progress);
+                float gain = e.strength * (1f - progress);
                 if (gain > amplitude)
                     amplitude = gain;
                 if (e.frequency > frequency)

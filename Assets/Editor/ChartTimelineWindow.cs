@@ -165,8 +165,10 @@ public partial class ChartTimelineWindow : EditorWindow
 
         float vfxLaneHeight = VfxLaneHeight;
         float detailHeight = selectedVfxIndex >= 0 ? VfxDetailPanelHeight : 0f;
+        float minAnimationLaneHeight =
+            detailHeight > 0f ? 0f : MinAnimationLaneHeight;
         float animationLaneHeight = Mathf.Max(
-            MinAnimationLaneHeight,
+            minAnimationLaneHeight,
             position.height - ToolbarHeight - RulerHeight - TrackHeight -
             vfxLaneHeight - detailHeight - ScrollbarHeight);
 

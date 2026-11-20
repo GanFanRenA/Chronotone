@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /// <summary>视效事件大类，用于 Chart Timeline 上色与图例。</summary>
 public enum StageVfxEventKind
@@ -24,9 +25,10 @@ public sealed class StageVfxEvent
     [Min(0f)]
     public float duration = 0.3f;
 
-    [Tooltip("震动幅度（映射为 Cinemachine 噪声的 AmplitudeGain）。")]
+    [Tooltip("震动强度（映射为 Cinemachine 噪声的 AmplitudeGain）。")]
+    [FormerlySerializedAs("amplitude")]
     [Min(0f)]
-    public float amplitude = 0.25f;
+    public float strength = 0.25f;
 
     [Tooltip("震动频率（映射为 Cinemachine 噪声的 FrequencyGain）。")]
     [Min(0f)]
