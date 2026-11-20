@@ -7,17 +7,28 @@ public partial class ChartTimelineWindow
     private const float VfxLaneHeight = 56f;
     private const float VfxLaneHeaderHeight = 16f;
     private const float VfxDotSize = 8f;
+    private const float VfxEndDotSize = 6f;
+    private const float VfxBarThickness = 4f;
     private const float VfxDetailPanelHeight = 64f;
     private const float VfxHitThreshold = 6f;
 
     private static readonly Color ScreenShakeColor =
         new Color(0.85f, 0.5f, 1f);
 
+    private enum VfxHitPart
+    {
+        None = 0,
+        Start = 1,   // 起点圆点 / 条身：改拍点
+        End = 2      // 末端圆点：改时长
+    }
+
     private int selectedVfxIndex = -1;
     private bool vfxDragging;
     private int vfxDragIndex = -1;
     private float vfxDragStartBeat;
+    private float vfxDragStartDurationBeats;
     private float vfxDragMouseStartBeat;
+    private bool vfxDragResize;
     private bool vfxDragChanged;
     private bool vfxDragRecorded;
 
@@ -80,22 +91,62 @@ public partial class ChartTimelineWindow
             if (e == null)
                 continue;
 
-            float x = rect.x + (e.beat - scrollBeat) * pixelsPerBeat;
-            if (x < -10 || x > rect.width + 10)
+            float startX = rect.x + (e.beat - scrollBeat) * pixelsPerBeat;
+            float endX = rect.x +
+                (e.beat + e.durationBeats - scrollBeat) * pixelsPerBeat;
+            float left = Mathf.Min(startX, endX);
+            float right = Mathf.Max(startX, endX);
+            if (right < -10 || left > rect.width + 10)
                 continue;
 
             Color color = ColorForVfxKind(e.kind);
-            Rect dotRect = new Rect(
-                x - VfxDotSize * 0.5f,
+            string tooltip = VfxTooltip(e);
+
+            // 时长线段。
+            if (right - left > 0.5f)
+            {
+                Color bar = new Color(color.r, color.g, color.b, 0.35f);
+                EditorGUI.DrawRect(
+                    new Rect(
+                        left,
+                        centerY - VfxBarThickness * 0.5f,
+                        right - left,
+                        VfxBarThickness),
+                    bar);
+                GUI.Label(
+                    new Rect(left, centerY - VfxDotSize, right - left, VfxDotSize * 2f),
+                    new GUIContent(string.Empty, tooltip));
+            }
+
+            // 起点圆点（拖它改拍点）。
+            Rect startDotRect = new Rect(
+                startX - VfxDotSize * 0.5f,
                 centerY - VfxDotSize * 0.5f,
                 VfxDotSize,
                 VfxDotSize);
-            DrawDot(dotRect, color);
+            DrawDot(startDotRect, color);
+            GUI.Label(startDotRect, new GUIContent(string.Empty, tooltip));
 
-            GUI.Label(dotRect, new GUIContent(string.Empty, VfxTooltip(e)));
+            // 末端圆点（拖它改时长）。
+            if (e.durationBeats > 0f)
+            {
+                Rect endDotRect = new Rect(
+                    endX - VfxEndDotSize * 0.5f,
+                    centerY - VfxEndDotSize * 0.5f,
+                    VfxEndDotSize,
+                    VfxEndDotSize);
+                DrawDot(endDotRect, color);
+                GUI.Label(endDotRect, new GUIContent(string.Empty, tooltip));
+            }
 
             if (i == selectedVfxIndex)
-                DrawSelectionOutline(InflateRect(dotRect, 2f));
+            {
+                DrawSelectionOutline(new Rect(
+                    left - 2f,
+                    centerY - VfxDotSize - 2f,
+                    Mathf.Max(VfxDotSize, right - left) + 4f,
+                    VfxDotSize * 2f + 4f));
+            }
         }
     }
 
@@ -104,7 +155,7 @@ public partial class ChartTimelineWindow
         DrawLegendItem(4f, header.y + 2f, ScreenShakeColor, "屏幕震动", 72f);
         GUI.Label(
             new Rect(84f, header.y + 2f, header.width - 88f, 14f),
-            "右键添加 · 拖动改拍点 · Delete 删除",
+            "右键添加 · 拖起点改拍点 · 拖末端改时长 · Delete 删除",
             EditorStyles.miniLabel);
     }
 
@@ -143,7 +194,7 @@ public partial class ChartTimelineWindow
             new Rect(x, y, fieldWidth, 18f), "拍点", e.beat);
         x += fieldWidth + gap;
         float newDuration = EditorGUI.FloatField(
-            new Rect(x, y, fieldWidth, 18f), "时长s", e.duration);
+            new Rect(x, y, fieldWidth, 18f), "时长拍", e.durationBeats);
         x += fieldWidth + gap;
         float newStrength = EditorGUI.FloatField(
             new Rect(x, y, fieldWidth, 18f), "强度", e.strength);
@@ -157,20 +208,11 @@ public partial class ChartTimelineWindow
         {
             RecordVfxUndo("Edit VFX Event");
             e.beat = Mathf.Max(0f, newBeat);
-            e.duration = Mathf.Max(0f, newDuration);
+            e.durationBeats = Mathf.Max(0f, newDuration);
             e.strength = Mathf.Max(0f, newStrength);
             e.frequency = Mathf.Max(0f, newFrequency);
             CommitVfxEdit();
         }
-    }
-
-    private static Rect InflateRect(Rect rect, float amount)
-    {
-        return new Rect(
-            rect.x - amount,
-            rect.y - amount,
-            rect.width + amount * 2f,
-            rect.height + amount * 2f);
     }
 
     private static Color ColorForVfxKind(StageVfxEventKind kind)
@@ -188,8 +230,8 @@ public partial class ChartTimelineWindow
     {
         if (e.kind == StageVfxEventKind.ScreenShake)
         {
-            return $"屏幕震动 · beat {e.beat:0.###} · " +
-                   $"{e.duration:0.##}s · 强度 {e.strength:0.##} · 频率 {e.frequency:0.##}";
+            return $"屏幕震动 · beat {e.beat:0.###} → {e.beat + e.durationBeats:0.###} · " +
+                   $"强度 {e.strength:0.##} · 频率 {e.frequency:0.##}";
         }
 
         return $"视效 · beat {e.beat:0.###}";
@@ -217,11 +259,16 @@ public partial class ChartTimelineWindow
             e.button == 0 &&
             rect.Contains(e.mousePosition))
         {
-            int hit = FindVfxEventAt(events, e.mousePosition.x, rect);
+            TryHitVfxEvent(
+                events,
+                e.mousePosition.x,
+                rect,
+                out int hit,
+                out VfxHitPart part);
             if (hit >= 0)
             {
                 selectedVfxIndex = hit;
-                BeginVfxDrag(e, rect, events);
+                BeginVfxDrag(e, rect, events, part);
             }
             else
             {
@@ -260,7 +307,7 @@ public partial class ChartTimelineWindow
             beat = Mathf.Round(beat / snap) * snap;
         beat = Mathf.Max(0f, beat);
 
-        int hit = FindVfxEventAt(events, mouse.x, rect);
+        TryHitVfxEvent(events, mouse.x, rect, out int hit, out VfxHitPart _);
 
         var menu = new GenericMenu();
         if (hit >= 0)
@@ -317,37 +364,83 @@ public partial class ChartTimelineWindow
             DeleteVfxEventAt(selectedVfxIndex);
     }
 
-    private int FindVfxEventAt(
+    private void TryHitVfxEvent(
         List<StageVfxEvent> events,
         float mouseX,
-        Rect rect)
+        Rect rect,
+        out int index,
+        out VfxHitPart part)
     {
+        index = -1;
+        part = VfxHitPart.None;
         if (events == null)
-            return -1;
+            return;
 
-        int best = -1;
+        // 先找圆点（末端优先用于改时长，起点用于改拍点）。
         float bestDistance = VfxHitThreshold;
         for (int i = 0; i < events.Count; i++)
         {
-            if (events[i] == null)
+            StageVfxEvent e = events[i];
+            if (e == null)
                 continue;
 
-            float x = rect.x + (events[i].beat - scrollBeat) * pixelsPerBeat;
-            float distance = Mathf.Abs(x - mouseX);
-            if (distance < bestDistance)
+            float startX = rect.x + (e.beat - scrollBeat) * pixelsPerBeat;
+            float endX = rect.x +
+                (e.beat + e.durationBeats - scrollBeat) * pixelsPerBeat;
+
+            if (e.durationBeats > 0f)
             {
-                bestDistance = distance;
-                best = i;
+                float endDistance = Mathf.Abs(endX - mouseX);
+                if (endDistance < bestDistance)
+                {
+                    bestDistance = endDistance;
+                    index = i;
+                    part = VfxHitPart.End;
+                }
+            }
+
+            float startDistance = Mathf.Abs(startX - mouseX);
+            if (startDistance <= bestDistance)
+            {
+                bestDistance = startDistance;
+                index = i;
+                part = VfxHitPart.Start;
             }
         }
 
-        return best;
+        if (index >= 0)
+            return;
+
+        // 没点到圆点，再看是否落在某段条身内。
+        for (int i = 0; i < events.Count; i++)
+        {
+            StageVfxEvent e = events[i];
+            if (e == null)
+                continue;
+
+            float startX = rect.x + (e.beat - scrollBeat) * pixelsPerBeat;
+            float endX = rect.x +
+                (e.beat + e.durationBeats - scrollBeat) * pixelsPerBeat;
+            float left = Mathf.Min(startX, endX);
+            float right = Mathf.Max(startX, endX);
+
+            if (mouseX >= left && mouseX <= right)
+            {
+                index = i;
+                part = VfxHitPart.Start; // 拖条身 = 改拍点
+                return;
+            }
+        }
     }
 
     private float ScreenXToBeatVfx(float screenX, Rect rect) =>
         scrollBeat + (screenX - rect.x) / pixelsPerBeat;
 
-    private void BeginVfxDrag(Event e, Rect rect, List<StageVfxEvent> events)
+    private void BeginVfxDrag(
+        Event e,
+        Rect rect,
+        List<StageVfxEvent> events,
+        VfxHitPart part)
     {
         if (selectedVfxIndex < 0 ||
             events == null ||
@@ -356,11 +449,14 @@ public partial class ChartTimelineWindow
             return;
         }
 
+        StageVfxEvent evt = events[selectedVfxIndex];
         vfxDragging = true;
         vfxDragChanged = false;
         vfxDragRecorded = false;
         vfxDragIndex = selectedVfxIndex;
-        vfxDragStartBeat = events[selectedVfxIndex].beat;
+        vfxDragResize = part == VfxHitPart.End;
+        vfxDragStartBeat = evt.beat;
+        vfxDragStartDurationBeats = evt.durationBeats;
         vfxDragMouseStartBeat = ScreenXToBeatVfx(e.mousePosition.x, rect);
     }
 
@@ -374,22 +470,33 @@ public partial class ChartTimelineWindow
             return;
         }
 
+        StageVfxEvent evt = events[vfxDragIndex];
         float mouseBeat = ScreenXToBeatVfx(e.mousePosition.x, rect);
         float delta = mouseBeat - vfxDragMouseStartBeat;
         if (!(e.control || e.command) && snap > 0f)
             delta = Mathf.Round(delta / snap) * snap;
 
-        float newBeat = Mathf.Max(0f, vfxDragStartBeat + delta);
-        if (Mathf.Approximately(events[vfxDragIndex].beat, newBeat))
+        float newBeat = evt.beat;
+        float newDuration = evt.durationBeats;
+        if (vfxDragResize)
+            newDuration = Mathf.Max(0f, vfxDragStartDurationBeats + delta);
+        else
+            newBeat = Mathf.Max(0f, vfxDragStartBeat + delta);
+
+        if (Mathf.Approximately(evt.beat, newBeat) &&
+            Mathf.Approximately(evt.durationBeats, newDuration))
+        {
             return;
+        }
 
         if (!vfxDragRecorded)
         {
-            RecordVfxUndo("Move VFX Event");
+            RecordVfxUndo(vfxDragResize ? "Resize VFX Event" : "Move VFX Event");
             vfxDragRecorded = true;
         }
 
-        events[vfxDragIndex].beat = newBeat;
+        evt.beat = newBeat;
+        evt.durationBeats = newDuration;
         vfxDragChanged = true;
     }
 

@@ -320,8 +320,12 @@ public partial class ChartTimelineWindow
         {
             foreach (StageVfxEvent e in vfxEvents)
             {
-                if (e != null && e.beat > maxBeat)
-                    maxBeat = e.beat;
+                if (e == null)
+                    continue;
+
+                float endBeat = e.beat + e.durationBeats;
+                if (endBeat > maxBeat)
+                    maxBeat = endBeat;
             }
         }
         float furthestBeat = Mathf.Max(Mathf.Max(maxBeat, playStartBeat), playheadBeat);

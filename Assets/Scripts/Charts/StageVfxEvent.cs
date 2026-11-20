@@ -21,9 +21,10 @@ public sealed class StageVfxEvent
     [Tooltip("视效类型。")]
     public StageVfxEventKind kind = StageVfxEventKind.ScreenShake;
 
-    [Tooltip("屏幕震动持续时间（秒）。")]
+    [Tooltip("屏幕震动持续时间（拍）。")]
+    [FormerlySerializedAs("duration")]
     [Min(0f)]
-    public float duration = 0.3f;
+    public float durationBeats = 1f;
 
     [Tooltip("震动强度（映射为 Cinemachine 噪声的 AmplitudeGain）。")]
     [FormerlySerializedAs("amplitude")]
