@@ -23,28 +23,8 @@ public partial class ChartTimelineWindow
             e.Use(); RequestRepaint(); return;
         }
 
-        if (e.type == EventType.ScrollWheel && trackRect.Contains(e.mousePosition))
-        {
-            bool ctrl = e.control || e.command;
-            if (ctrl)
-            {
-                float mouseBeat = scrollBeat + (e.mousePosition.x - trackRect.x) / pixelsPerBeat;
-                pixelsPerBeat = Mathf.Clamp(
-                    pixelsPerBeat * Mathf.Pow(1.1f, -e.delta.y),
-                    MinPixelsPerBeat, MaxPixelsPerBeat);
-                scrollBeat = Mathf.Max(
-                    MinScrollBeat,
-                    mouseBeat - (e.mousePosition.x - trackRect.x) / pixelsPerBeat);
-            }
-            else
-            {
-                float scrollDelta = (Mathf.Abs(e.delta.x) > Mathf.Abs(e.delta.y))
-                    ? e.delta.x * 100f / pixelsPerBeat
-                    : e.delta.y * 100f / pixelsPerBeat;
-                scrollBeat = Mathf.Max(MinScrollBeat, scrollBeat + scrollDelta);
-            }
-            e.Use(); RequestRepaint(); return;
-        }
+        if (HandleTimelineWheel(e, trackRect))
+            return;
 
         if (e.type == EventType.MouseDrag && e.button == 2 &&
             (rulerRect.Contains(e.mousePosition) || trackRect.Contains(e.mousePosition)))
@@ -161,6 +141,37 @@ public partial class ChartTimelineWindow
                 e.Use(); RequestRepaint(); return;
             }
         }
+    }
+
+    private bool HandleTimelineWheel(Event e, Rect laneRect)
+    {
+        if (e.type != EventType.ScrollWheel || !laneRect.Contains(e.mousePosition))
+            return false;
+
+        if (e.control || e.command)
+        {
+            float mouseBeat =
+                scrollBeat + (e.mousePosition.x - laneRect.x) / pixelsPerBeat;
+            pixelsPerBeat = Mathf.Clamp(
+                pixelsPerBeat * Mathf.Pow(1.1f, -e.delta.y),
+                MinPixelsPerBeat,
+                MaxPixelsPerBeat);
+            scrollBeat = Mathf.Max(
+                MinScrollBeat,
+                mouseBeat - (e.mousePosition.x - laneRect.x) / pixelsPerBeat);
+        }
+        else
+        {
+            float scrollDelta =
+                Mathf.Abs(e.delta.x) > Mathf.Abs(e.delta.y)
+                    ? e.delta.x * 100f / pixelsPerBeat
+                    : e.delta.y * 100f / pixelsPerBeat;
+            scrollBeat = Mathf.Max(MinScrollBeat, scrollBeat + scrollDelta);
+        }
+
+        e.Use();
+        RequestRepaint();
+        return true;
     }
 
     private bool HandleKeyboardShortcuts(Event e)

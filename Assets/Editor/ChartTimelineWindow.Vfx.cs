@@ -243,6 +243,9 @@ public partial class ChartTimelineWindow
         Event e = Event.current;
         List<StageVfxEvent> events = GetVfxEvents();
 
+        if (HandleTimelineWheel(e, rect))
+            return;
+
         bool rightClick =
             e.type == EventType.ContextClick ||
             (e.type == EventType.MouseDown && e.button == 1);

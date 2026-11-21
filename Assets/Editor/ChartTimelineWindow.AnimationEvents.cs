@@ -414,35 +414,27 @@ public partial class ChartTimelineWindow
     private void HandleAnimationInput(Rect laneRect)
     {
         Event e = Event.current;
-        Rect content = AnimationContentRect(laneRect);
         Rect scrollArea = new Rect(
             laneRect.x,
             laneRect.y + AnimationLaneHeaderHeight,
             laneRect.width,
             laneRect.height - AnimationLaneHeaderHeight);
 
-        // 滚轮：ctrl 缩放（与节点轨道一致），否则上下滚动动画内容。
-        if (e.type == EventType.ScrollWheel && scrollArea.Contains(e.mousePosition))
+        // 滚轮：默认横向滚动时间轴（与节点轨道一致），ctrl 缩放，
+        // shift 上下滚动动画内容。
+        if (e.type == EventType.ScrollWheel && laneRect.Contains(e.mousePosition))
         {
-            if (e.control || e.command)
-            {
-                float mouseBeat =
-                    scrollBeat + (e.mousePosition.x - content.x) / pixelsPerBeat;
-                pixelsPerBeat = Mathf.Clamp(
-                    pixelsPerBeat * Mathf.Pow(1.1f, -e.delta.y),
-                    MinPixelsPerBeat,
-                    MaxPixelsPerBeat);
-                scrollBeat = Mathf.Max(
-                    MinScrollBeat,
-                    mouseBeat - (e.mousePosition.x - content.x) / pixelsPerBeat);
-            }
-            else
+            if (e.shift && !(e.control || e.command) &&
+                scrollArea.Contains(e.mousePosition))
             {
                 ScrollAnimationVertically(e.delta.y * AnimationWheelScrollSpeed);
+                e.Use();
+                RequestRepaint();
+                return;
             }
-            e.Use();
-            RequestRepaint();
-            return;
+
+            if (HandleTimelineWheel(e, laneRect))
+                return;
         }
 
         if (e.type == EventType.MouseDown && e.button == 0 &&
