@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public partial class ChartTimelineWindow
@@ -179,7 +180,34 @@ public partial class ChartTimelineWindow
         scrollBeat = Mathf.Max(
             MinScrollBeat,
             playStartBeat - RedAxisLeftInsetPixels / pixelsPerBeat);
+        IncrementBeatMarkLoops();
         RequestRepaint();
+    }
+
+    private void IncrementBeatMarkLoops()
+    {
+        if (beatMarks == null)
+            return;
+
+        if (beatMarkLoopCounts == null)
+            beatMarkLoopCounts = new List<int>();
+
+        while (beatMarkLoopCounts.Count < beatMarks.Count)
+            beatMarkLoopCounts.Add(0);
+
+        for (int i = beatMarks.Count - 1; i >= 0; i--)
+        {
+            int count = beatMarkLoopCounts[i] + 1;
+            if (count >= BeatMarkMaxLoops)
+            {
+                beatMarks.RemoveAt(i);
+                beatMarkLoopCounts.RemoveAt(i);
+            }
+            else
+            {
+                beatMarkLoopCounts[i] = count;
+            }
+        }
     }
 
     private void StopPlayback()
@@ -188,6 +216,16 @@ public partial class ChartTimelineWindow
         playbackUsesAudio = false;
         if (previewSource != null)
             previewSource.Stop();
+        ResetBeatMarkLoops();
+    }
+
+    private void ResetBeatMarkLoops()
+    {
+        if (beatMarkLoopCounts == null)
+            return;
+
+        for (int i = 0; i < beatMarkLoopCounts.Count; i++)
+            beatMarkLoopCounts[i] = 0;
     }
 
     private bool CanPlay() =>

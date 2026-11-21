@@ -198,6 +198,7 @@ public partial class ChartTimelineWindow
                 break;
             case KeyCode.Backspace:
                 if (beatMarks != null) beatMarks.Clear();
+                if (beatMarkLoopCounts != null) beatMarkLoopCounts.Clear();
                 loopEnabled = false;
                 RequestRepaint();
                 break;
@@ -259,8 +260,11 @@ public partial class ChartTimelineWindow
 
         if (beatMarks == null)
             beatMarks = new List<float>();
+        if (beatMarkLoopCounts == null)
+            beatMarkLoopCounts = new List<int>();
 
         beatMarks.Add(beat);
+        beatMarkLoopCounts.Add(0);
     }
 
     private NodeMarker FindMarkerAt(NodeMarker[] markers, float mouseX, Rect trackRect)
