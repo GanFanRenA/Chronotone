@@ -28,7 +28,7 @@ public partial class ChartTimelineWindow : EditorWindow
     private const float RedAxisLeftInsetPixels = 24f;
     private const string NodePrefabPath = "Assets/Prefabs/Node.prefab";
     private const float PlaybackLeadTime = 0.1f;
-    private const int BeatMarkMaxLoops = 7;
+    private const int BeatMarkMaxLoops = 5;
     private static readonly string[] SnapLabels = { "1", "1/2", "1/4", "1/8", "1/16", "1/32", "关" };
     private static readonly float[] SnapValues = { 1f, 0.5f, 0.25f, 0.125f, 0.0625f, 0.03125f, 0f };
     private static readonly GUIContent OffsetLabel =
