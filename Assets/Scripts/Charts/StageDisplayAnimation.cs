@@ -54,7 +54,9 @@ public sealed class StageDisplayAnimation :
     private TargetKind targetKind;
     private Tilemap tilemap;
     private SpriteRenderer spriteRenderer;
+    private SpriteRenderer gravityRenderer;
     private Color baseColor = Color.white;
+    private Color gravityBaseColor = Color.white;
     private StageAnimationDriver driver;
     private bool driverDriven;
 
@@ -107,6 +109,8 @@ public sealed class StageDisplayAnimation :
         // the base color after all Awake callbacks have completed.
         if (targetKind != TargetKind.None)
             baseColor = GetColor();
+        if (gravityRenderer != null)
+            gravityBaseColor = gravityRenderer.color;
 
         if (targetKind == TargetKind.None)
         {
@@ -212,6 +216,15 @@ public sealed class StageDisplayAnimation :
         SpriteRenderer fallbackSprite = null;
         foreach (SpriteRenderer childSprite in childSprites)
         {
+            if (childSprite != null && IsGravityIndicator(childSprite.transform))
+            {
+                gravityRenderer = childSprite;
+                break;
+            }
+        }
+
+        foreach (SpriteRenderer childSprite in childSprites)
+        {
             if (childSprite == null || IsGravityIndicator(childSprite.transform))
                 continue;
 
@@ -273,6 +286,14 @@ public sealed class StageDisplayAnimation :
                 if (spriteRenderer != null && spriteRenderer.color != color)
                     spriteRenderer.color = color;
                 break;
+        }
+
+        if (gravityRenderer != null)
+        {
+            Color gravityColor = gravityBaseColor;
+            gravityColor.a *= alpha;
+            if (gravityRenderer.color != gravityColor)
+                gravityRenderer.color = gravityColor;
         }
     }
 
