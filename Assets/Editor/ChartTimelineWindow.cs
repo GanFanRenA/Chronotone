@@ -12,6 +12,7 @@ public partial class ChartTimelineWindow : EditorWindow
     [SerializeField] private float playStartBeat;
     [SerializeField] private float loopEndBeat;
     [SerializeField] private bool loopEnabled;
+    [SerializeField] private List<float> beatMarks = new List<float>();
     [SerializeField] private float playbackSpeed = 1f;
     [SerializeField] private NodeMarker nodePrefab;
     [SerializeField] private bool previewEnabled;
@@ -200,6 +201,7 @@ public partial class ChartTimelineWindow : EditorWindow
         DrawAnimationLane(animationRect, animationEvents);
         DrawLaneDividers(trackRect, vfxRect);
         DrawPlayhead(rulerRect, trackRect, vfxRect, animationRect);
+        DrawBeatMarks(rulerRect, trackRect, vfxRect, animationRect);
         DrawScrollbar(scrollRect, markers, animationEvents, vfxEvents);
         DrawBoxSelection();
 

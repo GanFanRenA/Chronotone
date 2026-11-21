@@ -60,6 +60,28 @@ public partial class ChartTimelineWindow
         EditorGUI.DrawRect(new Rect(x - 5, rulerRect.yMax - 10, 10, 10), color);
     }
 
+    private void DrawBeatMarks(
+        Rect rulerRect,
+        Rect trackRect,
+        Rect vfxRect,
+        Rect animationRect)
+    {
+        if (beatMarks == null || beatMarks.Count == 0) return;
+
+        Color color = new Color(1f, 0.9f, 0.4f, 0.9f);
+        foreach (float beat in beatMarks)
+        {
+            float x = rulerRect.x + (beat - scrollBeat) * pixelsPerBeat;
+            if (x < -2 || x > position.width + 2) continue;
+
+            EditorGUI.DrawRect(new Rect(x, rulerRect.y, 1, rulerRect.height), color);
+            EditorGUI.DrawRect(new Rect(x, trackRect.y, 1, trackRect.height), color);
+            EditorGUI.DrawRect(new Rect(x, vfxRect.y, 1, vfxRect.height), color);
+            EditorGUI.DrawRect(new Rect(x, animationRect.y, 1, animationRect.height), color);
+            EditorGUI.DrawRect(new Rect(x - 2, rulerRect.y, 5, 4), color);
+        }
+    }
+
     private bool DoEdgeScroll(Rect trackRect)
     {
         if (!draggingNodes && !boxSelecting) return false;

@@ -197,6 +197,7 @@ public partial class ChartTimelineWindow
                 else DeleteSelection();
                 break;
             case KeyCode.Backspace:
+                if (beatMarks != null) beatMarks.Clear();
                 loopEnabled = false;
                 RequestRepaint();
                 break;
@@ -227,6 +228,11 @@ public partial class ChartTimelineWindow
                 CreateNodeAtPlayhead();
                 RequestRepaint();
                 break;
+            case KeyCode.K:
+                if (e.control || e.command || e.alt) return false;
+                AddBeatMarkAtPlayhead();
+                RequestRepaint();
+                break;
             case KeyCode.Escape:
                 ClearSelection();
                 selectedVfxIndex = -1;
@@ -245,6 +251,24 @@ public partial class ChartTimelineWindow
 
         e.Use();
         return true;
+    }
+
+    private void AddBeatMarkAtPlayhead()
+    {
+        float beat = Mathf.Max(0f, playheadBeat);
+        if (snap > 0f)
+            beat = Mathf.Round(beat / snap) * snap;
+
+        if (beatMarks == null)
+            beatMarks = new List<float>();
+
+        foreach (float existing in beatMarks)
+        {
+            if (Mathf.Abs(existing - beat) < DuplicateBeatEpsilon)
+                return;
+        }
+
+        beatMarks.Add(beat);
     }
 
     private NodeMarker FindMarkerAt(NodeMarker[] markers, float mouseX, Rect trackRect)
