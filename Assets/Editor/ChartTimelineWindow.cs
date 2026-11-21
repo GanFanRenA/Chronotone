@@ -10,6 +10,8 @@ public partial class ChartTimelineWindow : EditorWindow
     [SerializeField] private float snap = 0.25f;
     [SerializeField] private float playheadBeat;
     [SerializeField] private float playStartBeat;
+    [SerializeField] private float loopEndBeat;
+    [SerializeField] private bool loopEnabled;
     [SerializeField] private float playbackSpeed = 1f;
     [SerializeField] private NodeMarker nodePrefab;
     [SerializeField] private bool previewEnabled;

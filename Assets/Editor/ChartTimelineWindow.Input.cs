@@ -23,6 +23,15 @@ public partial class ChartTimelineWindow
             e.Use(); RequestRepaint(); return;
         }
 
+        if (e.type == EventType.MouseDown && e.button == 1 && rulerRect.Contains(e.mousePosition))
+        {
+            float newBeat = scrollBeat + (e.mousePosition.x - rulerRect.x) / pixelsPerBeat;
+            if (snap > 0f) newBeat = Mathf.Round(newBeat / snap) * snap;
+            loopEndBeat = Mathf.Max(0f, newBeat);
+            loopEnabled = true;
+            e.Use(); RequestRepaint(); return;
+        }
+
         if (HandleTimelineWheel(e, trackRect))
             return;
 
@@ -186,6 +195,10 @@ public partial class ChartTimelineWindow
             case KeyCode.Delete:
                 if (selectedVfxIndex >= 0) DeleteSelectedVfxEvent();
                 else DeleteSelection();
+                break;
+            case KeyCode.Backspace:
+                loopEnabled = false;
+                RequestRepaint();
                 break;
             case KeyCode.A:
                 if (e.control || e.command)

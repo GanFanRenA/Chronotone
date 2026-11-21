@@ -21,6 +21,17 @@ public partial class ChartTimelineWindow
             playStartBeat,
             new Color(1f, 0.2f, 0.2f));
 
+        if (loopEnabled)
+        {
+            DrawPlayheadLine(
+                rulerRect,
+                trackRect,
+                vfxRect,
+                animationRect,
+                loopEndBeat,
+                new Color(0.25f, 0.55f, 1f));
+        }
+
         if (!playing && Mathf.Approximately(playStartBeat, playheadBeat)) return;
         DrawPlayheadLine(
             rulerRect,
@@ -132,10 +143,14 @@ public partial class ChartTimelineWindow
         }
         EditorGUI.EndDisabledGroup();
 
+        string playheadLabel =
+            $"红:{playStartBeat:0.##}  黄:{playheadBeat:0.##}";
+        if (loopEnabled)
+            playheadLabel += $"  蓝:{loopEndBeat:0.##}";
         GUILayout.Label(
-            $"红:{playStartBeat:0.##}  黄:{playheadBeat:0.##}",
+            playheadLabel,
             EditorStyles.miniLabel,
-            GUILayout.Width(122));
+            GUILayout.Width(170));
 
         GUILayout.FlexibleSpace();
         GUILayout.Label($"{pixelsPerBeat:0.#} px/beat", EditorStyles.miniLabel);
@@ -329,6 +344,8 @@ public partial class ChartTimelineWindow
             }
         }
         float furthestBeat = Mathf.Max(Mathf.Max(maxBeat, playStartBeat), playheadBeat);
+        if (loopEnabled)
+            furthestBeat = Mathf.Max(furthestBeat, loopEndBeat);
         float totalBeats = Mathf.Max(
             Mathf.Max(viewBeats, furthestBeat + 4f),
             scrollBeat + viewBeats);

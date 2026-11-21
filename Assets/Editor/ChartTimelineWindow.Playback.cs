@@ -49,6 +49,12 @@ public partial class ChartTimelineWindow
                 startSec + elapsed * playbackSpeed);
         }
 
+        if (loopEnabled && loopEndBeat > playStartBeat && playheadBeat >= loopEndBeat)
+        {
+            LoopBackToStart();
+            return;
+        }
+
         float viewBeats = Mathf.Max(1f, position.width) / pixelsPerBeat;
         if (playheadBeat > scrollBeat + viewBeats * 0.85f)
             scrollBeat = Mathf.Max(
@@ -160,6 +166,16 @@ public partial class ChartTimelineWindow
     private void FocusPlayStartBeat()
     {
         playheadBeat = playStartBeat;
+        scrollBeat = Mathf.Max(
+            MinScrollBeat,
+            playStartBeat - RedAxisLeftInsetPixels / pixelsPerBeat);
+        RequestRepaint();
+    }
+
+    private void LoopBackToStart()
+    {
+        playheadBeat = playStartBeat;
+        StartPlayback();
         scrollBeat = Mathf.Max(
             MinScrollBeat,
             playStartBeat - RedAxisLeftInsetPixels / pixelsPerBeat);
