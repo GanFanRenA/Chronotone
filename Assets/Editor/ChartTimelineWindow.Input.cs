@@ -256,8 +256,6 @@ public partial class ChartTimelineWindow
     private void AddBeatMarkAtPlayhead()
     {
         float beat = Mathf.Max(0f, playheadBeat);
-        if (snap > 0f)
-            beat = Mathf.Round(beat / snap) * snap;
 
         if (beatMarks == null)
             beatMarks = new List<float>();
