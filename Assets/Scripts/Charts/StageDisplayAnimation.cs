@@ -203,12 +203,40 @@ public sealed class StageDisplayAnimation :
             return;
         }
 
-        SpriteRenderer childSprite = GetComponentInChildren<SpriteRenderer>(true);
-        if (childSprite != null)
+        SpriteRenderer[] childSprites = GetComponentsInChildren<SpriteRenderer>(true);
+        SpriteRenderer fallbackSprite = null;
+        foreach (SpriteRenderer childSprite in childSprites)
         {
-            spriteRenderer = childSprite;
+            if (childSprite == null || IsGravityIndicator(childSprite.transform))
+                continue;
+
+            if (childSprite.gameObject.name == "Apperance")
+            {
+                spriteRenderer = childSprite;
+                targetKind = TargetKind.SpriteRenderer;
+                return;
+            }
+
+            if (fallbackSprite == null)
+                fallbackSprite = childSprite;
+        }
+
+        if (fallbackSprite != null)
+        {
+            spriteRenderer = fallbackSprite;
             targetKind = TargetKind.SpriteRenderer;
         }
+    }
+
+    private static bool IsGravityIndicator(Transform candidate)
+    {
+        for (Transform current = candidate; current != null; current = current.parent)
+        {
+            if (current.name == "GravityNode" || current.name == "GravityDot")
+                return true;
+        }
+
+        return false;
     }
 
     private Color GetColor()
