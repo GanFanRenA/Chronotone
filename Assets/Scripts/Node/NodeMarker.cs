@@ -128,8 +128,26 @@ public class NodeMarker : MonoBehaviour
 
     private void EnsureRenderer()
     {
-        if (nodeRenderer == null)
-            TryGetComponent(out nodeRenderer);
+        if (nodeRenderer != null)
+            return;
+
+        // 旧 Prefab 里 SpriteRenderer 直接挂在根物体上。
+        TryGetComponent(out nodeRenderer);
+        if (nodeRenderer != null)
+            return;
+
+        // 新 Prefab 把节点本体 Sprite 放在子物体上（Sprite/Apperance），
+        // 同层级还放了一个 GravityNode 子物体作为重力圆心。先解析重力圆心，
+        // 再取子物体里第一个不是重力圆心的 SpriteRenderer 作为节点本体。
+        EnsureGravityDot();
+        foreach (SpriteRenderer candidate in
+                 GetComponentsInChildren<SpriteRenderer>(true))
+        {
+            if (candidate == null || candidate == gravityDot)
+                continue;
+            nodeRenderer = candidate;
+            return;
+        }
     }
 
     private void EnsureGravityDot()
@@ -137,10 +155,30 @@ public class NodeMarker : MonoBehaviour
         if (gravityDot != null)
             return;
 
-        // 允许直接把子物体命名成 GravityDot，省去手动拖引用。
-        Transform dot = transform.Find("GravityDot");
-        if (dot != null)
-            dot.TryGetComponent(out gravityDot);
+        // 允许把重力圆心子物体命名成 GravityNode（新 Prefab，可能嵌套在 Sprite 下）
+        // 或 GravityDot（旧命名），省去手动拖引用。递归查找以兼容嵌套层级。
+        gravityDot = FindChildSprite(transform, "GravityNode")
+            ?? FindChildSprite(transform, "GravityDot");
+    }
+
+    private static SpriteRenderer FindChildSprite(
+        Transform parent,
+        string childName)
+    {
+        foreach (Transform child in parent)
+        {
+            if (child.name == childName &&
+                child.TryGetComponent(out SpriteRenderer renderer))
+            {
+                return renderer;
+            }
+
+            SpriteRenderer nested = FindChildSprite(child, childName);
+            if (nested != null)
+                return nested;
+        }
+
+        return null;
     }
 
     private void ReportMissingGravityDot()
@@ -155,8 +193,8 @@ public class NodeMarker : MonoBehaviour
 
         missingGravityDotReported = true;
         Debug.LogWarning(
-            "NodeMarker 找不到 GravityDot：请在 Node.prefab 下添加一个名为 " +
-            "GravityDot 的子物体，挂白色 Circle 的 SpriteRenderer（缩放约 0.3）。" +
+            "NodeMarker 找不到 GravityNode：请在 Node.prefab 下添加一个名为 " +
+            "GravityNode 的子物体，挂白色 Circle 的 SpriteRenderer（缩放约 0.1）。" +
             "也可以手动把该 SpriteRenderer 拖到 Gravity Indicator 字段。",
             this);
 #endif
