@@ -260,12 +260,6 @@ public partial class ChartTimelineWindow
         if (beatMarks == null)
             beatMarks = new List<float>();
 
-        foreach (float existing in beatMarks)
-        {
-            if (Mathf.Abs(existing - beat) < DuplicateBeatEpsilon)
-                return;
-        }
-
         beatMarks.Add(beat);
     }
 
