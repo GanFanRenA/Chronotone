@@ -62,7 +62,6 @@ public sealed class StageDisplayAnimation :
     {
         ResolveTimeSource();
         ResolveTarget();
-        baseColor = GetColor();
     }
 
     private void OnEnable()
@@ -103,6 +102,12 @@ public sealed class StageDisplayAnimation :
 
     private void Start()
     {
+        // Node.prefab places its visible renderer on the nested Sprite/Apperance
+        // object. NodeMarker may apply the action color during Awake, so capture
+        // the base color after all Awake callbacks have completed.
+        if (targetKind != TargetKind.None)
+            baseColor = GetColor();
+
         if (targetKind == TargetKind.None)
         {
             Debug.LogWarning(
