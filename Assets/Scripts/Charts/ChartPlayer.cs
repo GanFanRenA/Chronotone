@@ -12,11 +12,17 @@ public class ChartPlayer : MonoBehaviour
     [SerializeField] private BpmTimeline bpmTimeline = new BpmTimeline();
 
     [Header("Baked")]
-    [SerializeField] private NodeData[] bakedNodes = System.Array.Empty<NodeData>();
-    [SerializeField] private PerfectRouteSample[] bakedTrackSamples =
+    [Tooltip("烘焙产物资产。由 “Bake Stage” 生成，场景/预制体实例里只保存这一个引用。" +
+             "不要把上万条采样直接序列化在组件上，否则 Unity 会写成逐元素覆盖，打开场景极慢。")]
+    [SerializeField] private BakedStageData bakedData;
+
+    // 旧版内联烘焙数据，只为兼容与迁移保留；新烘焙只写 bakedData。
+    [HideInInspector, SerializeField] private NodeData[] bakedNodes =
+        System.Array.Empty<NodeData>();
+    [HideInInspector, SerializeField] private PerfectRouteSample[] bakedTrackSamples =
         System.Array.Empty<PerfectRouteSample>();
-    [SerializeField] private bool bakedTrackBlocked;
-    [SerializeField] private bool bakedTrackComplete;
+    [HideInInspector, SerializeField] private bool bakedTrackBlocked;
+    [HideInInspector, SerializeField] private bool bakedTrackComplete;
 
     [Header("Scan & Appearance")]
     public Transform scanRoot;
@@ -41,25 +47,34 @@ public class ChartPlayer : MonoBehaviour
 
     public float GlobalOffsetSeconds => GameSettings.GlobalOffsetSeconds;
 
-    public IReadOnlyList<NodeData> Nodes => bakedNodes;
+    public BakedStageData BakedData => bakedData;
+    public IReadOnlyList<NodeData> Nodes =>
+        bakedData != null ? bakedData.Nodes : bakedNodes;
     public IReadOnlyList<StageVfxEvent> VfxEvents => vfxEvents;
 #if UNITY_EDITOR
     public List<StageVfxEvent> VfxEventsEditable => vfxEvents;
 #endif
     public bool HasStageData => clip != null && bpmTimeline != null;
     public bool HasBakedTrack =>
-        bakedTrackSamples != null &&
-        bakedTrackSamples.Length > 0 &&
-        bakedTrackComplete &&
-        !bakedTrackBlocked;
+        bakedData != null
+            ? bakedData.HasRoute
+            : bakedTrackSamples != null &&
+              bakedTrackSamples.Length > 0 &&
+              bakedTrackComplete &&
+              !bakedTrackBlocked;
     public bool IsUpdatingPositions => updatingPositions;
+
+    /// <summary>还在用旧版内联数组（还没迁移到独立资产）。</summary>
+    public bool HasLegacyBakedData =>
+        (bakedNodes != null && bakedNodes.Length > 0) ||
+        (bakedTrackSamples != null && bakedTrackSamples.Length > 0);
 
     public PerfectRoute CreateBakedRoute() =>
         HasBakedTrack
             ? new PerfectRoute(
-                bakedTrackSamples,
-                bakedTrackBlocked,
-                bakedTrackComplete)
+                bakedData != null ? bakedData.SamplesArray : bakedTrackSamples,
+                bakedData != null ? bakedData.Blocked : bakedTrackBlocked,
+                bakedData != null ? bakedData.Complete : bakedTrackComplete)
             : null;
 
     public GameSettingsSO GameSettings
@@ -275,7 +290,8 @@ public class ChartPlayer : MonoBehaviour
 
     /// <summary>
     /// 显式烘焙（编辑器内执行一次）：扫描场景 NodeMarker → 生成节点缓存 → 物理模拟
-    /// 完美路径 → 把结果序列化写回本组件。运行阶段只反序列化，不重新模拟。
+    /// 完美路径 → 结果写进本场景的 BakedStageData 资产（本组件只保存引用）。
+    /// 运行阶段只反序列化，不重新模拟。
     /// </summary>
     [ContextMenu("Bake Stage")]
     public void Bake()
@@ -289,10 +305,19 @@ public class ChartPlayer : MonoBehaviour
             return;
         }
 
+        Transform root = scanRoot != null ? scanRoot : transform;
+        if (root.GetComponentsInChildren<NodeMarker>(false).Length == 0)
+        {
+            Debug.LogError(
+                "Bake 已取消：扫描范围内没有任何启用的 NodeMarker。" +
+                "空谱面只会把整首歌模拟成上万条采样，没有意义。",
+                this);
+            return;
+        }
+
         EnsureNodeDataMigrated();
         UpdatePos();
 
-        Transform root = scanRoot != null ? scanRoot : transform;
         NodeMarker[] markers = root.GetComponentsInChildren<NodeMarker>(false);
 
         System.Array.Sort(markers, (a, b) =>
@@ -332,26 +357,30 @@ public class ChartPlayer : MonoBehaviour
         if (!TrySimulateRoute(nodes, out PerfectRoute route))
             return;
 
-        bakedNodes = nodes.ToArray();
-
         PerfectRouteSample[] samples = new PerfectRouteSample[route.Count];
         for (int i = 0; i < route.Count; i++)
             samples[i] = route.Samples[i];
-        bakedTrackSamples = samples;
-        bakedTrackBlocked = route.Blocked;
-        bakedTrackComplete = route.IsComplete;
 
 #if UNITY_EDITOR
-        EditorUtility.SetDirty(this);
-        var scene = gameObject.scene;
-        if (scene.IsValid() && !string.IsNullOrEmpty(scene.path))
-            EditorSceneManager.MarkSceneDirty(scene);
-#endif
+        BakedStageData data = GetOrCreateBakedDataAsset();
+        if (data == null)
+            return;
+
+        data.SetData(nodes.ToArray(), samples, route.Blocked, route.IsComplete);
+        EditorUtility.SetDirty(data);
+        AssetDatabase.SaveAssets();
+
+        bakedData = data;
+        ClearLegacyBakedData();
+        NotifyBakedDataChanged();
 
         Debug.Log(
-            $"烘焙完成：{bakedNodes.Length} 个节点，" +
-            $"{bakedTrackSamples.Length} 个轨道样本。",
+            $"烘焙完成：{nodes.Count} 个节点，{samples.Length} 个轨道样本，" +
+            $"已写入 {AssetDatabase.GetAssetPath(data)}。",
             this);
+#else
+        Debug.LogError("Bake 只能在编辑器里执行。", this);
+#endif
     }
 
     private bool TrySimulateRoute(
@@ -619,6 +648,118 @@ public class ChartPlayer : MonoBehaviour
             : string.Empty;
         return EditorPlayStartBeatPrefix +
             System.Uri.EscapeDataString(scenePath);
+    }
+
+    /// <summary>本场景专属的烘焙资产路径（场景旁边的 “&lt;场景名&gt; Baked.asset”）。</summary>
+    public string GetBakedDataAssetPath()
+    {
+        var scene = gameObject.scene;
+        if (!scene.IsValid() || string.IsNullOrEmpty(scene.path))
+            return null;
+
+        string folder = System.IO.Path.GetDirectoryName(scene.path);
+        if (string.IsNullOrEmpty(folder))
+            return null;
+
+        folder = folder.Replace('\\', '/');
+        string fileName =
+            System.IO.Path.GetFileNameWithoutExtension(scene.path) + " Baked.asset";
+        return $"{folder}/{fileName}";
+    }
+
+    private BakedStageData GetOrCreateBakedDataAsset()
+    {
+        string path = GetBakedDataAssetPath();
+        if (string.IsNullOrEmpty(path))
+        {
+            Debug.LogError(
+                "Bake 需要场景已保存：烘焙结果要存到场景旁边的 " +
+                "“<场景名> Baked.asset”。",
+                this);
+            return null;
+        }
+
+        if (bakedData != null &&
+            string.Equals(
+                AssetDatabase.GetAssetPath(bakedData),
+                path,
+                System.StringComparison.OrdinalIgnoreCase))
+        {
+            return bakedData;
+        }
+
+        // 从别的关卡复制过来的引用不要覆盖原资产，改回本场景自己的资产。
+        BakedStageData existing = AssetDatabase.LoadAssetAtPath<BakedStageData>(path);
+        if (existing != null)
+            return existing;
+
+        BakedStageData created = ScriptableObject.CreateInstance<BakedStageData>();
+        AssetDatabase.CreateAsset(created, AssetDatabase.GenerateUniqueAssetPath(path));
+        return created;
+    }
+
+    private void ClearLegacyBakedData()
+    {
+        bakedNodes = System.Array.Empty<NodeData>();
+        bakedTrackSamples = System.Array.Empty<PerfectRouteSample>();
+        bakedTrackBlocked = false;
+        bakedTrackComplete = false;
+    }
+
+    private void NotifyBakedDataChanged()
+    {
+        EditorUtility.SetDirty(this);
+
+        if (PrefabUtility.IsPartOfPrefabAsset(this))
+        {
+            AssetDatabase.SaveAssets();
+            return;
+        }
+
+        if (PrefabUtility.IsPartOfPrefabInstance(this))
+            PrefabUtility.RecordPrefabInstancePropertyModifications(this);
+
+        var scene = gameObject.scene;
+        if (scene.IsValid() && !string.IsNullOrEmpty(scene.path))
+            EditorSceneManager.MarkSceneDirty(scene);
+    }
+
+    /// <summary>
+    /// 把旧版内联烘焙数组搬到独立资产（不重新模拟），
+    /// 避免继续把上万条采样写成场景/预制体实例的逐元素覆盖。
+    /// </summary>
+    [ContextMenu("迁移旧烘焙数据到独立资产")]
+    public void MigrateLegacyBakedData()
+    {
+        if (Application.isPlaying || bakedData != null)
+            return;
+
+        if (!HasLegacyBakedData)
+        {
+            Debug.LogWarning("没有可迁移的旧烘焙数据。", this);
+            return;
+        }
+
+        BakedStageData data = GetOrCreateBakedDataAsset();
+        if (data == null)
+            return;
+
+        data.SetData(
+            bakedNodes,
+            bakedTrackSamples,
+            bakedTrackBlocked,
+            bakedTrackComplete);
+        EditorUtility.SetDirty(data);
+        AssetDatabase.SaveAssets();
+
+        bakedData = data;
+        ClearLegacyBakedData();
+        NotifyBakedDataChanged();
+
+        Debug.Log(
+            $"已迁移烘焙数据到 {AssetDatabase.GetAssetPath(data)}。" +
+            "场景/预制体里的旧内联数组已清空。",
+            this);
     }
 
     [InitializeOnLoadMethod]

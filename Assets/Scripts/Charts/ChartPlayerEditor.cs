@@ -6,6 +6,7 @@ public class ChartPlayerEditor : Editor
 {
     private SerializedProperty clipProperty;
     private SerializedProperty bpmTimelineProperty;
+    private SerializedProperty bakedDataProperty;
     private SerializedProperty scanRootProperty;
     private SerializedProperty nodePrefabProperty;
     private SerializedProperty nodeAppearanceSetProperty;
@@ -14,6 +15,7 @@ public class ChartPlayerEditor : Editor
     {
         clipProperty = serializedObject.FindProperty("clip");
         bpmTimelineProperty = serializedObject.FindProperty("bpmTimeline");
+        bakedDataProperty = serializedObject.FindProperty("bakedData");
         scanRootProperty = serializedObject.FindProperty("scanRoot");
         nodePrefabProperty = serializedObject.FindProperty("nodePrefab");
         nodeAppearanceSetProperty =
@@ -36,12 +38,24 @@ public class ChartPlayerEditor : Editor
         EditorGUILayout.LabelField(
             "Baked（烘焙产物，运行只读）",
             EditorStyles.boldLabel);
-        if (p.HasBakedTrack)
+        EditorGUILayout.PropertyField(bakedDataProperty);
+
+        BakedStageData data = p.BakedData;
+        if (data != null && p.HasBakedTrack)
         {
-            int nodeCount = p.Nodes != null ? p.Nodes.Count : 0;
             EditorGUILayout.HelpBox(
-                $"已烘焙：{nodeCount} 个节点。运行阶段直接读取缓存，不会重新烘焙。",
+                $"已烘焙：{data.NodeCount} 个节点，" +
+                $"{data.SampleCount} 个轨道样本。\n" +
+                "运行阶段直接读取该资产，不会重新烘焙。",
                 MessageType.Info);
+        }
+        else if (data == null && p.HasLegacyBakedData)
+        {
+            EditorGUILayout.HelpBox(
+                $"旧版内联烘焙数据：{p.Nodes.Count} 个节点。\n" +
+                "内联数组会被 Unity 拆成逐元素覆盖写进场景，" +
+                "上万条采样会让场景打开极慢。建议迁移到独立资产。",
+                MessageType.Warning);
         }
         else
         {
@@ -57,6 +71,12 @@ public class ChartPlayerEditor : Editor
         EditorGUILayout.PropertyField(nodeAppearanceSetProperty);
 
         serializedObject.ApplyModifiedProperties();
+
+        if (data == null && p.HasLegacyBakedData)
+        {
+            if (GUILayout.Button("迁移旧烘焙数据到独立资产"))
+                p.MigrateLegacyBakedData();
+        }
 
         EditorGUILayout.Space(6);
         using (new EditorGUI.DisabledScope(Application.isPlaying))
