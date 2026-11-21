@@ -16,7 +16,6 @@ public partial class ChartTimelineWindow : EditorWindow
 
     private const float ToolbarHeight = 54f;
     private const float RulerHeight = 32f;
-    private const float TrackHeight = 40f;
     private const float ScrollbarHeight = 16f;
     private const float MinPixelsPerBeat = 4f;
     private const float MaxPixelsPerBeat = 400f;
@@ -163,37 +162,31 @@ public partial class ChartTimelineWindow : EditorWindow
         List<StageVfxEvent> vfxEvents = GetVfxEvents();
         ValidateVfxSelection();
 
-        float vfxLaneHeight = VfxLaneHeight;
         float detailHeight = selectedVfxIndex >= 0 ? VfxDetailPanelHeight : 0f;
-        float minAnimationLaneHeight =
-            detailHeight > 0f ? 0f : MinAnimationLaneHeight;
-        float animationLaneHeight = Mathf.Max(
-            minAnimationLaneHeight,
-            position.height - ToolbarHeight - RulerHeight - TrackHeight -
-            vfxLaneHeight - detailHeight - ScrollbarHeight);
+        ResolveLaneHeights(detailHeight, out float nodeHeight, out float vfxHeight, out float animationHeight);
 
         Rect rulerRect = new Rect(0, ToolbarHeight, position.width, RulerHeight);
-        Rect trackRect = new Rect(0, ToolbarHeight + RulerHeight, position.width, TrackHeight);
+        Rect trackRect = new Rect(0, ToolbarHeight + RulerHeight, position.width, nodeHeight);
         Rect vfxRect = new Rect(
             0,
-            ToolbarHeight + RulerHeight + TrackHeight,
+            ToolbarHeight + RulerHeight + nodeHeight,
             position.width,
-            vfxLaneHeight);
+            vfxHeight);
         Rect animationRect = new Rect(
             0,
-            ToolbarHeight + RulerHeight + TrackHeight + vfxLaneHeight,
+            ToolbarHeight + RulerHeight + nodeHeight + vfxHeight,
             position.width,
-            animationLaneHeight);
+            animationHeight);
         Rect scrollRect = new Rect(
             0,
-            ToolbarHeight + RulerHeight + TrackHeight + vfxLaneHeight +
-            animationLaneHeight,
+            ToolbarHeight + RulerHeight + nodeHeight + vfxHeight +
+            animationHeight,
             position.width,
             ScrollbarHeight);
         Rect detailRect = new Rect(
             0,
-            ToolbarHeight + RulerHeight + TrackHeight + vfxLaneHeight +
-            animationLaneHeight + ScrollbarHeight,
+            ToolbarHeight + RulerHeight + nodeHeight + vfxHeight +
+            animationHeight + ScrollbarHeight,
             position.width,
             detailHeight);
 
@@ -203,12 +196,17 @@ public partial class ChartTimelineWindow : EditorWindow
         DrawTrack(trackRect, markers);
         DrawVfxLane(vfxRect, vfxEvents);
         DrawAnimationLane(animationRect, animationEvents);
+        DrawLaneDividers(trackRect, vfxRect);
         DrawPlayhead(rulerRect, trackRect, vfxRect, animationRect);
         DrawScrollbar(scrollRect, markers, animationEvents, vfxEvents);
         DrawBoxSelection();
-        HandleInput(rulerRect, trackRect, scrollRect, markers);
-        HandleVfxInput(vfxRect);
-        HandleAnimationInput(animationRect);
+
+        if (!HandleLaneDividerInput(trackRect, vfxRect, detailHeight))
+        {
+            HandleInput(rulerRect, trackRect, scrollRect, markers);
+            HandleVfxInput(vfxRect);
+            HandleAnimationInput(animationRect);
+        }
         DrawVfxDetailPanel(detailRect);
 
         if (DoEdgeScroll(trackRect))

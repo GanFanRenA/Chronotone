@@ -4,7 +4,6 @@ using UnityEngine;
 
 public partial class ChartTimelineWindow
 {
-    private const float VfxLaneHeight = 56f;
     private const float VfxLaneHeaderHeight = 16f;
     private const float VfxDotSize = 8f;
     private const float VfxEndDotSize = 6f;
