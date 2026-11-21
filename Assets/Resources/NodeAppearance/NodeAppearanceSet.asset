@@ -12,6 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8a7d3e62b3449f9a1f4a0bc2a47eb53, type: 3}
   m_Name: NodeAppearanceSet
   m_EditorClassIdentifier: Assembly-CSharp::NodeAppearanceSet
+  actionAppearances:
+  - action: 0
+    nodeColor: {r: 0.2, g: 0.65, b: 1, a: 0.7}
+    timelineColor: {r: 0.2, g: 0.65, b: 1, a: 1}
+  - action: 1
+    nodeColor: {r: 1, g: 0.75311047, b: 0, a: 0.7}
+    timelineColor: {r: 1, g: 0.75686276, b: 0, a: 1}
+  - action: 2
+    nodeColor: {r: 1, g: 0.28, b: 0.18, a: 0.7}
+    timelineColor: {r: 1, g: 0.28, b: 0.18, a: 1}
+  - action: 3
+    nodeColor: {r: 0.15265143, g: 1, b: 0, a: 0.7}
+    timelineColor: {r: 0.15294118, g: 1, b: 0, a: 1}
   appearances:
   - type: 0
     nodeColor: {r: 1, g: 0.75311047, b: 0, a: 0.7}
@@ -34,3 +47,4 @@ MonoBehaviour:
   - type: 6
     nodeColor: {r: 0.45, g: 1, b: 0.35, a: 0.7}
     timelineColor: {r: 0.45, g: 1, b: 0.35, a: 1}
+  migrated: 1
