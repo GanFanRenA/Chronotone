@@ -341,6 +341,136 @@ public partial class ChartTimelineWindow
         RequestRepaint();
     }
 
+    private void CopySelection()
+    {
+        if (selection.Count == 0)
+            return;
+
+        if (clipboardNodes == null)
+            clipboardNodes = new List<NodeClipboardEntry>();
+        clipboardNodes.Clear();
+
+        foreach (NodeMarker marker in selection)
+        {
+            if (marker == null)
+                continue;
+
+            clipboardNodes.Add(new NodeClipboardEntry
+            {
+                beat = marker.beat,
+                order = marker.order,
+                action = marker.action,
+                gravity = marker.gravity,
+                auto = marker.auto,
+                visible = marker.visible,
+                strength = marker.strength,
+                positionY = marker.transform.position.y
+            });
+        }
+
+        if (clipboardNodes.Count == 0)
+            return;
+
+        clipboardNodes.Sort((a, b) =>
+        {
+            int byBeat = a.beat.CompareTo(b.beat);
+            return byBeat != 0 ? byBeat : a.order.CompareTo(b.order);
+        });
+
+        ShowNotification(new GUIContent($"已复制 {clipboardNodes.Count} 个节点"));
+    }
+
+    private void PasteSelection()
+    {
+        if (targetPlayer == null ||
+            clipboardNodes == null ||
+            clipboardNodes.Count == 0)
+        {
+            return;
+        }
+
+        NodeMarker[] markers = GetMarkers();
+
+        float anchorBeat = Mathf.Max(0f, playheadBeat);
+        float minBeat = clipboardNodes[0].beat;
+        float offset = anchorBeat - minBeat;
+
+        float earliestTargetBeat = float.MaxValue;
+        foreach (NodeClipboardEntry entry in clipboardNodes)
+        {
+            float targetBeat = Mathf.Max(0f, entry.beat + offset);
+            if (FindMarkerAtBeat(targetBeat, markers, false) != null)
+            {
+                ShowNotification(new GUIContent("粘贴位置与已有节点冲突，已取消"));
+                return;
+            }
+            earliestTargetBeat = Mathf.Min(earliestTargetBeat, targetBeat);
+        }
+
+        if (nodePrefab == null)
+            nodePrefab = AssetDatabase.LoadAssetAtPath<NodeMarker>(NodePrefabPath);
+        if (nodePrefab == null)
+        {
+            Debug.LogError($"Chart Timeline 无法加载 Node Prefab：{NodePrefabPath}");
+            return;
+        }
+
+        Transform root = targetPlayer.scanRoot != null
+            ? targetPlayer.scanRoot
+            : targetPlayer.transform;
+        NodeAppearanceSet appearanceSet = targetPlayer.ResolveNodeAppearanceSet();
+
+        Undo.IncrementCurrentGroup();
+        int undoGroup = Undo.GetCurrentGroup();
+        Undo.SetCurrentGroupName($"Paste {clipboardNodes.Count} Nodes");
+
+        var created = new List<NodeMarker>(clipboardNodes.Count);
+        foreach (NodeClipboardEntry entry in clipboardNodes)
+        {
+            float targetBeat = Mathf.Max(0f, entry.beat + offset);
+
+            var go = (GameObject)PrefabUtility.InstantiatePrefab(nodePrefab.gameObject, root);
+            Undo.RegisterCreatedObjectUndo(go, "Paste Node");
+
+            var marker = go.GetComponent<NodeMarker>();
+            marker.beat = targetBeat;
+            marker.order = entry.order;
+            marker.action = entry.action;
+            marker.gravity = entry.gravity;
+            marker.auto = entry.auto;
+            marker.visible = entry.visible;
+            marker.strength = entry.strength;
+            marker.ApplyAppearance(appearanceSet);
+            marker.ApplyVisibility();
+
+            Vector3 position = root.position;
+            position.x = root.position.x;
+            position.y = entry.positionY;
+            marker.transform.position = position;
+
+            PrefabUtility.RecordPrefabInstancePropertyModifications(go);
+            PrefabUtility.RecordPrefabInstancePropertyModifications(marker);
+            PrefabUtility.RecordPrefabInstancePropertyModifications(marker.transform);
+
+            created.Add(marker);
+        }
+
+        Undo.CollapseUndoOperations(undoGroup);
+
+        targetPlayer.UpdatePos(earliestTargetBeat);
+        targetPlayer.MarkDirty();
+        EditorUtility.SetDirty(targetPlayer);
+        InvalidateMarkerCache();
+
+        ReplaceSelection(created);
+        SyncSelectionToUnity();
+        if (created.Count > 0)
+            Selection.activeGameObject = created[0].gameObject;
+
+        RequestRepaint();
+        SceneView.RepaintAll();
+    }
+
     private void AdjustOrder(int delta)
     {
         if (targetPlayer == null || selection.Count == 0) return;

@@ -211,6 +211,20 @@ public partial class ChartTimelineWindow
                 if (e.alt || e.shift) return false;
                 AdjustSelectedNodesToPerfectPath();
                 break;
+            case KeyCode.C:
+                if (e.control || e.command)
+                {
+                    CopySelection();
+                    break;
+                }
+                return false;
+            case KeyCode.V:
+                if (e.control || e.command)
+                {
+                    PasteSelection();
+                    break;
+                }
+                return false;
             case KeyCode.Space:
                 TogglePlayback();
                 RequestRepaint();

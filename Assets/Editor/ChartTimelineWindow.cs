@@ -2,6 +2,19 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
+[System.Serializable]
+public struct NodeClipboardEntry
+{
+    public float beat;
+    public int order;
+    public NodeAction action;
+    public NodeGravity gravity;
+    public bool auto;
+    public bool visible;
+    public float strength;
+    public float positionY;
+}
+
 public partial class ChartTimelineWindow : EditorWindow
 {
     [SerializeField] private ChartPlayer targetPlayer;
@@ -14,6 +27,7 @@ public partial class ChartTimelineWindow : EditorWindow
     [SerializeField] private bool loopEnabled;
     [SerializeField] private List<float> beatMarks = new List<float>();
     [SerializeField] private List<int> beatMarkLoopCounts = new List<int>();
+    [SerializeField] private List<NodeClipboardEntry> clipboardNodes = new List<NodeClipboardEntry>();
     [SerializeField] private float playbackSpeed = 1f;
     [SerializeField] private NodeMarker nodePrefab;
     [SerializeField] private bool previewEnabled;
