@@ -15,7 +15,7 @@ MonoBehaviour:
   perfectWindowSeconds: 0.045
   greatWindowSeconds: 0.12
   badWindowSeconds: 0.24
-  autoModeEnabled: 1
+  autoModeEnabled: 0
   autoPlayOffsetMilliseconds: 0
   scheduleLeadSeconds: 0.15
   globalOffsetSeconds: 0
