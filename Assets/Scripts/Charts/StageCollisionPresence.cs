@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 外观型舞台动画（飞入飞出 / 淡入淡出）对外暴露的「物理在场」窗口。
+/// 外观型舞台动画（当前只有飞入飞出）对外暴露的「物理在场」窗口。
 /// 入场完成拍之前、出场开始拍之后，平台都尚未/不再物理在场。
 /// </summary>
 public interface IStageAppearanceAnimation

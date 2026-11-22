@@ -5,7 +5,8 @@ using UnityEngine.Tilemaps;
 /// <summary>
 /// 场景「显示」动画组件（动画组件系列之一）。
 /// 按 beat 定时对目标做淡入 / 淡出，只改透明度（Tilemap.color / SpriteRenderer.color），
-/// 不碰碰撞体。Platform 的碰撞开关仍由 StageSceneController 的硬切换事件负责。
+/// 从头到尾不改变碰撞体，也不参与 StageSceneController 的物理在场调度。
+/// Platform 的碰撞开关由 StageSceneController 的硬切换事件与飞入飞出动画负责。
 ///
 /// 目标与时间源全部自动获取，不在 Inspector 暴露：
 /// - 目标：优先本物体、其次子物体上的 Tilemap / SpriteRenderer。
@@ -21,8 +22,7 @@ using UnityEngine.Tilemaps;
 public sealed class StageDisplayAnimation :
     MonoBehaviour,
     IStageAnimationEventSource,
-    IStageAnimationSource,
-    IStageAppearanceAnimation
+    IStageAnimationSource
 {
     private enum TargetKind
     {
@@ -138,16 +138,6 @@ public sealed class StageDisplayAnimation :
     {
         ApplyAlpha(ComputeAlpha(songTime));
     }
-
-    public float CollisionEnterBeat =>
-        fadeInEnabled
-            ? fadeInEndBeat - fadeInDurationBeats * 0.5f
-            : float.NegativeInfinity;
-
-    public float CollisionExitBeat =>
-        fadeOutEnabled
-            ? fadeOutStartBeat + fadeOutDurationBeats * 0.5f
-            : float.PositiveInfinity;
 
     public void CollectAnimationEvents(List<StageAnimationEvent> events)
     {

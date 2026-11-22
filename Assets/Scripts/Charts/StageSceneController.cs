@@ -57,8 +57,9 @@ public sealed class StageLayerBinding
 }
 
 /// <summary>
-/// 关卡场景控制器：按歌曲时间硬切换各 Tilemap 层的显隐，并按外观动画（飞入飞出 / 淡入淡出）
+/// 关卡场景控制器：按歌曲时间硬切换各 Tilemap 层的显隐，并按外观动画（飞入飞出）
 /// 的入场/出场窗口门控 Platform 的物理碰撞（入场完成前 / 出场开始后关闭碰撞体）。
+/// 淡入淡出只改透明度、不参与碰撞门控；初始为关闭的碰撞体从头到尾不改变。
 /// 层描述、显隐事件、场景绑定都直接序列化在本组件里（一场景一关卡，不产生额外资产）。
 /// </summary>
 public sealed class StageSceneController :
@@ -91,6 +92,8 @@ public sealed class StageSceneController :
     private Player resolvedPlayer;
     private StageAnimationDriver driver;
     private bool driverDriven;
+    private readonly HashSet<StageLayerBinding> lockedColliders =
+        new HashSet<StageLayerBinding>();
 
     private const float BeatEpsilon = 0.0001f;
 
@@ -124,6 +127,7 @@ public sealed class StageSceneController :
         resolvedPlayer = player != null
             ? player
             : (chartPlayer != null ? chartPlayer.ResolvePlayer() : null);
+        CaptureInitialColliderState();
         RebuildIndex();
         ApplyState(double.NegativeInfinity);
     }
@@ -292,6 +296,22 @@ public sealed class StageSceneController :
         }
     }
 
+    private void CaptureInitialColliderState()
+    {
+        lockedColliders.Clear();
+        if (bindings == null)
+            return;
+
+        foreach (StageLayerBinding binding in bindings)
+        {
+            if (binding == null || binding.collider == null)
+                continue;
+
+            if (!binding.collider.enabled)
+                lockedColliders.Add(binding);
+        }
+    }
+
     private void ApplyState(double songTime)
     {
         if (bindings == null)
@@ -307,7 +327,13 @@ public sealed class StageSceneController :
             bool visible = ResolveVisible(binding.id, currentBeat);
             bool physicallyPresent = ResolvePhysicallyPresent(binding, currentBeat);
             bool visibilityVisible = ResolveVisibility(binding, currentBeat);
-            ApplyVisible(binding, visible, physicallyPresent, visibilityVisible);
+            bool colliderLocked = lockedColliders.Contains(binding);
+            ApplyVisible(
+                binding,
+                visible,
+                physicallyPresent,
+                visibilityVisible,
+                colliderLocked);
         }
     }
 
@@ -386,7 +412,8 @@ public sealed class StageSceneController :
         StageLayerBinding binding,
         bool visible,
         bool physicallyPresent,
-        bool visibilityVisible)
+        bool visibilityVisible,
+        bool colliderLocked)
     {
         bool rendererEnabled = visible && visibilityVisible;
         if (binding.renderer != null &&
@@ -395,9 +422,12 @@ public sealed class StageSceneController :
             binding.renderer.enabled = rendererEnabled;
         }
 
+        // 初始为关闭的碰撞体从头到尾不改变，交回场景手工控制。
+        if (colliderLocked || binding.collider == null)
+            return;
+
         bool colliderEnabled = visible && physicallyPresent;
-        if (binding.collider != null &&
-            binding.collider.enabled != colliderEnabled)
+        if (binding.collider.enabled != colliderEnabled)
         {
             binding.collider.enabled = colliderEnabled;
         }
