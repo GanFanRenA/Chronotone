@@ -79,6 +79,31 @@ public partial class ChartTimelineWindow
             new List<AnimationBeatField>();
     }
 
+    private sealed class VisibilityBindingKey
+    {
+        public readonly int ControllerId;
+        public readonly string LayerId;
+
+        public VisibilityBindingKey(int controllerId, string layerId)
+        {
+            ControllerId = controllerId;
+            LayerId = layerId;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is VisibilityBindingKey other &&
+                   other.ControllerId == ControllerId &&
+                   string.Equals(other.LayerId, LayerId, System.StringComparison.Ordinal);
+        }
+
+        public override int GetHashCode()
+        {
+            return ControllerId * 397 ^
+                   (LayerId != null ? LayerId.GetHashCode() : 0);
+        }
+    }
+
     // ---- 事件收集 ----
 
     private List<StageAnimationEvent> GetAnimationEvents()
@@ -579,10 +604,17 @@ public partial class ChartTimelineWindow
             }
             else if (!animDragged)
             {
-                // 单击：保持原有「Hierarchy 选中 owner」行为，并清空时间轴多选。
                 if (animPendingClickHit != null)
+                {
+                    // 单击：跳 Hierarchy 选中 owner；随后 OnSelectionChange 会
+                    // 反向把该 owner 对应的事件高亮到时间轴上。
                     SelectAnimationOwner(animPendingClickHit);
-                ClearAnimationSelection();
+                }
+                else
+                {
+                    // 空白处单击：清空时间轴动画多选。
+                    ClearAnimationSelection();
+                }
                 RequestRepaint();
             }
 
@@ -967,5 +999,175 @@ public partial class ChartTimelineWindow
         }
 
         return -1;
+    }
+
+    // ---- 场景选中同步 ----
+
+    private void SyncAnimationSelectionFromUnity()
+    {
+        List<StageAnimationEvent> events =
+            GetAnimationEventsForObjects(Selection.objects);
+        ReplaceAnimationSelection(events);
+        ScrollToAnimationSelection(events);
+    }
+
+    private void ReplaceAnimationSelection(IEnumerable<StageAnimationEvent> events)
+    {
+        animationSelection.Clear();
+        foreach (StageAnimationEvent evt in events)
+            AddAnimationSelection(evt);
+    }
+
+    private void ScrollToAnimationSelection(List<StageAnimationEvent> events)
+    {
+        if (events == null || events.Count == 0)
+            return;
+
+        float minBeat = float.MaxValue;
+        foreach (StageAnimationEvent evt in events)
+            minBeat = Mathf.Min(minBeat, evt.beat);
+
+        if (minBeat == float.MaxValue)
+            return;
+
+        float viewBeats = Mathf.Max(1f, position.width) / pixelsPerBeat;
+        if (minBeat < scrollBeat || minBeat > scrollBeat + viewBeats * 0.8f)
+        {
+            scrollBeat = Mathf.Max(MinScrollBeat, minBeat - viewBeats * 0.2f);
+        }
+    }
+
+    private List<StageAnimationEvent> GetAnimationEventsForObjects(
+        Object[] selectedObjects)
+    {
+        var result = new List<StageAnimationEvent>();
+        if (selectedObjects == null || selectedObjects.Length == 0)
+            return result;
+
+        // 1. 解析选中的 GameObject（Component 也归到其 GameObject）。
+        var ownerObjects = new HashSet<GameObject>();
+        foreach (Object selected in selectedObjects)
+        {
+            if (selected == null)
+                continue;
+
+            GameObject go = selected as GameObject;
+            if (go == null && selected is Component component)
+                go = component.gameObject;
+            if (go != null)
+                ownerObjects.Add(go);
+        }
+
+        // 2. 查找这些 GameObject 在场景控制器里绑定到的图层（显隐事件用）。
+        var visibilityKeys = new HashSet<VisibilityBindingKey>();
+        CollectVisibilityBindingsForObjects(ownerObjects, visibilityKeys);
+
+        // 3. 匹配：owner 直接命中，或图层显隐事件命中。
+        List<StageAnimationEvent> events = GetAnimationEvents();
+        foreach (StageAnimationEvent evt in events)
+        {
+            if (evt.owner is GameObject ownerGO && ownerObjects.Contains(ownerGO))
+            {
+                result.Add(evt);
+                continue;
+            }
+
+            if (evt.kind == StageAnimationEventKind.LayerVisibility &&
+                evt.owner is GameObject controllerGO)
+            {
+                bool matched = false;
+                foreach (VisibilityBindingKey key in visibilityKeys)
+                {
+                    if (key.ControllerId == controllerGO.GetInstanceID() &&
+                        evt.label.StartsWith(
+                            $"显隐 {key.LayerId}→",
+                            System.StringComparison.Ordinal))
+                    {
+                        matched = true;
+                        break;
+                    }
+                }
+
+                if (matched)
+                    result.Add(evt);
+            }
+        }
+
+        return result;
+    }
+
+    private void CollectVisibilityBindingsForObjects(
+        HashSet<GameObject> ownerObjects,
+        HashSet<VisibilityBindingKey> visibilityKeys)
+    {
+        Scene scene = targetPlayer.gameObject.scene;
+        if (!scene.IsValid())
+            return;
+
+        GameObject[] roots = scene.GetRootGameObjects();
+        foreach (GameObject root in roots)
+        {
+            if (root == null)
+                continue;
+
+            StageSceneController[] controllers =
+                root.GetComponentsInChildren<StageSceneController>(true);
+            foreach (StageSceneController controller in controllers)
+            {
+                if (controller == null)
+                    continue;
+
+                var so = new SerializedObject(controller);
+                SerializedProperty bindings = so.FindProperty("bindings");
+                if (bindings == null || !bindings.isArray)
+                {
+                    so.Dispose();
+                    continue;
+                }
+
+                for (int i = 0; i < bindings.arraySize; i++)
+                {
+                    SerializedProperty binding = bindings.GetArrayElementAtIndex(i);
+                    string layerId = binding.FindPropertyRelative("id")?.stringValue;
+                    if (string.IsNullOrEmpty(layerId))
+                        continue;
+
+                    GameObject boundGO = ResolveBindingGameObject(binding);
+                    if (boundGO != null && ownerObjects.Contains(boundGO))
+                    {
+                        visibilityKeys.Add(new VisibilityBindingKey(
+                            controller.gameObject.GetInstanceID(),
+                            layerId));
+                    }
+                }
+
+                so.Dispose();
+            }
+        }
+    }
+
+    private static GameObject ResolveBindingGameObject(SerializedProperty binding)
+    {
+        Component component = null;
+
+        SerializedProperty tilemapProp = binding.FindPropertyRelative("tilemap");
+        if (tilemapProp != null)
+            component = tilemapProp.objectReferenceValue as Component;
+
+        if (component == null)
+        {
+            SerializedProperty rendererProp = binding.FindPropertyRelative("renderer");
+            if (rendererProp != null)
+                component = rendererProp.objectReferenceValue as Component;
+        }
+
+        if (component == null)
+        {
+            SerializedProperty colliderProp = binding.FindPropertyRelative("collider");
+            if (colliderProp != null)
+                component = colliderProp.objectReferenceValue as Component;
+        }
+
+        return component != null ? component.gameObject : null;
     }
 }

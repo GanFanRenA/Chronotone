@@ -524,6 +524,9 @@ public partial class ChartTimelineWindow
                     minBeat - viewBeats * 0.2f);
         }
 
+        // 场景选中 → 场景动画多选高亮（与 Node 一致）。
+        SyncAnimationSelectionFromUnity();
+
         RequestRepaint();
         SceneView.RepaintAll();
     }

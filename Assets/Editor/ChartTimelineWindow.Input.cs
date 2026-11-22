@@ -250,6 +250,7 @@ public partial class ChartTimelineWindow
                 break;
             case KeyCode.Escape:
                 ClearSelection();
+                ClearAnimationSelection();
                 selectedVfxIndex = -1;
                 SyncSelectionToUnity();
                 RequestRepaint();
