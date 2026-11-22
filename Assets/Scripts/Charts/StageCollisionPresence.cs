@@ -31,6 +31,7 @@ public interface IStageVisibilityAnimation
 /// 场景里所有外观型平台碰撞体的「在场时间表」。
 /// 供 PerfectRoute 模拟（烘焙 + 编辑器轨迹预览）按当前歌曲时间忽略
 /// 「尚未入场 / 已退场」的碰撞体命中。
+/// 初始为关闭的碰撞体视为全程不在场。
 /// </summary>
 public sealed class StageCollisionPresence
 {
@@ -48,12 +49,20 @@ public sealed class StageCollisionPresence
 
     private readonly Dictionary<Collider2D, Interval> intervals =
         new Dictionary<Collider2D, Interval>();
+    private readonly HashSet<Collider2D> absentColliders =
+        new HashSet<Collider2D>();
 
-    /// <summary>某碰撞体在 songTime 是否物理在场。不在时间表里 = 没有外观约束，始终在场。</summary>
+    /// <summary>
+    /// 某碰撞体在 songTime 是否物理在场。
+    /// 初始关闭的碰撞体全程不在场；不在时间表里 = 没有外观约束，始终在场。
+    /// </summary>
     public bool IsActive(Collider2D collider, double songTime)
     {
         if (collider == null)
             return true;
+
+        if (absentColliders.Contains(collider))
+            return false;
 
         if (!intervals.TryGetValue(collider, out Interval interval))
             return true;
@@ -99,6 +108,12 @@ public sealed class StageCollisionPresence
                 {
                     if (collider == null || collider.isTrigger)
                         continue;
+
+                    if (!collider.enabled)
+                    {
+                        presence.absentColliders.Add(collider);
+                        continue;
+                    }
 
                     presence.Merge(collider, enterSeconds, exitSeconds);
                 }
