@@ -125,6 +125,7 @@ public partial class ChartTimelineWindow
         {
             StopPlayback();
             ClearSelection();
+            ClearAnimationSelection();
             selectedVfxIndex = -1;
             SyncSelectionToUnity();
             InvalidateMarkerCache();

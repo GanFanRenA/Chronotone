@@ -126,6 +126,7 @@ public partial class ChartTimelineWindow : EditorWindow
         EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
         SceneView.duringSceneGui -= DrawTrajectoryPreview;
         StopPlayback();
+        DisposeAnimationMoveTargets();
         if (previewSource != null && previewSource.gameObject != null)
             DestroyImmediate(previewSource.gameObject);
         previewSource = null;
@@ -160,6 +161,7 @@ public partial class ChartTimelineWindow : EditorWindow
         pendingClick = false;
         boxSelecting = false;
         boxSelectionBase.Clear();
+        CancelAnimationDrag();
     }
 
     private void OnGUI()

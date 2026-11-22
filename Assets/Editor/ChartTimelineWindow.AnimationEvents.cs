@@ -40,6 +40,16 @@ public partial class ChartTimelineWindow
     private float animDragStartScrollY;
     private PositionedAnimationEvent animPendingClickHit;
 
+    private float animDragMouseStartX;
+    private bool animMoveCandidate;
+    private bool animMoveDragged;
+    private float animMoveMouseStartBeat;
+    private float animMoveMinBeat;
+    private readonly List<StageAnimationEvent> animationSelection =
+        new List<StageAnimationEvent>();
+    private readonly List<AnimationComponentTarget> animationMoveTargets =
+        new List<AnimationComponentTarget>();
+
     private static Texture2D animationDotTexture;
 
     private sealed class PositionedAnimationEvent
@@ -51,6 +61,22 @@ public partial class ChartTimelineWindow
         public float CenterY;
         public Rect DotRect;
         public Rect EndDotRect;
+    }
+
+    private sealed class AnimationBeatField
+    {
+        public SerializedProperty Beat;
+        public SerializedProperty EndBeat;
+        public float StartBeat;
+        public float StartEndBeat;
+    }
+
+    private sealed class AnimationComponentTarget
+    {
+        public Component Component;
+        public SerializedObject Serialized;
+        public readonly List<AnimationBeatField> Fields =
+            new List<AnimationBeatField>();
     }
 
     // ---- 事件收集 ----
@@ -73,6 +99,7 @@ public partial class ChartTimelineWindow
             cachedAnimationEvents.Clear();
             CollectAnimationEventsFromScene(cachedAnimationEvents);
             SortAnimationEvents(cachedAnimationEvents);
+            PruneAnimationSelection();
             animationEventsDirty = false;
         }
 
@@ -286,6 +313,31 @@ public partial class ChartTimelineWindow
             }
         }
 
+        // 选中高亮（区间整体、单点仅点）。
+        foreach (PositionedAnimationEvent p in positionedAnimationEvents)
+        {
+            if (!IsAnimationSelected(p.Event) ||
+                !IsAnimationEventVisible(p, content))
+            {
+                continue;
+            }
+
+            if (p.Event.IsSpan)
+            {
+                float left = Mathf.Min(p.X, p.EndX);
+                float right = Mathf.Max(p.X, p.EndX);
+                DrawSelectionOutline(new Rect(
+                    left - 1f,
+                    p.CenterY - AnimationDotSize * 0.5f - 1f,
+                    right - left + 2f,
+                    AnimationDotSize + 2f));
+            }
+            else
+            {
+                DrawSelectionOutline(p.DotRect);
+            }
+        }
+
         DrawAnimationScrollbar(rect);
     }
 
@@ -319,6 +371,10 @@ public partial class ChartTimelineWindow
         DrawLegendItem(4f, y, LayerVisibilityColor, "显隐", 34f);
         DrawLegendItem(46f, y, FadeColor, "淡入/淡出", 64f);
         DrawLegendItem(122f, y, FlyColor, "飞入/飞出", 64f);
+        GUI.Label(
+            new Rect(194f, y, header.width - 198f, 14f),
+            "ctrl+左键多选 · 拖动选中点改拍点",
+            EditorStyles.miniLabel);
     }
 
     private void DrawLegendItem(float x, float y, Color color, string text, float labelWidth)
@@ -440,19 +496,64 @@ public partial class ChartTimelineWindow
         if (e.type == EventType.MouseDown && e.button == 0 &&
             scrollArea.Contains(e.mousePosition))
         {
+            bool ctrl = e.control || e.command;
+            PositionedAnimationEvent hit = FindAnimationHit(e.mousePosition);
+
+            // ctrl+左键：切换时间轴多选，不跳 Hierarchy。
+            if (ctrl)
+            {
+                if (hit != null)
+                {
+                    ToggleAnimationSelection(hit.Event);
+                    RequestRepaint();
+                }
+                e.Use();
+                return;
+            }
+
             animDragActive = true;
             animDragged = false;
+            animMoveCandidate = hit != null && IsAnimationSelected(hit.Event);
+            animMoveDragged = false;
+            animDragMouseStartX = e.mousePosition.x;
             animDragMouseStartY = e.mousePosition.y;
             animDragStartScrollY = animationScrollY;
-            animPendingClickHit = FindAnimationHit(e.mousePosition);
+            animMoveMouseStartBeat = ScreenXToBeat(e.mousePosition.x, laneRect);
+            animPendingClickHit = hit;
             e.Use();
             return;
         }
 
         if (e.type == EventType.MouseDrag && e.button == 0 && animDragActive)
         {
+            float deltaX = e.mousePosition.x - animDragMouseStartX;
             float deltaY = e.mousePosition.y - animDragMouseStartY;
-            if (Mathf.Abs(deltaY) > AnimationDragThreshold)
+            float absX = Mathf.Abs(deltaX);
+            float absY = Mathf.Abs(deltaY);
+
+            // 按住已选中的点拖动：水平为主则批量移动，垂直为主则竖向滚动。
+            if (animMoveCandidate && !animMoveDragged && !animDragged)
+            {
+                if (absX > AnimationDragThreshold && absX >= absY)
+                {
+                    animMoveDragged = true;
+                    BeginAnimationMoveDrag();
+                }
+                else if (absY > AnimationDragThreshold && absY > absX)
+                {
+                    animDragged = true;
+                }
+            }
+
+            if (animMoveDragged)
+            {
+                UpdateAnimationMoveDrag(e, laneRect);
+                e.Use();
+                RequestRepaint();
+                return;
+            }
+
+            if (!animDragged && absY > AnimationDragThreshold)
                 animDragged = true;
 
             if (animDragged)
@@ -462,6 +563,7 @@ public partial class ChartTimelineWindow
                     0f,
                     animationMaxScrollY);
             }
+
             e.Use();
             RequestRepaint();
             return;
@@ -470,13 +572,25 @@ public partial class ChartTimelineWindow
         if (e.type == EventType.MouseUp && e.button == 0 && animDragActive)
         {
             animDragActive = false;
-            if (!animDragged && animPendingClickHit != null)
-                SelectAnimationOwner(animPendingClickHit);
+
+            if (animMoveDragged)
+            {
+                EndAnimationMoveDrag();
+            }
+            else if (!animDragged)
+            {
+                // 单击：保持原有「Hierarchy 选中 owner」行为，并清空时间轴多选。
+                if (animPendingClickHit != null)
+                    SelectAnimationOwner(animPendingClickHit);
+                ClearAnimationSelection();
+                RequestRepaint();
+            }
 
             animPendingClickHit = null;
+            animMoveCandidate = false;
+            animMoveDragged = false;
             animDragged = false;
             e.Use();
-            RequestRepaint();
             return;
         }
     }
@@ -550,5 +664,308 @@ public partial class ChartTimelineWindow
         float dx = Mathf.Max(rect.xMin - point.x, 0f, point.x - rect.xMax);
         float dy = Mathf.Max(rect.yMin - point.y, 0f, point.y - rect.yMax);
         return Mathf.Sqrt(dx * dx + dy * dy);
+    }
+
+    // ---- 多选与批量移动 ----
+
+    private bool IsAnimationSelected(StageAnimationEvent evt)
+    {
+        foreach (StageAnimationEvent selected in animationSelection)
+        {
+            if (AnimationEventMatches(selected, evt))
+                return true;
+        }
+
+        return false;
+    }
+
+    private void AddAnimationSelection(StageAnimationEvent evt)
+    {
+        if (evt.owner == null || IsAnimationSelected(evt))
+            return;
+
+        animationSelection.Add(evt);
+    }
+
+    private void RemoveAnimationSelection(StageAnimationEvent evt)
+    {
+        for (int i = animationSelection.Count - 1; i >= 0; i--)
+        {
+            if (AnimationEventMatches(animationSelection[i], evt))
+                animationSelection.RemoveAt(i);
+        }
+    }
+
+    private void ToggleAnimationSelection(StageAnimationEvent evt)
+    {
+        if (IsAnimationSelected(evt))
+            RemoveAnimationSelection(evt);
+        else
+            AddAnimationSelection(evt);
+    }
+
+    private void ClearAnimationSelection()
+    {
+        animationSelection.Clear();
+    }
+
+    private void PruneAnimationSelection()
+    {
+        for (int i = animationSelection.Count - 1; i >= 0; i--)
+        {
+            if (animationSelection[i].owner == null)
+                animationSelection.RemoveAt(i);
+        }
+    }
+
+    private static bool AnimationEventMatches(
+        StageAnimationEvent a,
+        StageAnimationEvent b)
+    {
+        return a.kind == b.kind &&
+               a.owner == b.owner &&
+               string.Equals(a.label, b.label, System.StringComparison.Ordinal);
+    }
+
+    private void BeginAnimationMoveDrag()
+    {
+        DisposeAnimationMoveTargets();
+        animMoveMinBeat = float.MaxValue;
+
+        // 遍历当帧已布局的事件（beat 为当前值），避免选中快照的 beat 过期
+        // 导致显隐事件在多次拖动后无法按拍点重新定位。
+        foreach (PositionedAnimationEvent positioned in positionedAnimationEvents)
+        {
+            if (!IsAnimationSelected(positioned.Event))
+                continue;
+
+            StageAnimationEvent evt = positioned.Event;
+            Component component = ResolveAnimationComponent(evt);
+            if (component == null)
+                continue;
+
+            AnimationComponentTarget target = null;
+            foreach (AnimationComponentTarget existing in animationMoveTargets)
+            {
+                if (existing.Component == component)
+                {
+                    target = existing;
+                    break;
+                }
+            }
+
+            if (target == null)
+            {
+                target = new AnimationComponentTarget
+                {
+                    Component = component,
+                    Serialized = new SerializedObject(component)
+                };
+                animationMoveTargets.Add(target);
+            }
+
+            AnimationBeatField field =
+                ResolveAnimationBeatField(target.Serialized, evt);
+            if (field == null)
+                continue;
+
+            field.StartBeat = field.Beat.floatValue;
+            field.StartEndBeat = field.EndBeat != null
+                ? field.EndBeat.floatValue
+                : field.StartBeat;
+            animMoveMinBeat = Mathf.Min(animMoveMinBeat, field.StartBeat);
+            target.Fields.Add(field);
+        }
+
+        if (animationMoveTargets.Count > 0)
+        {
+            var undoObjects = new Object[animationMoveTargets.Count];
+            for (int i = 0; i < animationMoveTargets.Count; i++)
+                undoObjects[i] = animationMoveTargets[i].Component;
+
+            Undo.RegisterCompleteObjectUndo(undoObjects, "Move Animation Events");
+        }
+    }
+
+    private void UpdateAnimationMoveDrag(Event e, Rect laneRect)
+    {
+        float mouseBeat = ScreenXToBeat(e.mousePosition.x, laneRect);
+        float delta = mouseBeat - animMoveMouseStartBeat;
+        if (!(e.control || e.command) && snap > 0f)
+            delta = Mathf.Round(delta / snap) * snap;
+        delta = Mathf.Max(delta, -animMoveMinBeat);
+
+        foreach (AnimationComponentTarget target in animationMoveTargets)
+        {
+            foreach (AnimationBeatField field in target.Fields)
+            {
+                field.Beat.floatValue = Mathf.Max(0f, field.StartBeat + delta);
+                if (field.EndBeat != null)
+                {
+                    field.EndBeat.floatValue =
+                        Mathf.Max(0f, field.StartEndBeat + delta);
+                }
+            }
+
+            target.Serialized.ApplyModifiedProperties();
+            EditorUtility.SetDirty(target.Component);
+        }
+
+        animationEventsDirty = true;
+    }
+
+    private void EndAnimationMoveDrag()
+    {
+        foreach (AnimationComponentTarget target in animationMoveTargets)
+        {
+            if (target.Component == null)
+                continue;
+
+            EditorUtility.SetDirty(target.Component);
+            if (PrefabUtility.IsPartOfPrefabInstance(target.Component))
+            {
+                PrefabUtility.RecordPrefabInstancePropertyModifications(
+                    target.Component);
+            }
+        }
+
+        DisposeAnimationMoveTargets();
+        animationEventsDirty = true;
+        RequestRepaint();
+        SceneView.RepaintAll();
+    }
+
+    private void DisposeAnimationMoveTargets()
+    {
+        foreach (AnimationComponentTarget target in animationMoveTargets)
+            target.Serialized?.Dispose();
+
+        animationMoveTargets.Clear();
+    }
+
+    private void CancelAnimationDrag()
+    {
+        if (animMoveDragged)
+            EndAnimationMoveDrag();
+        else
+            DisposeAnimationMoveTargets();
+
+        animDragActive = false;
+        animDragged = false;
+        animMoveCandidate = false;
+        animMoveDragged = false;
+        animPendingClickHit = null;
+    }
+
+    private static Component ResolveAnimationComponent(StageAnimationEvent evt)
+    {
+        Object owner = evt.owner;
+        if (owner == null)
+            return null;
+
+        if (owner is GameObject gameObject)
+        {
+            switch (evt.kind)
+            {
+                case StageAnimationEventKind.Fly:
+                    return gameObject.GetComponent<StageFlyAnimation>();
+                case StageAnimationEventKind.Fade:
+                    return gameObject.GetComponent<StageDisplayAnimation>();
+                case StageAnimationEventKind.LayerVisibility:
+                    return gameObject.GetComponent<StageSceneController>();
+                default:
+                    return null;
+            }
+        }
+
+        return owner as Component;
+    }
+
+    private static AnimationBeatField ResolveAnimationBeatField(
+        SerializedObject serialized,
+        StageAnimationEvent evt)
+    {
+        switch (evt.kind)
+        {
+            case StageAnimationEventKind.Fly:
+                if (evt.label == "飞入→飞出")
+                    return CreateBeatField(serialized, "flyInEndBeat", "flyOutStartBeat");
+                if (evt.label == "飞入")
+                    return CreateBeatField(serialized, "flyInEndBeat", null);
+                if (evt.label == "飞出")
+                    return CreateBeatField(serialized, "flyOutStartBeat", null);
+                return null;
+
+            case StageAnimationEventKind.Fade:
+                if (evt.label == "淡入→淡出")
+                    return CreateBeatField(serialized, "fadeInEndBeat", "fadeOutStartBeat");
+                if (evt.label == "淡入")
+                    return CreateBeatField(serialized, "fadeInEndBeat", null);
+                if (evt.label == "淡出")
+                    return CreateBeatField(serialized, "fadeOutStartBeat", null);
+                return null;
+
+            case StageAnimationEventKind.LayerVisibility:
+            {
+                int index = FindVisibilityEventIndex(serialized, evt);
+                if (index < 0)
+                    return null;
+
+                SerializedProperty beat = serialized
+                    .FindProperty("visibilityEvents")
+                    .GetArrayElementAtIndex(index)
+                    .FindPropertyRelative("beat");
+                return beat != null
+                    ? new AnimationBeatField { Beat = beat }
+                    : null;
+            }
+
+            default:
+                return null;
+        }
+    }
+
+    private static AnimationBeatField CreateBeatField(
+        SerializedObject serialized,
+        string beatPath,
+        string endBeatPath)
+    {
+        SerializedProperty beat = serialized.FindProperty(beatPath);
+        if (beat == null)
+            return null;
+
+        return new AnimationBeatField
+        {
+            Beat = beat,
+            EndBeat = string.IsNullOrEmpty(endBeatPath)
+                ? null
+                : serialized.FindProperty(endBeatPath)
+        };
+    }
+
+    private static int FindVisibilityEventIndex(
+        SerializedObject serialized,
+        StageAnimationEvent evt)
+    {
+        SerializedProperty array = serialized.FindProperty("visibilityEvents");
+        if (array == null || !array.isArray)
+            return -1;
+
+        for (int i = 0; i < array.arraySize; i++)
+        {
+            SerializedProperty element = array.GetArrayElementAtIndex(i);
+            string layerId = element.FindPropertyRelative("layerId")?.stringValue;
+            float beat = element.FindPropertyRelative("beat")?.floatValue ?? 0f;
+            bool visible = element.FindPropertyRelative("visible")?.boolValue ?? true;
+
+            string label = $"显隐 {layerId}→{(visible ? "显示" : "隐藏")}";
+            if (string.Equals(label, evt.label, System.StringComparison.Ordinal) &&
+                Mathf.Approximately(beat, evt.beat))
+            {
+                return i;
+            }
+        }
+
+        return -1;
     }
 }
