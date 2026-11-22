@@ -271,5 +271,13 @@ public sealed class StageFlyAnimation :
     public static event System.Action EditorChanged;
 
     private void OnValidate() => EditorChanged?.Invoke();
+
+    private void Reset()
+    {
+        float beat = ChartPlayer.ResolveDefaultBeat(gameObject);
+        flyInEndBeat = beat;
+        flyOutStartBeat = beat;
+        EditorChanged?.Invoke();
+    }
 #endif
 }

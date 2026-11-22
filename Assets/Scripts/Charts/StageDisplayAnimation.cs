@@ -342,5 +342,13 @@ public sealed class StageDisplayAnimation :
     public static event System.Action EditorChanged;
 
     private void OnValidate() => EditorChanged?.Invoke();
+
+    private void Reset()
+    {
+        float beat = ChartPlayer.ResolveDefaultBeat(gameObject);
+        fadeInEndBeat = beat;
+        fadeOutStartBeat = beat;
+        EditorChanged?.Invoke();
+    }
 #endif
 }

@@ -214,6 +214,47 @@ public class ChartPlayer : MonoBehaviour
         UpdatePos();
     }
 
+    /// <summary>逻辑拍 → 世界 X 坐标（与 <see cref="UpdatePos"/> 的摆位一致：root 起点 + 累计距离）。</summary>
+    public float XAtBeat(float beat)
+    {
+        Transform root = scanRoot != null ? scanRoot : transform;
+        if (bpmTimeline != null)
+            return root.position.x + bpmTimeline.DistanceAtBeat(beat);
+
+        return root.position.x + beat * 5f; // 兜底 120 BPM / 速度 5
+    }
+
+    /// <summary>世界 X 坐标 → 逻辑拍（<see cref="XAtBeat"/> 的逆运算）。</summary>
+    public float BeatAtX(float worldX)
+    {
+        Transform root = scanRoot != null ? scanRoot : transform;
+        float distance = worldX - root.position.x;
+        if (bpmTimeline != null)
+            return bpmTimeline.BeatAtDistance(distance);
+
+        return Mathf.Max(0f, distance / 5f); // 兜底 120 BPM / 速度 5
+    }
+
+    /// <summary>
+    /// 推导某个物体动画事件的默认拍点：自身是节点用节点 beat，
+    /// 否则用自身 X 坐标反查 beat，仍无结果则 0。
+    /// </summary>
+    public static float ResolveDefaultBeat(GameObject target)
+    {
+        if (target == null)
+            return 0f;
+
+        NodeMarker node = target.GetComponent<NodeMarker>();
+        if (node != null)
+            return node.beat;
+
+        ChartPlayer player = Object.FindFirstObjectByType<ChartPlayer>();
+        if (player != null)
+            return player.BeatAtX(target.transform.position.x);
+
+        return 0f;
+    }
+
     /// <summary>
     /// 按 beat/order 排序场景 NodeMarker，并用 BpmTimeline 计算每个节点的 X 坐标。
     /// Y 坐标保留作者在场景里的摆放。烘焙前会调用，保证节点位置与拍点一致。

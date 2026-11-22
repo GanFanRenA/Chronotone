@@ -105,6 +105,40 @@ public class BpmTimeline
         return DistanceAtBeat(lastBeat) - DistanceAtBeat(firstBeat);
     }
 
+    // 累计世界坐标距离 → 逻辑拍（DistanceAtBeat 的逆运算）。
+    public float BeatAtDistance(float distance)
+    {
+        if (segments == null || segments.Count == 0)
+            return Mathf.Max(0f, distance) / 5f;
+
+        if (distancePrefixBySegment == null ||
+            distancePrefixBySegment.Length != segments.Count)
+        {
+            RebuildDistanceCache();
+        }
+
+        distance = Mathf.Max(0f, distance);
+
+        int segmentIndex = 0;
+        for (int i = 0; i < segments.Count - 1; i++)
+        {
+            if (distance < distancePrefixBySegment[i + 1])
+                break;
+            segmentIndex = i + 1;
+        }
+
+        BpmSegment segment = segments[segmentIndex];
+        if (segment == null)
+            return 0f;
+
+        float speed = Mathf.Max(0f, segment.speed);
+        float prefix = distancePrefixBySegment[segmentIndex];
+        if (speed <= 0f)
+            return segment.beat;
+
+        return segment.beat + (distance - prefix) / speed;
+    }
+
     private int FindSegmentIndex(float beat)
     {
         int low = 0;
