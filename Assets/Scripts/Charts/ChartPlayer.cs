@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 #endif
 
-public class ChartPlayer : MonoBehaviour
+public class ChartPlayer : MonoBehaviour, IBeatMappable
 {
     [Header("Stage")]
     [SerializeField] private AudioClip clip;
@@ -36,6 +36,11 @@ public class ChartPlayer : MonoBehaviour
     [SerializeField] private List<StageVfxEvent> vfxEvents =
         new List<StageVfxEvent>();
 
+    [Header("Rhythm Segments")]
+    [Tooltip("节奏段：可命名的谱面区间，在 Chart Timeline 里编辑；纯制谱数据，运行时无效果。")]
+    [SerializeField] private List<RhythmSegment> rhythmSegments =
+        new List<RhythmSegment>();
+
     [System.NonSerialized] private bool updatingPositions;
     [System.NonSerialized] private GameSettingsSO gameSettings;
     [SerializeField, HideInInspector] private int nodeDataVersion;
@@ -53,6 +58,10 @@ public class ChartPlayer : MonoBehaviour
     public IReadOnlyList<StageVfxEvent> VfxEvents => vfxEvents;
 #if UNITY_EDITOR
     public List<StageVfxEvent> VfxEventsEditable => vfxEvents;
+#endif
+    public IReadOnlyList<RhythmSegment> RhythmSegments => rhythmSegments;
+#if UNITY_EDITOR
+    public List<RhythmSegment> RhythmSegmentsEditable => rhythmSegments;
 #endif
     public bool HasStageData => clip != null && bpmTimeline != null;
     public bool HasBakedTrack =>
@@ -98,6 +107,21 @@ public class ChartPlayer : MonoBehaviour
         }
 
         return players.Length == 1 ? players[0] : null;
+    }
+
+    /// <summary>节奏段移动时，把屏幕震动事件作为「主拍点」暴露给编辑器统一平移。</summary>
+    public void CollectBeatAnchors(List<BeatAnchor> anchors)
+    {
+        if (anchors == null || vfxEvents == null)
+            return;
+
+        foreach (StageVfxEvent e in vfxEvents)
+        {
+            if (e == null)
+                continue;
+
+            anchors.Add(new BeatAnchor(e.beat, d => e.beat += d));
+        }
     }
 
     private void Awake()

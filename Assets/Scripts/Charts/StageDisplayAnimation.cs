@@ -22,7 +22,8 @@ using UnityEngine.Tilemaps;
 public sealed class StageDisplayAnimation :
     MonoBehaviour,
     IStageAnimationEventSource,
-    IStageAnimationSource
+    IStageAnimationSource,
+    IBeatMappable
 {
     private enum TargetKind
     {
@@ -162,6 +163,32 @@ public sealed class StageDisplayAnimation :
         if (fadeOutEnabled)
             events.Add(new StageAnimationEvent(
                 fadeOutStartBeat, StageAnimationEventKind.Fade, "淡出", gameObject));
+    }
+
+    /// <summary>节奏段移动时把淡入/淡出拍点作为「主拍点」暴露给编辑器统一平移。</summary>
+    public void CollectBeatAnchors(List<BeatAnchor> anchors)
+    {
+        if (anchors == null)
+            return;
+
+        bool span = fadeInEnabled && fadeOutEnabled && fadeOutStartBeat > fadeInEndBeat;
+        if (span)
+        {
+            anchors.Add(new BeatAnchor(
+                fadeInEndBeat,
+                d =>
+                {
+                    fadeInEndBeat += d;
+                    fadeOutStartBeat += d;
+                }));
+            return;
+        }
+
+        if (fadeInEnabled)
+            anchors.Add(new BeatAnchor(fadeInEndBeat, d => fadeInEndBeat += d));
+
+        if (fadeOutEnabled)
+            anchors.Add(new BeatAnchor(fadeOutStartBeat, d => fadeOutStartBeat += d));
     }
 
     private void ResolveTimeSource()

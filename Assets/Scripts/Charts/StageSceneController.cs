@@ -63,7 +63,7 @@ public sealed class StageLayerBinding
 /// 层描述、显隐事件、场景绑定都直接序列化在本组件里（一场景一关卡，不产生额外资产）。
 /// </summary>
 public sealed class StageSceneController :
-    MonoBehaviour, IStageAnimationEventSource, IStageAnimationSource
+    MonoBehaviour, IStageAnimationEventSource, IStageAnimationSource, IBeatMappable
 {
     [Header("Layers（层描述）")]
     [SerializeField] private List<StageTilemapLayerDef> layers =
@@ -163,6 +163,21 @@ public sealed class StageSceneController :
                 StageAnimationEventKind.LayerVisibility,
                 $"显隐 {e.layerId}→{(e.visible ? "显示" : "隐藏")}",
                 gameObject));
+        }
+    }
+
+    /// <summary>节奏段移动时把层显隐事件拍点作为「主拍点」暴露给编辑器统一平移。</summary>
+    public void CollectBeatAnchors(List<BeatAnchor> anchors)
+    {
+        if (anchors == null || visibilityEvents == null)
+            return;
+
+        foreach (StageLayerVisibilityEvent e in visibilityEvents)
+        {
+            if (e == null)
+                continue;
+
+            anchors.Add(new BeatAnchor(e.beat, d => e.beat += d));
         }
     }
 

@@ -24,7 +24,8 @@ public sealed class StageFlyAnimation :
     IStageAnimationEventSource,
     IStageAnimationSource,
     IStageAppearanceAnimation,
-    IStageVisibilityAnimation
+    IStageVisibilityAnimation,
+    IBeatMappable
 {
     [Header("Fly In（飞入）")]
     [Tooltip("勾选后：从「结束拍 - 时长」开始在偏移点，经过时长飞到原始位置，在结束拍抵达。")]
@@ -184,6 +185,32 @@ public sealed class StageFlyAnimation :
         if (flyOutEnabled)
             events.Add(new StageAnimationEvent(
                 flyOutStartBeat, StageAnimationEventKind.Fly, "飞出", gameObject));
+    }
+
+    /// <summary>节奏段移动时把飞入/飞出拍点作为「主拍点」暴露给编辑器统一平移。</summary>
+    public void CollectBeatAnchors(List<BeatAnchor> anchors)
+    {
+        if (anchors == null)
+            return;
+
+        bool span = flyInEnabled && flyOutEnabled && flyOutStartBeat > flyInEndBeat;
+        if (span)
+        {
+            anchors.Add(new BeatAnchor(
+                flyInEndBeat,
+                d =>
+                {
+                    flyInEndBeat += d;
+                    flyOutStartBeat += d;
+                }));
+            return;
+        }
+
+        if (flyInEnabled)
+            anchors.Add(new BeatAnchor(flyInEndBeat, d => flyInEndBeat += d));
+
+        if (flyOutEnabled)
+            anchors.Add(new BeatAnchor(flyOutStartBeat, d => flyOutStartBeat += d));
     }
 
     private void ResolveTimeSource()

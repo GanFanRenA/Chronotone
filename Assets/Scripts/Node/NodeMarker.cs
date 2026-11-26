@@ -1,9 +1,10 @@
+using System.Collections.Generic;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
-public class NodeMarker : MonoBehaviour
+public class NodeMarker : MonoBehaviour, IBeatMappable
 {
     public float beat;
     public int order;
@@ -44,6 +45,13 @@ public class NodeMarker : MonoBehaviour
         action == NodeAction.Jump ||
         action == NodeAction.FastFall ||
         gravity != NodeGravity.None;
+
+    /// <summary>节奏段移动时把节点 beat 作为「主拍点」暴露给编辑器统一平移。</summary>
+    public void CollectBeatAnchors(List<BeatAnchor> anchors)
+    {
+        if (anchors != null)
+            anchors.Add(new BeatAnchor(beat, d => beat += d));
+    }
 
     public bool UpdatePos(float x, float deltaX)
     {
