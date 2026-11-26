@@ -15,6 +15,25 @@ public partial class ChartTimelineWindow
             Repaint();
     }
 
+    /// <summary>仅失效节点缓存与完美路线预览缓存（不重扫舞台动画事件）。</summary>
+    private void InvalidateMarkers()
+    {
+        markersDirty = true;
+        editorPerfectRouteDirty = true;
+        RequestRepaint();
+        SceneView.RepaintAll();
+    }
+
+    /// <summary>仅失效舞台动画事件缓存（动画组件字段变化时使用）。</summary>
+    private void InvalidateAnimationEvents()
+    {
+        animationEventsDirty = true;
+        editorPerfectRouteDirty = true; // 飞入飞出会改变碰撞在场，进而影响轨迹预览
+        RequestRepaint();
+        SceneView.RepaintAll();
+    }
+
+    /// <summary>全量失效（层级变化 / Undo / PlayMode 等无法判定范围时使用）。</summary>
     private void InvalidateMarkerCache()
     {
         markersDirty = true;
@@ -141,7 +160,7 @@ public partial class ChartTimelineWindow
             if (target is NodeMarker ||
                 target == targetPlayer)
             {
-                InvalidateMarkerCache();
+                InvalidateMarkers();
                 if (targetPlayer != null)
                 {
                     if (target is NodeMarker || target == targetPlayer)
@@ -294,7 +313,7 @@ public partial class ChartTimelineWindow
         targetPlayer.MarkDirty();
         EditorUtility.SetDirty(targetPlayer);
         Selection.activeGameObject = go;
-        InvalidateMarkerCache();
+        InvalidateMarkers();
     }
 
     private NodeMarker FindMarkerAtBeat(
@@ -337,7 +356,7 @@ public partial class ChartTimelineWindow
         Undo.CollapseUndoOperations(undoGroup);
 
         targetPlayer.MarkDirty();
-        InvalidateMarkerCache();
+        InvalidateMarkers();
         RequestRepaint();
     }
 
@@ -460,7 +479,7 @@ public partial class ChartTimelineWindow
         targetPlayer.UpdatePos(earliestTargetBeat);
         targetPlayer.MarkDirty();
         EditorUtility.SetDirty(targetPlayer);
-        InvalidateMarkerCache();
+        InvalidateMarkers();
 
         ReplaceSelection(created);
         SyncSelectionToUnity();
@@ -482,7 +501,7 @@ public partial class ChartTimelineWindow
             EditorUtility.SetDirty(m);
         }
         targetPlayer.MarkDirty();
-        InvalidateMarkerCache();
+        InvalidateMarkers();
         RequestRepaint();
     }
 

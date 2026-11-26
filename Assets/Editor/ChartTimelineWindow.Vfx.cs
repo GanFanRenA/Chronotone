@@ -154,7 +154,7 @@ public partial class ChartTimelineWindow
         DrawLegendItem(4f, header.y + 2f, ScreenShakeColor, "屏幕震动", 72f);
         GUI.Label(
             new Rect(84f, header.y + 2f, header.width - 88f, 14f),
-            "右键添加 · 拖起点改拍点 · 拖末端改时长 · Delete 删除",
+            "右键添加 · S 播放头添加 · 拖起点改拍点 · 拖末端改时长 · Delete 删除",
             EditorStyles.miniLabel);
     }
 
@@ -326,6 +326,18 @@ public partial class ChartTimelineWindow
             false,
             () => AddVfxEventAt(beat));
         menu.ShowAsContext();
+    }
+
+    private void AddVfxEventAtPlayhead()
+    {
+        if (targetPlayer == null)
+            return;
+
+        float beat = Mathf.Max(0f, playheadBeat);
+        if (snap > 0f)
+            beat = Mathf.Round(beat / snap) * snap;
+
+        AddVfxEventAt(beat);
     }
 
     private void AddVfxEventAt(float beat)

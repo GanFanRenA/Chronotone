@@ -92,10 +92,10 @@ public partial class ChartTimelineWindow : EditorWindow
         NodeAppearanceSet.Changed += OnNodeAppearanceChanged;
         NodeMarker.EditorChanged -= OnNodeMarkerChanged;
         NodeMarker.EditorChanged += OnNodeMarkerChanged;
-        StageFlyAnimation.EditorChanged -= InvalidateMarkerCache;
-        StageFlyAnimation.EditorChanged += InvalidateMarkerCache;
-        StageDisplayAnimation.EditorChanged -= InvalidateMarkerCache;
-        StageDisplayAnimation.EditorChanged += InvalidateMarkerCache;
+        StageFlyAnimation.EditorChanged -= InvalidateAnimationEvents;
+        StageFlyAnimation.EditorChanged += InvalidateAnimationEvents;
+        StageDisplayAnimation.EditorChanged -= InvalidateAnimationEvents;
+        StageDisplayAnimation.EditorChanged += InvalidateAnimationEvents;
         if (nodePrefab == null)
             nodePrefab = AssetDatabase.LoadAssetAtPath<NodeMarker>(NodePrefabPath);
         EditorApplication.hierarchyChanged -= OnHierarchyChanged;
@@ -118,8 +118,8 @@ public partial class ChartTimelineWindow : EditorWindow
     {
         NodeAppearanceSet.Changed -= OnNodeAppearanceChanged;
         NodeMarker.EditorChanged -= OnNodeMarkerChanged;
-        StageFlyAnimation.EditorChanged -= InvalidateMarkerCache;
-        StageDisplayAnimation.EditorChanged -= InvalidateMarkerCache;
+        StageFlyAnimation.EditorChanged -= InvalidateAnimationEvents;
+        StageDisplayAnimation.EditorChanged -= InvalidateAnimationEvents;
         EditorApplication.hierarchyChanged -= OnHierarchyChanged;
         Undo.undoRedoPerformed -= OnUndoRedoPerformed;
         Undo.postprocessModifications -= OnPostprocessModifications;
@@ -134,7 +134,7 @@ public partial class ChartTimelineWindow : EditorWindow
 
     private void OnNodeAppearanceChanged(NodeAppearanceSet appearanceSet)
     {
-        InvalidateMarkerCache();
+        InvalidateMarkers();
     }
 
     private void OnNodeMarkerChanged(NodeMarker marker)
@@ -142,7 +142,7 @@ public partial class ChartTimelineWindow : EditorWindow
         if (marker == null)
             return;
 
-        InvalidateMarkerCache();
+        InvalidateMarkers();
     }
 
     private void OnBecameVisible()

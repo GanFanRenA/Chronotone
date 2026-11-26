@@ -261,6 +261,11 @@ public partial class ChartTimelineWindow
             case KeyCode.RightBracket:
                 AdjustOrder(+1);
                 break;
+            case KeyCode.S:
+                if (e.control || e.command || e.alt) return false;
+                AddVfxEventAtPlayhead();
+                RequestRepaint();
+                break;
             default:
                 return false;
         }
@@ -379,7 +384,7 @@ public partial class ChartTimelineWindow
         duplicateDragNotificationShown = false;
         dragStartBeats = null;
         targetPlayer.EndPositionUpdateBatch(fromBeat);
-        InvalidateMarkerCache();
+        InvalidateMarkers();
     }
 
     private float GetEarliestSelectedBeat()

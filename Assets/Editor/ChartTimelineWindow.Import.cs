@@ -301,7 +301,7 @@ public partial class ChartTimelineWindow
 
         targetPlayer.MarkDirty();
         EditorUtility.SetDirty(targetPlayer);
-        InvalidateMarkerCache();
+        InvalidateMarkers();
 
         ReplaceSelection(importedMarkers);
         SyncSelectionToUnity();

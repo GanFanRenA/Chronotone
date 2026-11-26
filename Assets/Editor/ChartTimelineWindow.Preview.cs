@@ -213,7 +213,7 @@ public partial class ChartTimelineWindow
         if (adjustedCount > 0)
         {
             targetPlayer.MarkDirty();
-            InvalidateMarkerCache();
+            InvalidateMarkers();
             SceneView.RepaintAll();
         }
 

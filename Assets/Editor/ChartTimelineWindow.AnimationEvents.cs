@@ -398,7 +398,7 @@ public partial class ChartTimelineWindow
         DrawLegendItem(122f, y, FlyColor, "飞入/飞出", 64f);
         GUI.Label(
             new Rect(194f, y, header.width - 198f, 14f),
-            "ctrl+左键多选 · 拖动选中点改拍点",
+            "单击拖动 · 双击跳转 · ctrl多选 · 右键添加显隐",
             EditorStyles.miniLabel);
     }
 
@@ -518,6 +518,16 @@ public partial class ChartTimelineWindow
                 return;
         }
 
+        bool rightClick =
+            e.type == EventType.ContextClick ||
+            (e.type == EventType.MouseDown && e.button == 1);
+        if (rightClick && laneRect.Contains(e.mousePosition))
+        {
+            ShowAnimationContextMenu(laneRect, e.mousePosition);
+            e.Use();
+            return;
+        }
+
         if (e.type == EventType.MouseDown && e.button == 0 &&
             scrollArea.Contains(e.mousePosition))
         {
@@ -536,9 +546,31 @@ public partial class ChartTimelineWindow
                 return;
             }
 
+            // 双击：跳 Hierarchy 选中 owner（单击直接进入拖动，见下）。
+            if (e.clickCount == 2 && hit != null)
+            {
+                SelectAnimationOwner(hit);
+                e.Use();
+                return;
+            }
+
+            // 单击命中事件：未选中则单选，已选中保留多选，并立即进入可拖动状态。
+            if (hit != null)
+            {
+                if (!IsAnimationSelected(hit.Event))
+                {
+                    ClearAnimationSelection();
+                    AddAnimationSelection(hit.Event);
+                }
+            }
+            else
+            {
+                ClearAnimationSelection();
+            }
+
             animDragActive = true;
             animDragged = false;
-            animMoveCandidate = hit != null && IsAnimationSelected(hit.Event);
+            animMoveCandidate = hit != null;
             animMoveDragged = false;
             animDragMouseStartX = e.mousePosition.x;
             animDragMouseStartY = e.mousePosition.y;
@@ -604,17 +636,11 @@ public partial class ChartTimelineWindow
             }
             else if (!animDragged)
             {
-                if (animPendingClickHit != null)
-                {
-                    // 单击：跳 Hierarchy 选中 owner；随后 OnSelectionChange 会
-                    // 反向把该 owner 对应的事件高亮到时间轴上。
-                    SelectAnimationOwner(animPendingClickHit);
-                }
-                else
-                {
-                    // 空白处单击：清空时间轴动画多选。
+                // 单击事件：保持选中（选中已在 MouseDown 完成），不再跳 Hierarchy；
+                // 跳转改为双击。单击空白处：清空时间轴动画多选。
+                if (animPendingClickHit == null)
                     ClearAnimationSelection();
-                }
+
                 RequestRepaint();
             }
 
@@ -1169,5 +1195,137 @@ public partial class ChartTimelineWindow
         }
 
         return component != null ? component.gameObject : null;
+    }
+
+    // ---- 右键添加显隐事件 ----
+
+    private void ShowAnimationContextMenu(Rect laneRect, Vector2 mouse)
+    {
+        float beat = ScreenXToBeat(mouse.x, laneRect);
+        if (snap > 0f)
+            beat = Mathf.Round(beat / snap) * snap;
+        beat = Mathf.Max(0f, beat);
+
+        var menu = new GenericMenu();
+        AddLayerVisibilityMenuItems(menu, beat);
+        menu.ShowAsContext();
+    }
+
+    private void AddLayerVisibilityMenuItems(GenericMenu menu, float beat)
+    {
+        StageSceneController[] controllers = GetSceneStageControllers();
+        if (controllers.Length == 0)
+        {
+            menu.AddDisabledItem(
+                new GUIContent("场景中没有 StageSceneController，无法添加显隐事件"));
+            return;
+        }
+
+        menu.AddDisabledItem(new GUIContent($"在 beat {beat:0.###} 添加显隐事件"));
+
+        foreach (StageSceneController controller in controllers)
+        {
+            string[] layerIds = GetStageLayerIds(controller);
+            if (layerIds.Length == 0)
+                continue;
+
+            string controllerName = controller.gameObject.name;
+            foreach (string layerId in layerIds)
+            {
+                menu.AddItem(
+                    new GUIContent($"{controllerName}/{layerId} → 显示"),
+                    false,
+                    () => AddVisibilityEventAt(controller, layerId, beat, true));
+                menu.AddItem(
+                    new GUIContent($"{controllerName}/{layerId} → 隐藏"),
+                    false,
+                    () => AddVisibilityEventAt(controller, layerId, beat, false));
+            }
+        }
+    }
+
+    private StageSceneController[] GetSceneStageControllers()
+    {
+        if (targetPlayer == null)
+            return System.Array.Empty<StageSceneController>();
+
+        Scene scene = targetPlayer.gameObject.scene;
+        if (!scene.IsValid())
+            return System.Array.Empty<StageSceneController>();
+
+        var result = new List<StageSceneController>();
+        GameObject[] roots = scene.GetRootGameObjects();
+        foreach (GameObject root in roots)
+        {
+            if (root == null)
+                continue;
+
+            result.AddRange(root.GetComponentsInChildren<StageSceneController>(true));
+        }
+
+        return result.ToArray();
+    }
+
+    private static string[] GetStageLayerIds(StageSceneController controller)
+    {
+        if (controller == null)
+            return System.Array.Empty<string>();
+
+        var ids = new List<string>();
+        var so = new SerializedObject(controller);
+        SerializedProperty layers = so.FindProperty("layers");
+        if (layers != null && layers.isArray)
+        {
+            for (int i = 0; i < layers.arraySize; i++)
+            {
+                SerializedProperty def = layers.GetArrayElementAtIndex(i);
+                SerializedProperty idProp = def.FindPropertyRelative("id");
+                if (idProp != null && !string.IsNullOrEmpty(idProp.stringValue))
+                    ids.Add(idProp.stringValue);
+            }
+        }
+        so.Dispose();
+        return ids.ToArray();
+    }
+
+    private void AddVisibilityEventAt(
+        StageSceneController controller,
+        string layerId,
+        float beat,
+        bool visible)
+    {
+        if (controller == null || string.IsNullOrEmpty(layerId))
+            return;
+
+        Undo.RecordObject(controller, "Add Visibility Event");
+
+        var so = new SerializedObject(controller);
+        SerializedProperty array = so.FindProperty("visibilityEvents");
+        if (array == null || !array.isArray)
+        {
+            so.Dispose();
+            return;
+        }
+
+        int index = array.arraySize;
+        array.InsertArrayElementAtIndex(index);
+        SerializedProperty element = array.GetArrayElementAtIndex(index);
+        SerializedProperty layerIdProp = element.FindPropertyRelative("layerId");
+        SerializedProperty beatProp = element.FindPropertyRelative("beat");
+        SerializedProperty visibleProp = element.FindPropertyRelative("visible");
+        if (layerIdProp != null) layerIdProp.stringValue = layerId;
+        if (beatProp != null) beatProp.floatValue = beat;
+        if (visibleProp != null) visibleProp.boolValue = visible;
+
+        so.ApplyModifiedProperties();
+        so.Dispose();
+
+        EditorUtility.SetDirty(controller);
+        if (PrefabUtility.IsPartOfPrefabInstance(controller))
+            PrefabUtility.RecordPrefabInstancePropertyModifications(controller);
+
+        animationEventsDirty = true;
+        RequestRepaint();
+        SceneView.RepaintAll();
     }
 }
