@@ -127,6 +127,8 @@ public partial class ChartTimelineWindow : EditorWindow
         SceneView.duringSceneGui -= DrawTrajectoryPreview;
         StopPlayback();
         DisposeAnimationMoveTargets();
+        CancelSegmentRename();
+        segmentDragging = false;
         if (previewSource != null && previewSource.gameObject != null)
             DestroyImmediate(previewSource.gameObject);
         previewSource = null;
@@ -162,6 +164,8 @@ public partial class ChartTimelineWindow : EditorWindow
         boxSelecting = false;
         boxSelectionBase.Clear();
         CancelAnimationDrag();
+        CancelSegmentRename();
+        segmentDragging = false;
     }
 
     private void OnGUI()
@@ -185,28 +189,34 @@ public partial class ChartTimelineWindow : EditorWindow
 
         float detailHeight = selectedVfxIndex >= 0 ? VfxDetailPanelHeight : 0f;
         ResolveLaneHeights(detailHeight, out float nodeHeight, out float vfxHeight, out float animationHeight);
+        ValidateSegmentSelection();
 
         Rect rulerRect = new Rect(0, ToolbarHeight, position.width, RulerHeight);
-        Rect trackRect = new Rect(0, ToolbarHeight + RulerHeight, position.width, nodeHeight);
+        Rect segmentRect = new Rect(0, ToolbarHeight + RulerHeight, position.width, SegmentLaneHeight);
+        Rect trackRect = new Rect(
+            0,
+            ToolbarHeight + RulerHeight + SegmentLaneHeight,
+            position.width,
+            nodeHeight);
         Rect vfxRect = new Rect(
             0,
-            ToolbarHeight + RulerHeight + nodeHeight,
+            ToolbarHeight + RulerHeight + SegmentLaneHeight + nodeHeight,
             position.width,
             vfxHeight);
         Rect animationRect = new Rect(
             0,
-            ToolbarHeight + RulerHeight + nodeHeight + vfxHeight,
+            ToolbarHeight + RulerHeight + SegmentLaneHeight + nodeHeight + vfxHeight,
             position.width,
             animationHeight);
         Rect scrollRect = new Rect(
             0,
-            ToolbarHeight + RulerHeight + nodeHeight + vfxHeight +
+            ToolbarHeight + RulerHeight + SegmentLaneHeight + nodeHeight + vfxHeight +
             animationHeight,
             position.width,
             ScrollbarHeight);
         Rect detailRect = new Rect(
             0,
-            ToolbarHeight + RulerHeight + nodeHeight + vfxHeight +
+            ToolbarHeight + RulerHeight + SegmentLaneHeight + nodeHeight + vfxHeight +
             animationHeight + ScrollbarHeight,
             position.width,
             detailHeight);
@@ -214,17 +224,19 @@ public partial class ChartTimelineWindow : EditorWindow
         UpdatePlayheadIfPlaying();
 
         DrawRuler(rulerRect);
+        DrawSegmentLane(segmentRect);
         DrawTrack(trackRect, markers);
         DrawVfxLane(vfxRect, vfxEvents);
         DrawAnimationLane(animationRect, animationEvents);
         DrawLaneDividers(trackRect, vfxRect);
-        DrawPlayhead(rulerRect, trackRect, vfxRect, animationRect);
-        DrawBeatMarks(rulerRect, trackRect, vfxRect, animationRect);
+        DrawPlayhead(rulerRect, segmentRect, trackRect, vfxRect, animationRect);
+        DrawBeatMarks(rulerRect, segmentRect, trackRect, vfxRect, animationRect);
         DrawScrollbar(scrollRect, markers, animationEvents, vfxEvents);
         DrawBoxSelection();
 
         if (!HandleLaneDividerInput(trackRect, vfxRect, detailHeight))
         {
+            HandleSegmentInput(segmentRect);
             HandleInput(rulerRect, trackRect, scrollRect, markers);
             HandleVfxInput(vfxRect);
             HandleAnimationInput(animationRect);

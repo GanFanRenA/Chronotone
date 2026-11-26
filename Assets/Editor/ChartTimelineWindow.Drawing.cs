@@ -9,12 +9,14 @@ public partial class ChartTimelineWindow
 
     private void DrawPlayhead(
         Rect rulerRect,
+        Rect segmentRect,
         Rect trackRect,
         Rect vfxRect,
         Rect animationRect)
     {
         DrawPlayheadLine(
             rulerRect,
+            segmentRect,
             trackRect,
             vfxRect,
             animationRect,
@@ -25,6 +27,7 @@ public partial class ChartTimelineWindow
         {
             DrawPlayheadLine(
                 rulerRect,
+                segmentRect,
                 trackRect,
                 vfxRect,
                 animationRect,
@@ -35,6 +38,7 @@ public partial class ChartTimelineWindow
         if (!playing && Mathf.Approximately(playStartBeat, playheadBeat)) return;
         DrawPlayheadLine(
             rulerRect,
+            segmentRect,
             trackRect,
             vfxRect,
             animationRect,
@@ -44,6 +48,7 @@ public partial class ChartTimelineWindow
 
     private void DrawPlayheadLine(
         Rect rulerRect,
+        Rect segmentRect,
         Rect trackRect,
         Rect vfxRect,
         Rect animationRect,
@@ -54,6 +59,7 @@ public partial class ChartTimelineWindow
         if (x < -2 || x > position.width + 2) return;
 
         EditorGUI.DrawRect(new Rect(x - 1, rulerRect.y, 2, rulerRect.height), color);
+        EditorGUI.DrawRect(new Rect(x - 1, segmentRect.y, 2, segmentRect.height), color);
         EditorGUI.DrawRect(new Rect(x - 1, trackRect.y, 2, trackRect.height), color);
         EditorGUI.DrawRect(new Rect(x - 1, vfxRect.y, 2, vfxRect.height), color);
         EditorGUI.DrawRect(new Rect(x - 1, animationRect.y, 2, animationRect.height), color);
@@ -62,6 +68,7 @@ public partial class ChartTimelineWindow
 
     private void DrawBeatMarks(
         Rect rulerRect,
+        Rect segmentRect,
         Rect trackRect,
         Rect vfxRect,
         Rect animationRect)
@@ -75,6 +82,7 @@ public partial class ChartTimelineWindow
             if (x < -2 || x > position.width + 2) continue;
 
             EditorGUI.DrawRect(new Rect(x, rulerRect.y, 1, rulerRect.height), color);
+            EditorGUI.DrawRect(new Rect(x, segmentRect.y, 1, segmentRect.height), color);
             EditorGUI.DrawRect(new Rect(x, trackRect.y, 1, trackRect.height), color);
             EditorGUI.DrawRect(new Rect(x, vfxRect.y, 1, vfxRect.height), color);
             EditorGUI.DrawRect(new Rect(x, animationRect.y, 1, animationRect.height), color);
@@ -127,6 +135,8 @@ public partial class ChartTimelineWindow
             ClearSelection();
             ClearAnimationSelection();
             selectedVfxIndex = -1;
+            selectedSegmentIndex = -1;
+            CancelSegmentRename();
             SyncSelectionToUnity();
             InvalidateMarkerCache();
             SceneView.RepaintAll();

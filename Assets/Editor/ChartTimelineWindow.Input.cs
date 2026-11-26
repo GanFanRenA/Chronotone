@@ -193,7 +193,8 @@ public partial class ChartTimelineWindow
         switch (e.keyCode)
         {
             case KeyCode.Delete:
-                if (selectedVfxIndex >= 0) DeleteSelectedVfxEvent();
+                if (selectedSegmentIndex >= 0) DeleteSelectedSegment();
+                else if (selectedVfxIndex >= 0) DeleteSelectedVfxEvent();
                 else DeleteSelection();
                 break;
             case KeyCode.Backspace:
@@ -252,6 +253,8 @@ public partial class ChartTimelineWindow
                 ClearSelection();
                 ClearAnimationSelection();
                 selectedVfxIndex = -1;
+                selectedSegmentIndex = -1;
+                CancelSegmentRename();
                 SyncSelectionToUnity();
                 RequestRepaint();
                 break;
@@ -264,6 +267,11 @@ public partial class ChartTimelineWindow
             case KeyCode.S:
                 if (e.control || e.command || e.alt) return false;
                 AddVfxEventAtPlayhead();
+                RequestRepaint();
+                break;
+            case KeyCode.G:
+                if (e.control || e.command || e.alt) return false;
+                CreateSegmentFromLoop();
                 RequestRepaint();
                 break;
             default:

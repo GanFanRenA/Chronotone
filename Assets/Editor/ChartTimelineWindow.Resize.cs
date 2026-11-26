@@ -37,7 +37,7 @@ public partial class ChartTimelineWindow
     {
         float available =
             position.height - ToolbarHeight - RulerHeight -
-            ScrollbarHeight - detailHeight;
+            SegmentLaneHeight - ScrollbarHeight - detailHeight;
         float minAnimation = detailHeight > 0f ? 0f : MinAnimationLaneHeight;
         float maxNodeVfx = Mathf.Max(
             MinNodeLaneHeight + MinVfxLaneHeight,
@@ -151,7 +151,7 @@ public partial class ChartTimelineWindow
         float delta = mouseY - resizeStartMouseY;
         float available =
             position.height - ToolbarHeight - RulerHeight -
-            ScrollbarHeight - detailHeight;
+            SegmentLaneHeight - ScrollbarHeight - detailHeight;
         float minAnimation = detailHeight > 0f ? 0f : MinAnimationLaneHeight;
 
         switch (resizingDivider)
