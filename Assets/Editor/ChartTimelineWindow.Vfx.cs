@@ -363,6 +363,8 @@ public partial class ChartTimelineWindow
         if (events == null || index < 0 || index >= events.Count)
             return;
 
+        StageVfxEvent deleted = events[index];
+
         RecordVfxUndo("Delete VFX Event");
         events.RemoveAt(index);
         if (selectedVfxIndex == index)
@@ -371,6 +373,9 @@ public partial class ChartTimelineWindow
             selectedVfxIndex--;
 
         CommitVfxEdit();
+
+        if (deleted != null && !string.IsNullOrEmpty(deleted.segmentTemplateId))
+            HandleDeletedSegmentVfx(deleted);
     }
 
     private void DeleteSelectedVfxEvent()

@@ -345,6 +345,20 @@ public partial class ChartTimelineWindow
         NodeMarker[] selectedNodes = selection.Where(m => m != null).ToArray();
         if (selectedNodes.Length == 0) return;
 
+        // 在销毁前收集被删除的「生成节点」信息，用于同步模板。
+        var deletions = new List<SegmentNodeDeletion>();
+        foreach (NodeMarker marker in selectedNodes)
+        {
+            if (marker != null &&
+                !string.IsNullOrEmpty(marker.segmentTemplateId) &&
+                marker.segmentTemplateNodeIndex >= 0)
+            {
+                deletions.Add(new SegmentNodeDeletion(
+                    marker.segmentTemplateId,
+                    marker.segmentTemplateNodeIndex));
+            }
+        }
+
         ClearSelection();
         SyncSelectionToUnity();
 
@@ -354,6 +368,9 @@ public partial class ChartTimelineWindow
         foreach (NodeMarker marker in selectedNodes)
             Undo.DestroyObjectImmediate(marker.gameObject);
         Undo.CollapseUndoOperations(undoGroup);
+
+        if (deletions.Count > 0)
+            HandleDeletedSegmentNodes(deletions);
 
         targetPlayer.MarkDirty();
         InvalidateMarkers();

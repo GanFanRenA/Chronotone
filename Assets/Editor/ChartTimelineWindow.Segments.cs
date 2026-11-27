@@ -1012,6 +1012,162 @@ public partial class ChartTimelineWindow
         }
     }
 
+    // ---- 删除同步（删除生成元素 → 移除模板项 → 删除其他实例对应元素） ----
+
+    private readonly struct SegmentNodeDeletion
+    {
+        public readonly string TemplateId;
+        public readonly int NodeIndex;
+
+        public SegmentNodeDeletion(string templateId, int nodeIndex)
+        {
+            TemplateId = templateId;
+            NodeIndex = nodeIndex;
+        }
+    }
+
+    /// <summary>删除生成节点后，把对应模板项移除并同步删除其他实例的对应节点。</summary>
+    private void HandleDeletedSegmentNodes(IList<SegmentNodeDeletion> deletions)
+    {
+        if (deletions == null || targetPlayer == null)
+            return;
+
+        Undo.RecordObject(targetPlayer, "Delete Segment Nodes");
+
+        var byTemplate = new Dictionary<string, List<int>>();
+        foreach (SegmentNodeDeletion deletion in deletions)
+        {
+            if (string.IsNullOrEmpty(deletion.TemplateId) || deletion.NodeIndex < 0)
+                continue;
+
+            if (!byTemplate.TryGetValue(deletion.TemplateId, out List<int> list))
+            {
+                list = new List<int>();
+                byTemplate[deletion.TemplateId] = list;
+            }
+            list.Add(deletion.NodeIndex);
+        }
+
+        foreach (KeyValuePair<string, List<int>> kv in byTemplate)
+        {
+            SegmentTemplate template = FindTemplate(kv.Key);
+            if (template == null)
+                continue;
+
+            List<int> indices = kv.Value;
+            indices.Sort();
+            for (int i = indices.Count - 1; i >= 0; i--)
+            {
+                int nodeIndex = indices[i];
+                if (nodeIndex < 0 || nodeIndex >= template.nodes.Count)
+                    continue;
+
+                template.nodes.RemoveAt(nodeIndex);
+                RemoveTemplateNodeFromInstances(template, nodeIndex);
+            }
+        }
+    }
+
+    private void RemoveTemplateNodeFromInstances(SegmentTemplate template, int removedNodeIndex)
+    {
+        List<RhythmSegment> segments = GetSegments();
+        if (segments == null)
+            return;
+
+        Transform root = targetPlayer.scanRoot != null ? targetPlayer.scanRoot : targetPlayer.transform;
+        NodeMarker[] allMarkers = root.GetComponentsInChildren<NodeMarker>(false);
+
+        foreach (RhythmSegment segment in segments)
+        {
+            if (segment == null || segment.templateId != template.id)
+                continue;
+
+            NodeMarker toDestroy = null;
+            foreach (NodeMarker marker in allMarkers)
+            {
+                if (marker == null)
+                    continue;
+                if (marker.segmentInstanceId == segment.instanceId &&
+                    marker.segmentTemplateNodeIndex == removedNodeIndex)
+                {
+                    toDestroy = marker;
+                    break;
+                }
+            }
+
+            if (toDestroy != null)
+                Undo.DestroyObjectImmediate(toDestroy.gameObject);
+
+            foreach (NodeMarker marker in allMarkers)
+            {
+                if (marker == null)
+                    continue;
+                if (marker.segmentInstanceId == segment.instanceId &&
+                    marker.segmentTemplateNodeIndex > removedNodeIndex)
+                {
+                    marker.segmentTemplateNodeIndex--;
+                }
+            }
+        }
+    }
+
+    /// <summary>删除生成屏幕震动后，把对应模板项移除并同步删除其他实例的对应震动。</summary>
+    private void HandleDeletedSegmentVfx(StageVfxEvent deletedVfx)
+    {
+        if (deletedVfx == null ||
+            string.IsNullOrEmpty(deletedVfx.segmentTemplateId) ||
+            deletedVfx.segmentTemplateVfxIndex < 0)
+        {
+            return;
+        }
+
+        Undo.RecordObject(targetPlayer, "Delete Segment VFX");
+
+        SegmentTemplate template = FindTemplate(deletedVfx.segmentTemplateId);
+        if (template == null || deletedVfx.segmentTemplateVfxIndex >= template.vfx.Count)
+            return;
+
+        int vfxIndex = deletedVfx.segmentTemplateVfxIndex;
+        template.vfx.RemoveAt(vfxIndex);
+
+        List<RhythmSegment> segments = GetSegments();
+        if (segments == null || targetPlayer.VfxEventsEditable == null)
+            return;
+
+        foreach (RhythmSegment segment in segments)
+        {
+            if (segment == null || segment.templateId != template.id)
+                continue;
+
+            StageVfxEvent toRemove = null;
+            foreach (StageVfxEvent e in targetPlayer.VfxEventsEditable)
+            {
+                if (e == null)
+                    continue;
+                if (e.segmentInstanceId == segment.instanceId &&
+                    e.segmentTemplateVfxIndex == vfxIndex)
+                {
+                    toRemove = e;
+                    break;
+                }
+            }
+
+            if (toRemove != null)
+                targetPlayer.VfxEventsEditable.Remove(toRemove);
+
+            foreach (StageVfxEvent e in targetPlayer.VfxEventsEditable)
+            {
+                if (e == null)
+                    continue;
+                if (e.segmentInstanceId == segment.instanceId &&
+                    e.segmentTemplateVfxIndex > vfxIndex)
+                {
+                    e.segmentTemplateVfxIndex--;
+                }
+            }
+        }
+    }
+
     // ---- 重命名 ----
 
     private void BeginSegmentRename(RhythmSegment segment)
