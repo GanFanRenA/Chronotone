@@ -37,9 +37,14 @@ public class ChartPlayer : MonoBehaviour, IBeatMappable
         new List<StageVfxEvent>();
 
     [Header("Rhythm Segments")]
-    [Tooltip("节奏段：可命名的谱面区间，在 Chart Timeline 里编辑；纯制谱数据，运行时无效果。")]
+    [Tooltip("节奏段实例：模板在某起始拍处的放置。")]
     [SerializeField] private List<RhythmSegment> rhythmSegments =
         new List<RhythmSegment>();
+
+    [Header("Rhythm Segment Templates")]
+    [Tooltip("节奏段模板：可复用的段落内容（相对拍）。")]
+    [SerializeField] private List<SegmentTemplate> segmentTemplates =
+        new List<SegmentTemplate>();
 
     [System.NonSerialized] private bool updatingPositions;
     [System.NonSerialized] private GameSettingsSO gameSettings;
@@ -62,6 +67,10 @@ public class ChartPlayer : MonoBehaviour, IBeatMappable
     public IReadOnlyList<RhythmSegment> RhythmSegments => rhythmSegments;
 #if UNITY_EDITOR
     public List<RhythmSegment> RhythmSegmentsEditable => rhythmSegments;
+#endif
+    public IReadOnlyList<SegmentTemplate> SegmentTemplates => segmentTemplates;
+#if UNITY_EDITOR
+    public List<SegmentTemplate> SegmentTemplatesEditable => segmentTemplates;
 #endif
     public bool HasStageData => clip != null && bpmTimeline != null;
     public bool HasBakedTrack =>

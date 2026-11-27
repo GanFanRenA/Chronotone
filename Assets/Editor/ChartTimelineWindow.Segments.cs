@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public partial class ChartTimelineWindow
 {
@@ -21,14 +20,12 @@ public partial class ChartTimelineWindow
     private bool segmentDragChanged;
     private bool segmentDragRecorded;
     private float segmentDragMouseStartBeat;
-    private float segmentDragStartStartBeat;
-    private float segmentDragStartEndBeat;
+    private float segmentDragStartBeat;
     private float segmentDragMinBeat;
     private float segmentDragAppliedDelta;
-
-    private readonly List<IBeatMappable> segmentMoveSources = new List<IBeatMappable>();
-    private readonly List<BeatAnchor> segmentDragAnchors = new List<BeatAnchor>();
-    private readonly List<Component> segmentDragObjects = new List<Component>();
+    private RhythmSegment segmentDragSegment;
+    private readonly List<NodeMarker> segmentDragNodes = new List<NodeMarker>();
+    private readonly List<StageVfxEvent> segmentDragVfx = new List<StageVfxEvent>();
 
     private int renamingSegmentIndex = -1;
     private string renameBuffer = string.Empty;
@@ -39,6 +36,53 @@ public partial class ChartTimelineWindow
     private List<RhythmSegment> GetSegments()
     {
         return targetPlayer != null ? targetPlayer.RhythmSegmentsEditable : null;
+    }
+
+    private List<SegmentTemplate> GetTemplates()
+    {
+        return targetPlayer != null ? targetPlayer.SegmentTemplatesEditable : null;
+    }
+
+    private SegmentTemplate FindTemplate(string id)
+    {
+        List<SegmentTemplate> templates = GetTemplates();
+        if (templates == null || string.IsNullOrEmpty(id))
+            return null;
+
+        foreach (SegmentTemplate template in templates)
+        {
+            if (template != null && template.id == id)
+                return template;
+        }
+
+        return null;
+    }
+
+    private RhythmSegment FindInstance(string instanceId)
+    {
+        List<RhythmSegment> segments = GetSegments();
+        if (segments == null)
+            return null;
+
+        foreach (RhythmSegment segment in segments)
+        {
+            if (segment != null && segment.instanceId == instanceId)
+                return segment;
+        }
+
+        return null;
+    }
+
+    private float SegmentEndBeat(RhythmSegment segment)
+    {
+        SegmentTemplate template = FindTemplate(segment.templateId);
+        return template != null ? segment.startBeat + template.durationBeats : segment.startBeat;
+    }
+
+    private string SegmentDisplayName(RhythmSegment segment)
+    {
+        SegmentTemplate template = FindTemplate(segment.templateId);
+        return template != null ? template.name : "段";
     }
 
     private void ValidateSegmentSelection()
@@ -62,7 +106,7 @@ public partial class ChartTimelineWindow
         {
             GUI.Label(
                 new Rect(rect.x + 8f, rect.y, rect.width - 16f, rect.height),
-                "节奏段：G 用红轴→蓝轴创建 · 拖动移动 · 双击改名 · Del 删除",
+                "节奏段：G 用红轴→蓝轴建段 · 右键复制模板 · 拖动移动 · 双击改名 · Del 删除",
                 EditorStyles.miniLabel);
             return;
         }
@@ -73,8 +117,9 @@ public partial class ChartTimelineWindow
             if (segment == null)
                 continue;
 
+            float endBeat = SegmentEndBeat(segment);
             float startX = rect.x + (segment.startBeat - scrollBeat) * pixelsPerBeat;
-            float endX = rect.x + (segment.endBeat - scrollBeat) * pixelsPerBeat;
+            float endX = rect.x + (endBeat - scrollBeat) * pixelsPerBeat;
             float left = Mathf.Min(startX, endX);
             float right = Mathf.Max(startX, endX);
             if (right < -10f || left > rect.width + 10f)
@@ -93,19 +138,19 @@ public partial class ChartTimelineWindow
 
             if (i == renamingSegmentIndex)
             {
-                DrawSegmentRenameField(barRect, segment);
+                DrawSegmentRenameField(barRect);
             }
             else if (barRect.width > 16f)
             {
                 GUI.Label(
                     new Rect(barRect.x + 3f, barRect.y, barRect.width - 6f, barRect.height),
-                    segment.name,
+                    SegmentDisplayName(segment),
                     EditorStyles.miniLabel);
             }
         }
     }
 
-    private void DrawSegmentRenameField(Rect barRect, RhythmSegment segment)
+    private void DrawSegmentRenameField(Rect barRect)
     {
         GUI.SetNextControlName(SegmentRenameControlId);
 
@@ -218,21 +263,52 @@ public partial class ChartTimelineWindow
         RhythmSegment hit = FindSegmentAt(mouse.x, laneRect, segments);
         int index = hit != null ? segments.IndexOf(hit) : -1;
 
+        float beat = ScreenXToBeat(mouse.x, laneRect);
+        if (snap > 0f)
+            beat = Mathf.Round(beat / snap) * snap;
+        beat = Mathf.Max(0f, beat);
+
         var menu = new GenericMenu();
-        if (index >= 0)
+        if (index >= 0 && hit != null)
         {
             menu.AddItem(new GUIContent("重命名"), false, () =>
             {
                 selectedSegmentIndex = index;
-                BeginSegmentRename(segments[index]);
+                BeginSegmentRename(hit);
             });
-            menu.AddItem(
-                new GUIContent("删除节奏段"),
-                false,
-                () => DeleteSegmentAt(index));
+            menu.AddItem(new GUIContent("删除实例"), false, () => DeleteInstanceAt(index));
+
+            SegmentTemplate hitTemplate = FindTemplate(hit.templateId);
+            if (hitTemplate != null)
+            {
+                menu.AddItem(
+                    new GUIContent($"删除模板「{hitTemplate.name}」及所有实例"),
+                    false,
+                    () => DeleteTemplate(hitTemplate));
+            }
+
             menu.AddSeparator(string.Empty);
         }
-        menu.AddItem(new GUIContent("用红轴→蓝轴创建节奏段"), false, CreateSegmentFromLoop);
+
+        List<SegmentTemplate> templates = GetTemplates();
+        if (templates != null && templates.Count > 0)
+        {
+            menu.AddDisabledItem(new GUIContent($"复制模板到 beat {beat:0.###}"));
+            foreach (SegmentTemplate template in templates)
+            {
+                if (template == null)
+                    continue;
+
+                menu.AddItem(
+                    new GUIContent($"复制「{template.name}」"),
+                    false,
+                    () => CopyTemplateAt(template, beat));
+            }
+
+            menu.AddSeparator(string.Empty);
+        }
+
+        menu.AddItem(new GUIContent("用红轴→蓝轴新建段"), false, CreateSegmentFromLoop);
         menu.ShowAsContext();
     }
 
@@ -249,8 +325,9 @@ public partial class ChartTimelineWindow
             if (segment == null)
                 continue;
 
+            float endBeat = SegmentEndBeat(segment);
             float startX = laneRect.x + (segment.startBeat - scrollBeat) * pixelsPerBeat;
-            float endX = laneRect.x + (segment.endBeat - scrollBeat) * pixelsPerBeat;
+            float endX = laneRect.x + (endBeat - scrollBeat) * pixelsPerBeat;
             float left = Mathf.Min(startX, endX);
             float right = Mathf.Max(startX, endX);
 
@@ -270,7 +347,7 @@ public partial class ChartTimelineWindow
         return best;
     }
 
-    // ---- 创建 / 删除 ----
+    // ---- 创建 / 复制 ----
 
     private void CreateSegmentFromLoop()
     {
@@ -284,33 +361,277 @@ public partial class ChartTimelineWindow
             return;
         }
 
+        float start = playStartBeat;
+        float end = loopEndBeat;
+
+        CaptureFromRange(
+            start,
+            end,
+            out List<SegmentTemplateNode> nodes,
+            out List<SegmentTemplateVfx> vfx,
+            out List<NodeMarker> capturedMarkers,
+            out List<StageVfxEvent> capturedVfx);
+
+        List<SegmentTemplate> templates = GetTemplates();
+        List<RhythmSegment> segments = GetSegments();
+        if (templates == null || segments == null)
+            return;
+
+        Undo.IncrementCurrentGroup();
+        int undoGroup = Undo.GetCurrentGroup();
+        Undo.SetCurrentGroupName("Create Rhythm Segment");
+        Undo.RecordObject(targetPlayer, "Create Rhythm Segment");
+
+        var template = new SegmentTemplate
+        {
+            id = System.Guid.NewGuid().ToString("N"),
+            name = $"段落{templates.Count + 1}",
+            durationBeats = end - start,
+            nodes = nodes,
+            vfx = vfx
+        };
+        templates.Add(template);
+
+        var segment = new RhythmSegment
+        {
+            templateId = template.id,
+            instanceId = System.Guid.NewGuid().ToString("N"),
+            startBeat = start
+        };
+        segments.Add(segment);
+
+        // 把捕获到的元素打标为该实例的展开元素，无需删除重建。
+        for (int i = 0; i < capturedMarkers.Count; i++)
+        {
+            NodeMarker marker = capturedMarkers[i];
+            marker.segmentTemplateId = template.id;
+            marker.segmentInstanceId = segment.instanceId;
+            marker.segmentTemplateNodeIndex = i;
+            EditorUtility.SetDirty(marker);
+        }
+
+        for (int i = 0; i < capturedVfx.Count; i++)
+        {
+            StageVfxEvent e = capturedVfx[i];
+            e.segmentTemplateId = template.id;
+            e.segmentInstanceId = segment.instanceId;
+            e.segmentTemplateVfxIndex = i;
+        }
+
+        Undo.CollapseUndoOperations(undoGroup);
+
+        targetPlayer.UpdatePos(start);
+        targetPlayer.MarkDirty();
+        EditorUtility.SetDirty(targetPlayer);
+        InvalidateMarkers();
+
+        selectedSegmentIndex = segments.Count - 1;
+        RequestRepaint();
+        SceneView.RepaintAll();
+    }
+
+    private void CopyTemplateAt(SegmentTemplate template, float beat)
+    {
+        if (template == null || targetPlayer == null)
+            return;
+
         List<RhythmSegment> segments = GetSegments();
         if (segments == null)
             return;
 
-        Undo.RecordObject(targetPlayer, "Create Rhythm Segment");
+        Undo.IncrementCurrentGroup();
+        int undoGroup = Undo.GetCurrentGroup();
+        Undo.SetCurrentGroupName("Copy Rhythm Segment");
+        Undo.RecordObject(targetPlayer, "Copy Rhythm Segment");
+
         var segment = new RhythmSegment
         {
-            name = $"段落{segments.Count + 1}",
-            startBeat = playStartBeat,
-            endBeat = loopEndBeat
+            templateId = template.id,
+            instanceId = System.Guid.NewGuid().ToString("N"),
+            startBeat = beat
         };
         segments.Add(segment);
+
+        for (int i = 0; i < template.nodes.Count; i++)
+        {
+            SegmentTemplateNode node = template.nodes[i];
+            InstantiateTemplateNode(node, beat + node.relativeBeat, template.id, segment.instanceId, i);
+        }
+
+        for (int i = 0; i < template.vfx.Count; i++)
+        {
+            SegmentTemplateVfx vfx = template.vfx[i];
+            AddTemplateVfx(vfx, beat + vfx.relativeBeat, template.id, segment.instanceId, i);
+        }
+
+        Undo.CollapseUndoOperations(undoGroup);
+
+        targetPlayer.UpdatePos(beat);
+        targetPlayer.MarkDirty();
         EditorUtility.SetDirty(targetPlayer);
+        InvalidateMarkers();
 
         selectedSegmentIndex = segments.Count - 1;
         RequestRepaint();
+        SceneView.RepaintAll();
     }
 
-    private void DeleteSegmentAt(int index)
+    private NodeMarker InstantiateTemplateNode(
+        SegmentTemplateNode node,
+        float beat,
+        string templateId,
+        string instanceId,
+        int nodeIndex)
+    {
+        NodeMarker prefab = ResolveNodePrefab();
+        if (prefab == null)
+            return null;
+
+        Transform root = targetPlayer.scanRoot != null ? targetPlayer.scanRoot : targetPlayer.transform;
+        var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab.gameObject, root);
+        Undo.RegisterCreatedObjectUndo(go, "Expand Rhythm Segment");
+
+        var marker = go.GetComponent<NodeMarker>();
+        marker.beat = beat;
+        marker.order = 0;
+        marker.action = node.action;
+        marker.gravity = node.gravity;
+        marker.auto = node.auto;
+        marker.visible = node.visible;
+        marker.strength = node.strength;
+
+        Vector3 position = root.position;
+        position.x = root.position.x;
+        position.y = node.positionY;
+        marker.transform.position = position;
+
+        marker.ApplyAppearance(targetPlayer.ResolveNodeAppearanceSet());
+        marker.ApplyVisibility();
+
+        marker.segmentTemplateId = templateId;
+        marker.segmentInstanceId = instanceId;
+        marker.segmentTemplateNodeIndex = nodeIndex;
+
+        PrefabUtility.RecordPrefabInstancePropertyModifications(go);
+        PrefabUtility.RecordPrefabInstancePropertyModifications(marker);
+        PrefabUtility.RecordPrefabInstancePropertyModifications(marker.transform);
+        EditorUtility.SetDirty(marker);
+
+        return marker;
+    }
+
+    private void AddTemplateVfx(
+        SegmentTemplateVfx vfx,
+        float beat,
+        string templateId,
+        string instanceId,
+        int vfxIndex)
+    {
+        var e = new StageVfxEvent
+        {
+            beat = beat,
+            kind = StageVfxEventKind.ScreenShake,
+            durationBeats = vfx.durationBeats,
+            strength = vfx.strength,
+            frequency = vfx.frequency,
+            segmentTemplateId = templateId,
+            segmentInstanceId = instanceId,
+            segmentTemplateVfxIndex = vfxIndex
+        };
+        targetPlayer.VfxEventsEditable.Add(e);
+    }
+
+    private void CaptureFromRange(
+        float start,
+        float end,
+        out List<SegmentTemplateNode> nodes,
+        out List<SegmentTemplateVfx> vfx,
+        out List<NodeMarker> capturedMarkers,
+        out List<StageVfxEvent> capturedVfx)
+    {
+        nodes = new List<SegmentTemplateNode>();
+        vfx = new List<SegmentTemplateVfx>();
+        capturedMarkers = new List<NodeMarker>();
+        capturedVfx = new List<StageVfxEvent>();
+
+        Transform root = targetPlayer.scanRoot != null ? targetPlayer.scanRoot : targetPlayer.transform;
+
+        var freeMarkers = new List<NodeMarker>();
+        foreach (NodeMarker marker in root.GetComponentsInChildren<NodeMarker>(false))
+        {
+            if (marker != null &&
+                string.IsNullOrEmpty(marker.segmentTemplateId) &&
+                marker.beat >= start && marker.beat < end)
+            {
+                freeMarkers.Add(marker);
+            }
+        }
+        freeMarkers.Sort((a, b) => a.beat.CompareTo(b.beat));
+
+        foreach (NodeMarker marker in freeMarkers)
+        {
+            nodes.Add(new SegmentTemplateNode
+            {
+                relativeBeat = marker.beat - start,
+                action = marker.action,
+                gravity = marker.gravity,
+                auto = marker.auto,
+                visible = marker.visible,
+                strength = marker.strength,
+                positionY = marker.transform.position.y
+            });
+            capturedMarkers.Add(marker);
+        }
+
+        if (targetPlayer.VfxEventsEditable != null)
+        {
+            var freeVfx = new List<StageVfxEvent>();
+            foreach (StageVfxEvent e in targetPlayer.VfxEventsEditable)
+            {
+                if (e != null &&
+                    string.IsNullOrEmpty(e.segmentTemplateId) &&
+                    e.beat >= start && e.beat < end)
+                {
+                    freeVfx.Add(e);
+                }
+            }
+            freeVfx.Sort((a, b) => a.beat.CompareTo(b.beat));
+
+            foreach (StageVfxEvent e in freeVfx)
+            {
+                vfx.Add(new SegmentTemplateVfx
+                {
+                    relativeBeat = e.beat - start,
+                    durationBeats = e.durationBeats,
+                    strength = e.strength,
+                    frequency = e.frequency
+                });
+                capturedVfx.Add(e);
+            }
+        }
+    }
+
+    // ---- 删除 ----
+
+    private void DeleteInstanceAt(int index)
     {
         List<RhythmSegment> segments = GetSegments();
         if (segments == null || index < 0 || index >= segments.Count)
             return;
 
+        RhythmSegment segment = segments[index];
+
+        Undo.IncrementCurrentGroup();
+        int undoGroup = Undo.GetCurrentGroup();
+        Undo.SetCurrentGroupName("Delete Rhythm Segment");
         Undo.RecordObject(targetPlayer, "Delete Rhythm Segment");
+
+        DestroyInstanceElements(segment);
         segments.RemoveAt(index);
+        Undo.CollapseUndoOperations(undoGroup);
+
         EditorUtility.SetDirty(targetPlayer);
+        targetPlayer.MarkDirty();
 
         if (selectedSegmentIndex == index)
             selectedSegmentIndex = -1;
@@ -318,13 +639,75 @@ public partial class ChartTimelineWindow
             selectedSegmentIndex--;
 
         CancelSegmentRename();
+        InvalidateMarkers();
         RequestRepaint();
     }
 
     private void DeleteSelectedSegment()
     {
         if (selectedSegmentIndex >= 0)
-            DeleteSegmentAt(selectedSegmentIndex);
+            DeleteInstanceAt(selectedSegmentIndex);
+    }
+
+    private void DeleteTemplate(SegmentTemplate template)
+    {
+        if (template == null || targetPlayer == null)
+            return;
+
+        List<SegmentTemplate> templates = GetTemplates();
+        List<RhythmSegment> segments = GetSegments();
+        if (templates == null || segments == null)
+            return;
+
+        Undo.IncrementCurrentGroup();
+        int undoGroup = Undo.GetCurrentGroup();
+        Undo.SetCurrentGroupName("Delete Rhythm Segment Template");
+        Undo.RecordObject(targetPlayer, "Delete Rhythm Segment Template");
+
+        for (int i = segments.Count - 1; i >= 0; i--)
+        {
+            if (segments[i] != null && segments[i].templateId == template.id)
+                DestroyInstanceElements(segments[i]);
+        }
+
+        segments.RemoveAll(s => s != null && s.templateId == template.id);
+        templates.Remove(template);
+        Undo.CollapseUndoOperations(undoGroup);
+
+        EditorUtility.SetDirty(targetPlayer);
+        targetPlayer.MarkDirty();
+        selectedSegmentIndex = -1;
+        CancelSegmentRename();
+        InvalidateMarkers();
+        RequestRepaint();
+    }
+
+    private void DestroyInstanceElements(RhythmSegment segment)
+    {
+        if (segment == null || targetPlayer == null)
+            return;
+
+        Transform root = targetPlayer.scanRoot != null ? targetPlayer.scanRoot : targetPlayer.transform;
+
+        var toDestroy = new List<NodeMarker>();
+        foreach (NodeMarker marker in root.GetComponentsInChildren<NodeMarker>(false))
+        {
+            if (marker != null && marker.segmentInstanceId == segment.instanceId)
+                toDestroy.Add(marker);
+        }
+
+        foreach (NodeMarker marker in toDestroy)
+            Undo.DestroyObjectImmediate(marker.gameObject);
+
+        if (targetPlayer.VfxEventsEditable != null)
+        {
+            for (int i = targetPlayer.VfxEventsEditable.Count - 1; i >= 0; i--)
+            {
+                StageVfxEvent e = targetPlayer.VfxEventsEditable[i];
+                if (e != null && e.segmentInstanceId == segment.instanceId)
+                    targetPlayer.VfxEventsEditable.RemoveAt(i);
+            }
+        }
     }
 
     // ---- 拖动移动 ----
@@ -335,40 +718,19 @@ public partial class ChartTimelineWindow
         segmentDragChanged = false;
         segmentDragRecorded = false;
         segmentDragMouseStartBeat = ScreenXToBeat(e.mousePosition.x, laneRect);
-        segmentDragStartStartBeat = segment.startBeat;
-        segmentDragStartEndBeat = segment.endBeat;
+        segmentDragStartBeat = segment.startBeat;
         segmentDragMinBeat = segment.startBeat;
         segmentDragAppliedDelta = 0f;
+        segmentDragSegment = segment;
 
-        // 快照：原区间内所有「主拍点」落点都收集起来，拖动时按固定成员平移，避免边界漂移。
-        segmentDragAnchors.Clear();
-        segmentDragObjects.Clear();
-        CollectSceneBeatMappables(segmentMoveSources);
-
-        foreach (IBeatMappable source in segmentMoveSources)
-        {
-            var anchors = new List<BeatAnchor>();
-            source.CollectBeatAnchors(anchors);
-
-            bool any = false;
-            foreach (BeatAnchor anchor in anchors)
-            {
-                if (anchor.Beat >= segmentDragStartStartBeat &&
-                    anchor.Beat < segmentDragStartEndBeat)
-                {
-                    segmentDragAnchors.Add(anchor);
-                    any = true;
-                }
-            }
-
-            if (any && source is Component component)
-                segmentDragObjects.Add(component);
-        }
+        segmentDragNodes.Clear();
+        segmentDragVfx.Clear();
+        CollectInstanceElements(segment, segmentDragNodes, segmentDragVfx);
     }
 
     private void UpdateSegmentDrag(Event e, Rect laneRect)
     {
-        if (!segmentDragging || targetPlayer == null)
+        if (!segmentDragging || segmentDragSegment == null || targetPlayer == null)
             return;
 
         float mouseBeat = ScreenXToBeat(e.mousePosition.x, laneRect);
@@ -388,17 +750,19 @@ public partial class ChartTimelineWindow
 
         float step = delta - segmentDragAppliedDelta;
 
-        List<RhythmSegment> segments = GetSegments();
-        if (segments != null && selectedSegmentIndex >= 0 &&
-            selectedSegmentIndex < segments.Count)
+        segmentDragSegment.startBeat = segmentDragStartBeat + delta;
+
+        foreach (NodeMarker marker in segmentDragNodes)
         {
-            RhythmSegment segment = segments[selectedSegmentIndex];
-            segment.startBeat = segmentDragStartStartBeat + delta;
-            segment.endBeat = segmentDragStartEndBeat + delta;
+            if (marker != null)
+                marker.beat += step;
         }
 
-        foreach (BeatAnchor anchor in segmentDragAnchors)
-            anchor.Offset(step);
+        foreach (StageVfxEvent vfx in segmentDragVfx)
+        {
+            if (vfx != null)
+                vfx.beat += step;
+        }
 
         segmentDragAppliedDelta = delta;
         segmentDragChanged = true;
@@ -409,37 +773,21 @@ public partial class ChartTimelineWindow
     {
         segmentDragging = false;
 
-        if (segmentDragChanged)
+        if (segmentDragChanged && targetPlayer != null)
         {
-            if (targetPlayer != null && segmentDragAppliedDelta != 0f)
-            {
-                // 节点 beat 变化后，从最早受影响拍点重摆节点 X 坐标。
-                targetPlayer.UpdatePos(
-                    Mathf.Max(0f, segmentDragStartStartBeat + segmentDragAppliedDelta));
-                EditorUtility.SetDirty(targetPlayer);
-            }
-
-            // 非节点动画组件（淡入淡出/飞入飞出/显隐）的字段改动要落盘并记录 prefab override。
-            foreach (Component component in segmentDragObjects)
-            {
-                if (component == null || component == targetPlayer)
-                    continue;
-
-                EditorUtility.SetDirty(component);
-                if (PrefabUtility.IsPartOfPrefabInstance(component))
-                    PrefabUtility.RecordPrefabInstancePropertyModifications(component);
-            }
-
+            targetPlayer.UpdatePos(
+                Mathf.Max(0f, segmentDragStartBeat + segmentDragAppliedDelta));
+            EditorUtility.SetDirty(targetPlayer);
             InvalidateMarkers();
-            InvalidateAnimationEvents();
         }
         else
         {
             RequestRepaint();
         }
 
-        segmentDragAnchors.Clear();
-        segmentDragObjects.Clear();
+        segmentDragNodes.Clear();
+        segmentDragVfx.Clear();
+        segmentDragSegment = null;
         segmentDragChanged = false;
         segmentDragRecorded = false;
         segmentDragAppliedDelta = 0f;
@@ -447,45 +795,219 @@ public partial class ChartTimelineWindow
 
     private void RecordSegmentMoveUndo()
     {
-        var objects = new List<Object>(segmentDragObjects.Count + 2);
+        var objects = new List<Object>();
         if (targetPlayer != null)
             objects.Add(targetPlayer);
 
-        foreach (Component component in segmentDragObjects)
+        foreach (NodeMarker marker in segmentDragNodes)
         {
-            if (component == null || component == targetPlayer)
+            if (marker == null)
                 continue;
 
-            objects.Add(component);
-
-            if (component is NodeMarker marker && marker.transform != null)
+            objects.Add(marker);
+            if (marker.transform != null)
                 objects.Add(marker.transform);
         }
 
         Undo.RegisterCompleteObjectUndo(objects.ToArray(), "Move Rhythm Segment");
     }
 
-    private void CollectSceneBeatMappables(List<IBeatMappable> result)
+    private void CollectInstanceElements(
+        RhythmSegment segment,
+        List<NodeMarker> nodes,
+        List<StageVfxEvent> vfx)
     {
-        result.Clear();
-        if (targetPlayer == null)
+        nodes.Clear();
+        vfx.Clear();
+        if (segment == null || targetPlayer == null)
             return;
 
-        Scene scene = targetPlayer.gameObject.scene;
-        if (!scene.IsValid())
-            return;
-
-        GameObject[] roots = scene.GetRootGameObjects();
-        foreach (GameObject root in roots)
+        Transform root = targetPlayer.scanRoot != null ? targetPlayer.scanRoot : targetPlayer.transform;
+        foreach (NodeMarker marker in root.GetComponentsInChildren<NodeMarker>(false))
         {
-            if (root == null)
+            if (marker != null && marker.segmentInstanceId == segment.instanceId)
+                nodes.Add(marker);
+        }
+
+        if (targetPlayer.VfxEventsEditable != null)
+        {
+            foreach (StageVfxEvent e in targetPlayer.VfxEventsEditable)
+            {
+                if (e != null && e.segmentInstanceId == segment.instanceId)
+                    vfx.Add(e);
+            }
+        }
+    }
+
+    // ---- 编辑同步（改实例 → 改模板 → 同步其他实例） ----
+
+    /// <summary>节点拖动结束后，把被拖动的生成节点同步回模板。</summary>
+    private void SyncDraggedSegmentNodes()
+    {
+        foreach (NodeMarker marker in selection)
+        {
+            if (marker != null && !string.IsNullOrEmpty(marker.segmentTemplateId))
+                SyncNodeToTemplate(marker);
+        }
+    }
+
+    private void SyncNodeToTemplate(NodeMarker marker)
+    {
+        if (marker == null ||
+            string.IsNullOrEmpty(marker.segmentTemplateId) ||
+            marker.segmentTemplateNodeIndex < 0)
+        {
+            return;
+        }
+
+        SegmentTemplate template = FindTemplate(marker.segmentTemplateId);
+        if (template == null || marker.segmentTemplateNodeIndex >= template.nodes.Count)
+            return;
+
+        RhythmSegment instance = FindInstance(marker.segmentInstanceId);
+        if (instance == null)
+            return;
+
+        SegmentTemplateNode node = template.nodes[marker.segmentTemplateNodeIndex];
+        node.relativeBeat = Mathf.Max(0f, marker.beat - instance.startBeat);
+        node.action = marker.action;
+        node.gravity = marker.gravity;
+        node.strength = marker.strength;
+        node.positionY = marker.transform.position.y;
+        node.auto = marker.auto;
+        node.visible = marker.visible;
+
+        MirrorNodeToOtherInstances(template, instance, marker.segmentTemplateNodeIndex, node);
+
+        EditorUtility.SetDirty(targetPlayer);
+        targetPlayer.MarkDirty();
+        targetPlayer.QueueUpdatePos(0f);
+        InvalidateMarkers();
+    }
+
+    private void MirrorNodeToOtherInstances(
+        SegmentTemplate template,
+        RhythmSegment sourceInstance,
+        int nodeIndex,
+        SegmentTemplateNode node)
+    {
+        List<RhythmSegment> segments = GetSegments();
+        if (segments == null)
+            return;
+
+        NodeAppearanceSet appearanceSet = targetPlayer.ResolveNodeAppearanceSet();
+
+        foreach (RhythmSegment other in segments)
+        {
+            if (other == null ||
+                other.templateId != template.id ||
+                other.instanceId == sourceInstance.instanceId)
+            {
+                continue;
+            }
+
+            NodeMarker otherMarker = FindInstanceNode(other, nodeIndex);
+            if (otherMarker == null)
                 continue;
 
-            MonoBehaviour[] behaviours = root.GetComponentsInChildren<MonoBehaviour>(true);
-            foreach (MonoBehaviour behaviour in behaviours)
+            otherMarker.beat = other.startBeat + node.relativeBeat;
+            otherMarker.action = node.action;
+            otherMarker.gravity = node.gravity;
+            otherMarker.strength = node.strength;
+            otherMarker.auto = node.auto;
+            otherMarker.visible = node.visible;
+
+            Vector3 position = otherMarker.transform.position;
+            position.y = node.positionY;
+            otherMarker.transform.position = position;
+
+            otherMarker.ApplyAppearance(appearanceSet);
+            otherMarker.ApplyVisibility();
+            EditorUtility.SetDirty(otherMarker);
+        }
+    }
+
+    private NodeMarker FindInstanceNode(RhythmSegment segment, int nodeIndex)
+    {
+        if (segment == null)
+            return null;
+
+        Transform root = targetPlayer.scanRoot != null ? targetPlayer.scanRoot : targetPlayer.transform;
+        foreach (NodeMarker marker in root.GetComponentsInChildren<NodeMarker>(false))
+        {
+            if (marker != null &&
+                marker.segmentInstanceId == segment.instanceId &&
+                marker.segmentTemplateNodeIndex == nodeIndex)
             {
-                if (behaviour is IBeatMappable mappable)
-                    result.Add(mappable);
+                return marker;
+            }
+        }
+
+        return null;
+    }
+
+    private void SyncVfxToTemplate(StageVfxEvent vfx)
+    {
+        if (vfx == null ||
+            string.IsNullOrEmpty(vfx.segmentTemplateId) ||
+            vfx.segmentTemplateVfxIndex < 0)
+        {
+            return;
+        }
+
+        SegmentTemplate template = FindTemplate(vfx.segmentTemplateId);
+        if (template == null || vfx.segmentTemplateVfxIndex >= template.vfx.Count)
+            return;
+
+        RhythmSegment instance = FindInstance(vfx.segmentInstanceId);
+        if (instance == null)
+            return;
+
+        SegmentTemplateVfx def = template.vfx[vfx.segmentTemplateVfxIndex];
+        def.relativeBeat = Mathf.Max(0f, vfx.beat - instance.startBeat);
+        def.durationBeats = vfx.durationBeats;
+        def.strength = vfx.strength;
+        def.frequency = vfx.frequency;
+
+        MirrorVfxToOtherInstances(template, instance, vfx.segmentTemplateVfxIndex, def);
+
+        EditorUtility.SetDirty(targetPlayer);
+        targetPlayer.MarkDirty();
+        RequestRepaint();
+    }
+
+    private void MirrorVfxToOtherInstances(
+        SegmentTemplate template,
+        RhythmSegment sourceInstance,
+        int vfxIndex,
+        SegmentTemplateVfx def)
+    {
+        List<RhythmSegment> segments = GetSegments();
+        if (segments == null || targetPlayer.VfxEventsEditable == null)
+            return;
+
+        foreach (RhythmSegment other in segments)
+        {
+            if (other == null ||
+                other.templateId != template.id ||
+                other.instanceId == sourceInstance.instanceId)
+            {
+                continue;
+            }
+
+            foreach (StageVfxEvent e in targetPlayer.VfxEventsEditable)
+            {
+                if (e == null ||
+                    e.segmentInstanceId != other.instanceId ||
+                    e.segmentTemplateVfxIndex != vfxIndex)
+                {
+                    continue;
+                }
+
+                e.beat = other.startBeat + def.relativeBeat;
+                e.durationBeats = def.durationBeats;
+                e.strength = def.strength;
+                e.frequency = def.frequency;
             }
         }
     }
@@ -498,7 +1020,8 @@ public partial class ChartTimelineWindow
             return;
 
         renamingSegmentIndex = selectedSegmentIndex;
-        renameBuffer = segment.name;
+        SegmentTemplate template = FindTemplate(segment.templateId);
+        renameBuffer = template != null ? template.name : "段落";
         segmentRenameWasFocused = false;
         RequestRepaint();
     }
@@ -512,12 +1035,17 @@ public partial class ChartTimelineWindow
         if (segments != null && renamingSegmentIndex >= 0 &&
             renamingSegmentIndex < segments.Count)
         {
-            string name = string.IsNullOrEmpty(renameBuffer) ? "段落" : renameBuffer;
-            if (segments[renamingSegmentIndex].name != name)
+            RhythmSegment segment = segments[renamingSegmentIndex];
+            SegmentTemplate template = FindTemplate(segment.templateId);
+            if (template != null)
             {
-                Undo.RecordObject(targetPlayer, "Rename Rhythm Segment");
-                segments[renamingSegmentIndex].name = name;
-                EditorUtility.SetDirty(targetPlayer);
+                string name = string.IsNullOrEmpty(renameBuffer) ? "段落" : renameBuffer;
+                if (template.name != name)
+                {
+                    Undo.RecordObject(targetPlayer, "Rename Rhythm Segment");
+                    template.name = name;
+                    EditorUtility.SetDirty(targetPlayer);
+                }
             }
         }
 
@@ -533,5 +1061,14 @@ public partial class ChartTimelineWindow
         renameBuffer = string.Empty;
         segmentRenameWasFocused = false;
         RequestRepaint();
+    }
+
+    // ---- 工具 ----
+
+    private NodeMarker ResolveNodePrefab()
+    {
+        if (nodePrefab == null)
+            nodePrefab = AssetDatabase.LoadAssetAtPath<NodeMarker>(NodePrefabPath);
+        return nodePrefab;
     }
 }

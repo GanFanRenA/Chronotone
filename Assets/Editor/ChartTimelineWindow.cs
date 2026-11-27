@@ -144,6 +144,7 @@ public partial class ChartTimelineWindow : EditorWindow
         if (marker == null)
             return;
 
+        SyncNodeToTemplate(marker);
         InvalidateMarkers();
     }
 

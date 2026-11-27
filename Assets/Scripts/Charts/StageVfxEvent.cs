@@ -34,4 +34,9 @@ public sealed class StageVfxEvent
     [Tooltip("震动频率（映射为 Cinemachine 噪声的 FrequencyGain）。")]
     [Min(0f)]
     public float frequency = 1f;
+
+    // 由节奏段模板展开生成时打标，用于识别/同步/重生成。
+    [HideInInspector] public string segmentTemplateId;
+    [HideInInspector] public string segmentInstanceId;
+    [HideInInspector] public int segmentTemplateVfxIndex = -1;
 }

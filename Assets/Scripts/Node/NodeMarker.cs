@@ -28,6 +28,11 @@ public class NodeMarker : MonoBehaviour, IBeatMappable
     [HideInInspector] public int index;
     [HideInInspector, System.NonSerialized] public float deltaX;
 
+    // 由节奏段模板展开生成时打标，用于识别/同步/重生成。
+    [HideInInspector] public string segmentTemplateId;
+    [HideInInspector] public string segmentInstanceId;
+    [HideInInspector] public int segmentTemplateNodeIndex = -1;
+
     [Header("Gravity Indicator")]
     [Tooltip("Gravity 不是 None 时显示的小白圆心。把 Node 下白色 Circle 子物体的 SpriteRenderer 拖到这里。")]
     [SerializeField] private SpriteRenderer gravityDot;

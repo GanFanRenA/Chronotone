@@ -393,6 +393,7 @@ public partial class ChartTimelineWindow
         dragStartBeats = null;
         targetPlayer.EndPositionUpdateBatch(fromBeat);
         InvalidateMarkers();
+        SyncDraggedSegmentNodes();
     }
 
     private float GetEarliestSelectedBeat()

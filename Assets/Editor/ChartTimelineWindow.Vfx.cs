@@ -211,6 +211,7 @@ public partial class ChartTimelineWindow
             e.strength = Mathf.Max(0f, newStrength);
             e.frequency = Mathf.Max(0f, newFrequency);
             CommitVfxEdit();
+            SyncVfxToTemplate(e);
         }
     }
 
@@ -517,10 +518,26 @@ public partial class ChartTimelineWindow
     private void EndVfxDrag()
     {
         vfxDragging = false;
+
+        StageVfxEvent edited = null;
+        if (vfxDragChanged && vfxDragIndex >= 0)
+        {
+            List<StageVfxEvent> events = GetVfxEvents();
+            if (events != null && vfxDragIndex < events.Count)
+                edited = events[vfxDragIndex];
+        }
+
         vfxDragIndex = -1;
+
         if (vfxDragChanged)
+        {
             CommitVfxEdit();
+            if (edited != null)
+                SyncVfxToTemplate(edited);
+        }
         else
+        {
             RequestRepaint();
+        }
     }
 }
