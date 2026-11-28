@@ -217,6 +217,18 @@ MonoBehaviour:
     type: 0
     trigger: 0
     migrated: 1
+  - beat: 16.25
+    order: 0
+    action: 1
+    gravity: 0
+    auto: 1
+    visible: 0
+    strength: 30
+    position: {x: 130.5, y: 3.393263}
+    deltaX: 3.5
+    type: 0
+    trigger: 0
+    migrated: 1
   - beat: 16.75
     order: 0
     action: 2
@@ -225,7 +237,7 @@ MonoBehaviour:
     visible: 0
     strength: 80
     position: {x: 134.5, y: 8.37944}
-    deltaX: 7.5
+    deltaX: 4
     type: 0
     trigger: 0
     migrated: 1
@@ -3444,14 +3456,14 @@ MonoBehaviour:
     gravityInverted: 0
     gravityAccelerationY: -83.385
   - time: 5.099997986108065
-    position: {x: 129.01994, y: 5.4610286}
+    position: {x: 129.01996, y: 5.4610286}
     verticalSpeed: 23.3292
     angle: -28.799622
     grounded: 0
     gravityInverted: 0
     gravityAccelerationY: -83.385
   - time: 5.119997978210449
-    position: {x: 129.52394, y: 5.8942585}
+    position: {x: 129.52396, y: 5.8942585}
     verticalSpeed: 21.6615
     angle: -33.59961
     grounded: 0
@@ -3466,93 +3478,93 @@ MonoBehaviour:
     gravityAccelerationY: -83.385
   - time: 5.159997962415218
     position: {x: 130.53195, y: 6.660656}
-    verticalSpeed: 18.326101
+    verticalSpeed: 30
     angle: -43.199585
     grounded: 0
     gravityInverted: 0
     gravityAccelerationY: -83.385
   - time: 5.179997954517603
-    position: {x: 131.03595, y: 6.993824}
-    verticalSpeed: 16.658401
+    position: {x: 131.03595, y: 7.2273016}
+    verticalSpeed: 28.3323
     angle: -47.999573
     grounded: 0
     gravityInverted: 0
     gravityAccelerationY: -83.385
   - time: 5.1999979466199875
-    position: {x: 131.53995, y: 7.2936378}
-    verticalSpeed: 14.990702
+    position: {x: 131.53995, y: 7.7605934}
+    verticalSpeed: 26.6646
     angle: -52.79956
     grounded: 0
     gravityInverted: 0
     gravityAccelerationY: -83.385
   - time: 5.219997938722372
-    position: {x: 132.04395, y: 7.5600977}
-    verticalSpeed: 13.323002
+    position: {x: 132.04395, y: 8.260531}
+    verticalSpeed: 24.9969
     angle: -57.59955
     grounded: 0
     gravityInverted: 0
     gravityAccelerationY: -83.385
   - time: 5.239997930824757
-    position: {x: 132.54794, y: 7.793204}
-    verticalSpeed: 11.655302
+    position: {x: 132.54794, y: 8.727116}
+    verticalSpeed: 23.3292
     angle: -62.399536
     grounded: 0
     gravityInverted: 0
     gravityAccelerationY: -83.385
   - time: 5.259997922927141
-    position: {x: 133.05194, y: 7.9929557}
-    verticalSpeed: 9.987602
+    position: {x: 133.05194, y: 9.160345}
+    verticalSpeed: 21.6615
     angle: -67.199524
     grounded: 0
     gravityInverted: 0
     gravityAccelerationY: -83.385
   - time: 5.279997915029526
-    position: {x: 133.55594, y: 8.159353}
-    verticalSpeed: 8.319902
+    position: {x: 133.55594, y: 9.560221}
+    verticalSpeed: 19.993801
     angle: -71.99951
     grounded: 0
     gravityInverted: 0
     gravityAccelerationY: -83.385
   - time: 5.29999790713191
-    position: {x: 134.05994, y: 8.2923975}
-    verticalSpeed: 6.652203
+    position: {x: 134.05994, y: 9.926743}
+    verticalSpeed: 18.326101
     angle: -76.7995
     grounded: 0
     gravityInverted: 0
     gravityAccelerationY: -83.385
   - time: 5.319997899234295
-    position: {x: 134.56393, y: 8.392088}
-    verticalSpeed: -75.015495
+    position: {x: 134.56393, y: 10.259911}
+    verticalSpeed: -63.3416
     angle: -81.59949
     grounded: 0
     gravityInverted: 0
     gravityAccelerationY: -83.385
   - time: 5.3399978913366795
-    position: {x: 135.06795, y: 6.8584247}
-    verticalSpeed: -76.6832
+    position: {x: 135.06795, y: 8.959725}
+    verticalSpeed: -65.0093
     angle: -86.399475
     grounded: 0
     gravityInverted: 0
     gravityAccelerationY: -83.385
   - time: 5.359997883439064
-    position: {x: 135.57195, y: 5.2914076}
-    verticalSpeed: -78.3509
+    position: {x: 135.57195, y: 7.626186}
+    verticalSpeed: -66.677
     angle: -91.19946
     grounded: 0
     gravityInverted: 0
     gravityAccelerationY: -83.385
   - time: 5.379997875541449
-    position: {x: 136.07594, y: 3.6910362}
-    verticalSpeed: -80.0186
+    position: {x: 136.07594, y: 6.2592926}
+    verticalSpeed: -68.3447
     angle: -95.99945
     grounded: 0
     gravityInverted: 0
     gravityAccelerationY: -83.385
   - time: 5.399997867643833
-    position: {x: 136.57994, y: 3.4795}
-    verticalSpeed: 0
-    angle: 0
-    grounded: 1
+    position: {x: 136.57994, y: 4.859045}
+    verticalSpeed: -70.012405
+    angle: -100.79944
+    grounded: 0
     gravityInverted: 0
     gravityAccelerationY: -83.385
   - time: 5.419997859746218
